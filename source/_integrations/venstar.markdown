@@ -1,16 +1,10 @@
 ---
-title: Venstar
 description: Instructions for how to integrate Venstar WiFi thermostats within Home Assistant.
-ha_category:
-  - Climate
 ha_release: 0.62
-ha_iot_class: Local Polling
 ha_domain: venstar
-ha_platforms:
-  - climate
 ---
 
-The `venstar` climate platform allows you to control [Venstar](https://www.venstar.com/) thermostats from Home Assistant.
+The **Venstar** {% term integration %} allows you to control [Venstar](https://www.venstar.com/) thermostats from Home Assistant.
 Venstar thermostats feature a local API that allows for automation without the need for their Skyport cloud service.
 
 Currently supported and tested thermostats:
@@ -18,78 +12,69 @@ Currently supported and tested thermostats:
 - ColorTouch T7900  
 - ColorTouch T7850  (No Humidity control)
 - Explorer Mini T2000
+- Explorer IAQ T3950
 
 Currently supported functionality:
+
 - Setting heat/cool temperature when the thermostat is in the appropriate mode.
 - Changing the operation mode of the thermostat (heat/cool/off/auto)
 - Turning the fan on/off
 - Reading and setting the humidity level and limits (T7900 only)
 - Turning on away preset
 - Turning on hold mode preset
+- Remote temperature sensors
+- Thermostat alerts (Filter replacement/etc)
+- Reading IAQ and CO2 levels (on supported devices, e.g. T3950, only)
+- Reading the current schedule state (morning/day/evening/night/inactive)
 
 The following values are supported for the preset_mode state attribute:
+
 - `none`: *Enables* the scheduling functionality.
 - `temperature`: *Disables* the schedule and holds the set temperature indefinitely.
 - `away`: Places the thermostat in away mode
 
 Note - Please ensure that you update your thermostat to the latest firmware. Initially tested on firmware 5.10 and currently VH6.79.  
 
-Local API mode needs to be enabled via the thermostat's *Menu > WiFi > Local API Options > Local API - ON*
+### Enabling local API
 
-To set it up, add the following information to your `configuration.yaml` file:
+Local API mode needs to be enabled on the thermostat itself. It cannot be enabled using the Venstar mobile apps or Skyport cloud service. Exact steps vary across different [series](https://venstar.com/thermostats/) of thermostats:
 
-```yaml
-# Example configuration.yaml entry
-climate:
-  - platform: venstar
-    host: IP_OR_HOSTNAME_OF_THERMOSTAT
+- [ColorTouch](https://venstar.com/thermostats/colortouch/)
+  - **Menu** > **WiFi** > **Local API Option** > **[Local API - ON](https://www.youtube.com/watch?v=kB_HcJ3kqCg&t=51s)**.
+
+- [EXPLORER](https://venstar.com/thermostats/explorer/) / [EXPLORER IAQ](https://venstar.com/thermostats/explorer-iaq/)
+  - Press **SETUP**.
+  - Press **MODE** repeatedly until you see [LOCAL API](https://www.youtube.com/watch?v=HRmWFwfQAhU&t=276s).
+  - Press **WARMER** to toggle "ON".
+  - Press **SETUP** to exit.
+
+- [EXPLORER Mini](https://venstar.com/thermostats/explorermini/)
+  - Press and hold **MODE** + **FAN** together for 5 seconds.
+  - Press **MODE** repeatedly until you see "API".
+  - Press **WARMER** to toggle "ON".
+  - Press **MODE** + **FAN** together to exit.
+
+If the local API is successfully enabled on the thermostat, you should see some basic API info when you navigate to its IP address in a web browser:
+
+```json
+{"api_ver":7,"type":"commercial","model":"VYG-4800","firmware":"2.22.19"}
 ```
 
-{% configuration %}
-host:
-  description: Address of your thermostat, e.g., 192.168.1.32.
-  required: true
-  type: string
-username:
-  description: Username for the thermostat.
-  required: false
-  type: string
-password:
-  description:  Password for the thermostat.
-  required: false
-  type: string
-pin:
-  description: Pin for Lockscreen (required if lock screen enabled)
-  required: false
-  type: string
-ssl:
-  description: Whether to use SSL or not when communicating.
-  required: false
-  type: boolean
-  default: false
-timeout:
-  description: Number of seconds for API timeout.
-  required: false
-  type: integer
-  default: 5
-humidifier:
-  description: Report humidity and expose humidifier setpoints.
-  required: false
-  type: boolean
-  default: true
-{% endconfiguration %}
+{% include integrations/config_flow.md %}
 
-## Full configuration sample
+{% configuration_basic %}
+Host:
+  description: "The IP address of your thermostat, for example, `192.168.1.32`."
+Username:
+  description: "Username for the thermostat. Only supported on ColorTouch models."
+Password:
+  description: "Password for the thermostat. Only supported on ColorTouch models."
+PIN:
+  description: "The lock screen PIN, if you have enabled the lock screen on the thermostat."
+SSL:
+  description: "Whether to use HTTPS when communicating with the thermostat. Only supported on ColorTouch models."
+{% endconfiguration_basic %}
 
-```yaml
-# Example configuration.yaml entry
-climate:
-  - platform: venstar
-    host: IP_OR_HOSTNAME_OF_THERMOSTAT
-    ssl: true
-    username: OPTIONAL_AUTH_USER_HERE
-    password: OPTIONAL_AUTH_PASS_HERE
-    pin: LOCKSCREEN_PIN
-    timeout: 5
-    humidifier: false
-```
+{% note %}
+HTTPS, username, and password authentication are only available on ColorTouch thermostats. Other models, such as the Explorer Mini and Explorer IAQ, only support unencrypted HTTP connections with no authentication.
+{% endnote %}

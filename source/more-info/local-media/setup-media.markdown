@@ -1,77 +1,104 @@
 ---
 title: "Setting up local media sources"
-description: "More information on how to set up local media sources in Home Assistant."
+description: "Learn how to configure local media sources in Home Assistant so your audio and video files are available in the media browser."
+related:
+  - docs: /more-info/local-media/add-media/
+    title: Adding your media to Home Assistant
+  - docs: /integrations/homeassistant/#media_dirs
+    title: Media directories configuration
+  - docs: /integrations/media_source/
+    title: Media source
 ---
 
-In order to use the media browser with Home Assistant, it needs to know where to
-find you local media.
+Home Assistant includes a built-in media browser (in the sidebar under {% my media_browser title="**Media** > **My media**" %}) that lets you browse and play your local media files. Before you can use it, you need to make sure your media files are accessible to Home Assistant.
 
-## Home Assistant OS and Supervised
+On {% term "Home Assistant Operating System" %}, the `/media` folder is created automatically with no configuration needed. On {% term "Home Assistant Container" %}, you need to mount a volume to `/media` when starting your container.
 
-No action is needed from your end to set it up. Home Assistant will
-automatically use the "media" folder that is provided on these systems.
+Files stored in your media directories are only accessible to users who are logged in to Home Assistant. This is different from the [`www` folder](/integrations/http/#hosting-files), where files are publicly accessible without a login, which is useful for things like images in notifications, but not something you typically want for your personal media library.
 
-## Home Assistant Container
+## Setting up a media folder on Home Assistant Operating System
 
-If you run the Home Assistant Container in, for example, Docker, you'll need to
-add a Docker volume mount to the Home Assistant container, to mount in
-your local media.
+No setup is required. The `/media` folder is automatically created and available in the media browser as soon as Home Assistant starts.
 
-The default path Home Assistant will try to use, is `/media`.
+To add files, follow the [steps on adding media][add-media].
 
-For example, if you are currently using this command for Docker:
+## Setting up a media folder on Home Assistant Container
 
-```bash
-docker run -d --name="home-assistant" \
-  -v /PATH_TO_YOUR_CONFIG:/config \
-  -v /etc/localtime:/etc/localtime:ro \
-  --net=host \
-  {{ site.installation.container.base }}:stable
-```
+On {% term "Home Assistant Container" %}, you need to mount a directory on your host machine to `/media` inside the container. This must be done when starting or recreating the container.
 
-You'll need to change it to this:
+### Using Docker CLI
+
+Add `-v /PATH_TO_YOUR_MEDIA:/media` to your `docker run` command:
 
 ```bash
-docker run -d --name="home-assistant" \
+docker run -d \
+  --name homeassistant \
+  --privileged \
+  --restart=unless-stopped \
+  -e TZ=MY_TIME_ZONE \
   -v /PATH_TO_YOUR_CONFIG:/config \
   -v /PATH_TO_YOUR_MEDIA:/media \
-  -v /etc/localtime:/etc/localtime:ro \
-  --net=host \
-  {{ site.installation.container.base }}:stable
+  -v /run/dbus:/run/dbus:ro \
+  --network=host \
+  {{ site.installation.container }}:stable
 ```
 
-If you are using Docker compose, you can add a volume to your composition file
-in similar fashion as listed in the command above.
+### Using Docker Compose
 
-## Home Assistant Core
-
-If you run Home Assistant Core directly in, for example, a Python virtual
-environment, you'll need to create a media folder yourself.
-
-By default, Home Assistant will look for the `media` folder inside your current
-Home Assistant configuration folder.
-
-For example, if your current configuration folder is stored in:
-
-`/home/frenck/.homeassistant/`
-
-The you'll need to create a media folder in that same path:
-
-`/home/frenck/.homeassistant/media`
-
-## Using custom folders
-
-It is also possible to set up custom and additional media directories. To do
-so, you'll need to adjust the [core configuration][basic-configuration].
-
-This example adds the two media folders to Home Assistant:
+Add a volume entry for `/media` in your `compose.yaml` file:
 
 ```yaml
-# Example configuration.yaml
-homeassistant:
-  media_dirs:
-    media: /media
-    recording: /mnt/recordings
+services:
+  homeassistant:
+    container_name: homeassistant
+    image: "{{ site.installation.container }}:stable"
+    volumes:
+      - /PATH_TO_YOUR_CONFIG:/config
+      - /PATH_TO_YOUR_MEDIA:/media
+      - /etc/localtime:/etc/localtime:ro
+      - /run/dbus:/run/dbus:ro
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
+    environment:
+      TZ: Europe/Amsterdam
 ```
 
-[basic-configuration]: /docs/configuration/basic/#media_dirs
+After restarting the container, your media files will appear in the media browser, under {% my media_browser title="**Media** > **My media**" %}.
+
+To add files, follow the [steps on adding media][add-media].
+
+## Adding additional media directories
+
+This applies to both {% term "Home Assistant Operating System" %} and {% term "Home Assistant Container" %}.
+
+You can expose more than one media directory to the media browser. For example, a network storage path on Home Assistant OS, or an additional mounted volume on Home Assistant Container.
+
+### Prerequisites
+
+- If you want to use media from a network storage, connect the network storage first.
+  - Refer to the [instructions on how to connect network storage](/common-tasks/os/#network-storage).
+  - Once connected, the media from network storage is automatically added to the local media browser.
+
+### To add additional media directories
+
+1. Open your {% term "`configuration.yaml`" %} file.
+2. Under `homeassistant:`, add a `media_dirs:` entry with one or more directories:
+
+    ```yaml
+    homeassistant:
+      media_dirs:
+        media: /media
+        recordings: /mnt/recordings
+        photos: /mnt/photos
+    ```
+
+    Each key is the label that appears as the folder name in the media browser. For example, `recordings` will show up as "recordings" in the media browser, pointing to `/mnt/recordings` on disk.
+
+    The folders under `media_dirs` replace the default media folder. To keep your `/media` folder in the media browser, add it too, like `media: /media` in the example above.
+
+3. Save the file, and [restart Home Assistant](/common-tasks/general/restarting/#restarting-home-assistant) to apply the changes.
+   - A quick reload doesn't apply changes to `media_dirs`.
+4. To add files, follow the [steps on adding media][add-media].
+
+[add-media]: /more-info/local-media/add-media

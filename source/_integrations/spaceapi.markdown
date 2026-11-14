@@ -1,20 +1,18 @@
 ---
-title: Space API
 description: Instructions on how to configure the SpaceAPI for Home Assistant.
-ha_category:
-  - Social
-ha_iot_class: Cloud Polling
 ha_release: '0.70'
-ha_codeowners:
-  - '@fabaff'
 ha_domain: spaceapi
+related:
+  - docs: /docs/configuration/
+    title: Configuration file
 ---
 
-The `spaceapi` integration allow Hackerspaces to expose information to web apps or any other application with the [SpaceAPI](https://spaceapi.io/).
+The **Space API** {% term integration %} allow Hackerspaces and Makerspaces to expose information to web apps or any other application with the [SpaceAPI](https://spaceapi.io/). It does this by exposing an API on Home Assistant that hosts the JSON payload that SpaceAPI uses.
 
 ## Configuration
 
-To setup the `spaceapi` integration in your installation, add the following to your `configuration.yaml` file:
+To set up the `spaceapi` {% term integration %} in your installation, add the following to your {% term "`configuration.yaml`" %} file.
+{% include integrations/restart_ha_after_config_inclusion.md %}
 
 ```yaml
 # Example configuration.yaml entry
@@ -42,7 +40,7 @@ logo:
   required: true
   type: string
 url:
-  description: URL of the hackerspace's web site.
+  description: URL of the hackerspace's website.
   required: true
   type: string
 location:
@@ -54,6 +52,21 @@ location:
       description: The physical address of the Hackerspace.
       required: true
       type: string
+spacefed:
+  description: A flag indicating if the hackerspace uses SpaceFED, a federated login scheme so that visiting hackers can use the space Wi-Fi with their home space credentials.
+  required: false
+  type: map
+  keys:
+    spacenet:
+      description: Set to true or false depending on whether your space supports [spacenet](https://spacefed.net/index.php/Category:Howto/Spacenet)
+      required: true
+      type: boolean
+      default: false
+    spacesaml:
+      description: Set to true or false depending on whether your space uses [SpaceSAML](https://spacefed.net/index.php?title=Spacesaml)
+      required: true
+      type: boolean
+      default: false
 contact:
   description: Contact information of the Hackerspace. At least one entry is mandatory.
   required: true
@@ -68,7 +81,7 @@ contact:
       required: false
       type: string
     keymasters:
-      description: Persons who carry a key and are able to open the space upon request. One of the fields must be specified.
+      description: Persons who carry a key and can open the space upon request. One of the fields must be specified.
       required: false
       type: list
       keys:
@@ -89,7 +102,7 @@ contact:
           required: false
           type: string
         twitter:
-          description: Twitter username of the keymaster.
+          description: X username of the keymaster.
           required: false
           type: string
     irc:
@@ -97,7 +110,7 @@ contact:
       required: false
       type: string
     twitter:
-      description: The Twitter account of the Hackerspace.
+      description: The X account of the Hackerspace.
       required: false
       type: string
     facebook:
@@ -129,8 +142,8 @@ contact:
       required: false
       type: string
 issue_report_channels:
-  description: "The reporting channel for issues. Valid values are `email`, `issue_mail`, `twitter` or `ml`"
-  required: true
+  description: "*Removed*. V15 of SpaceAPI no longer supports this. The reporting channel for issues. Valid values are `email`, `issue_mail`, `twitter` or `ml`"
+  required: false
   type: list
 state:
   description: The current state of the Hackerspace.
@@ -138,7 +151,7 @@ state:
   type: list
   keys:
     entity_id:
-      description: "The `entity_id` of a binary sensor that represents the current state."
+      description: "The `entity_id` of a binary sensor that represents whether the space is currently open or closed. If the binary sensor is unavailable, the state provided will be false."
       required: true
       type: string
     icon_open:
@@ -207,7 +220,7 @@ feeds:
           required: true
           type: string
 cache:
-  description: Specifies options about caching of your SpaceAPI endpoint. Use this if you want to avoid hundreds/thousands of application instances crawling your status.
+  description: "*Removed*. V15 of SpaceAPI no longer supports this. Specifies options about caching of your SpaceAPI endpoint. Use this if you want to avoid hundreds/thousands of application instances crawling your status."
   required: false
   type: map
   keys:
@@ -220,7 +233,7 @@ projects:
   required: false
   type: list
 radio_show:
-  description: A list of radio shows that your hackerspace might broadcast.
+  description: "*Removed*. V15 of SpaceAPI no longer supports this. A list of radio shows that your hackerspace might broadcast."
   required: false
   type: list
   keys:
@@ -259,23 +272,39 @@ sensors:
       type: string
 {% endconfiguration %}
 
-The list of sensors can be any sensor, not just temperature or humidity.
+Although SpaceAPI supports many other sensors, this {% term integration %} only supports temperature or humidity.
 
-## Sensor specific location
+## Accessing the API
 
-The [SpaceAPI specification](http://spaceapi.net/documentation) requires every sensor to provide a location.
-In order to set a sensor specific location do the following steps:
+Once configured, the SpaceAPI endpoint is available at:
 
-1. Go to Configuration -> Customization
-2. Select the sensor entity
-3. Pick "Other" from the attribute override pulldown
-4. Set the attribute name to location and the attribute value to your desired location
+```text
+https://[DOMAIN_OR_IP_WITH_PORT]/api/spaceapi
+```
 
-If no location is set, the location defined in the HA configuration is used.
+Replace `[DOMAIN_OR_IP_WITH_PORT]` with your Home Assistant instance's domain or IP address and port (for example: `http://192.168.1.100:8123/api/spaceapi` or `https://homeassistant.local:8123/api/spaceapi`).
+
+### API version
+
+This {% term integration %} implements SpaceAPI **version 13** (v0.13).
+
+### Public access and CORS
+
+The SpaceAPI endpoint is publicly accessible without authentication. This is intentional, as SpaceAPI is a standard for sharing hackerspace status information with the public. Cross-origin requests (<abbr title="Cross-Origin Resource Sharing">CORS</abbr>) are also allowed, so web apps can query the endpoint directly from a browser.
+
+### Testing the endpoint
+
+You can test your SpaceAPI endpoint using curl:
+
+```bash
+curl http://YOUR_HOME_ASSISTANT_URL:8123/api/spaceapi
+```
+
+The response will be a JSON payload conforming to the SpaceAPI v0.13 specification, containing information about your hackerspace including status, location, contact details, and sensor data.
 
 ## Examples
 
-In this section you find some real-life examples of how to use this component.
+In this section you find some real-life examples of how to use this integration.
 
 ### Eastermundigen
 
@@ -296,7 +325,7 @@ spaceapi:
   issue_report_channels:
     - email
   state:
-    entity_id: binary_sensor.front_door"
+    entity_id: "binary_sensor.front_door"
     icon_open: https://eastermundigen.ch/open.png
     icon_closed: https://eastermundigen.ch/close.png
   sensors:

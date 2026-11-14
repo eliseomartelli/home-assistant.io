@@ -1,17 +1,10 @@
 ---
-title: Conversation
 description: Instructions on how to have conversations with your Home Assistant.
-ha_category:
-  - Voice
 ha_release: 0.7
-ha_quality_scale: internal
-ha_iot_class: Local Push
-ha_codeowners:
-  - '@home-assistant/core'
 ha_domain: conversation
 ---
 
-The conversation integration allows you to converse with Home Assistant. You can either converse by pressing the microphone in the frontend (supported browsers only (no iOS)) or by calling the `conversation/process` service with the transcribed text.
+The **Conversation** {% term integration %} allows you to converse with Home Assistant. You can either converse by pressing the microphone in the frontend (supported browsers only (no iOS)) or by calling the `conversation.process` action with the transcribed text.
 
 <p class='img'>
   <img src="/images/screenshots/voice-commands.png" />
@@ -23,79 +16,163 @@ The conversation integration allows you to converse with Home Assistant. You can
 conversation:
 ```
 
-{% configuration %}
-intents:
-  description: Intents that the conversation integration should understand.
-  required: false
-  type: map
-  keys:
-    '`<INTENT NAME>`':
-      description: Sentences that should trigger this intent.
-      required: true
-      type: list
-{% endconfiguration %}
+## Default sentences
+
+By default, a collection of [community contributed sentences](https://github.com/home-assistant/intents/) are supported in a growing [list of languages](https://contributors.home-assistant.io/translate/voice/languages/).
+
+In English, you can say things like "turn on kitchen lights" or "turn off lights in the bedroom" if you have an area named "bedroom".
+
+## Sentence triggers
+
+<a id="sentence-wildcards"></a>
+<a id="inline-number-ranges"></a>
+
+To start an automation when Assist matches a sentence that you say or type, use the [**Sentence** trigger](/triggers/conversation/). It also explains wildcards and number ranges.
 
 ## Adding custom sentences
 
-By default, it will support turning devices on and off. You can say things like "turn on kitchen lights" or "turn the living room lights off". You can also configure your own sentences to be processed. This works by mapping sentences to intents and then configure the [intent script integration](/integrations/intent_script/) to handle these intents.
+You can add your own [sentence templates](https://contributors.home-assistant.io/translate/voice/template-syntax/) to teach Home Assistant about new sentences. These sentences can work with the [built-in intents](https://contributors.home-assistant.io/core/internals/built-in-intents/) or trigger a custom action by defining custom {% term intents %} with the [intent script integration](/integrations/intent_script/).
 
-Here is a simple example to be able to ask what the temperature in the living room is.
+To get started, create a `custom_sentences/<language>` directory in your Home Assistant `config` directory where `<language>` is the [language code](https://contributors.home-assistant.io/translate/voice/languages/) of your language, such as `en` for English. These YAML files are automatically merged, and may contain intents, lists, or expansion rules.
 
-{% raw %}
+For an English example, create the file `config/custom_sentences/en/temperature.yaml` and add:
+
+
+```yaml
+# Example temperature.yaml entry
+language: "en"
+intents:
+  CustomOutsideHumidity:
+    data:
+      - sentences:
+          - "What is the humidity outside"
+```
+
+
+To teach Home Assistant how to handle the custom `CustomOutsideHumidity` {% term intent %}, create an `intent_script` entry in your {% term "`configuration.yaml`" %} file:
+
 
 ```yaml
 # Example configuration.yaml entry
-conversation:
-  intents:
-    LivingRoomTemperature:
-     - What is the temperature in the living room
-
 intent_script:
-  LivingRoomTemperature:
+  CustomOutsideHumidity:
     speech:
-      text: It is currently {{ states.sensor.temperature }} degrees in the living room.
+      text: "It is currently {{ states('sensor.outside_humidity') }} percent humidity outside."
 ```
 
-{% endraw %}
 
-## Adding advanced custom sentences
+More complex [actions](/docs/automation/building-blocks/) can be done in `intent_script`, such as performing actions and firing events.
 
-Sentences can contain slots (marked with curly braces: `{name}`) and optional words (marked with square brackets: `[the]`). The values of slots will be passed on to the intent and are available inside the templates.
+## Extending built-in intents
 
-The following configuration can handle the following sentences:
+Extending the built-in {% term intents %}, such as `HassTurnOn` and `HassTurnOff`, can be done as well.
 
-- Change the lights to red
-- Change the lights to green
-- Change the lights to blue
-- Change the lights to the color red
-- Change the lights to the color green
-- Change the lights to the color blue
+For example, create the file `config/custom_sentences/en/on_off.yaml` and add:
 
-{% raw %}
 
 ```yaml
-# Example configuration.yaml entry
-conversation:
-  intents:
-    ColorLight:
-     - Change the lights to [the color] {color}
-intent_script:
-  ColorLight:
-    speech:
-      text: Changed the lights to {{ color }}.
-    action:
-      service: light.turn_on
-      data:
-        rgb_color:
-          - "{% if color == 'red' %}255{% else %}0{% endif %}"
-          - "{% if color == 'green' %}255{% else %}0{% endif %}"
-          - "{% if color == 'blue' %}255{% else %}0{% endif %}"
+# Example on_off.yaml entry
+language: "en"
+intents:
+  HassTurnOn:
+    data:
+      - sentences:
+          - "engage [the] kitchen lights"
+        slots:
+          name: "kitchen lights"
+  HassTurnOff:
+    data:
+      - sentences:
+          - "disengage [the] kitchen lights"
+        slots:
+          name: "kitchen lights"
 ```
 
-{% endraw %}
 
-#### Service `conversation.process`
+Now when you say "engage the kitchen lights", it will turn on a light named "kitchen lights". Saying "disengage kitchen lights" will turn it off.
 
-| Service data attribute | Optional | Description                                      |
-|------------------------|----------|--------------------------------------------------|
-| `text`                 |      yes | Transcribed text                                 |
+Let's generalize this to other entities. The built-in `{name}` and `{area}` lists contain the names of your Home Assistant entities and areas.
+
+Adding `{name}` to `config/custom_sentences/en/on_off.yaml`:
+
+
+```yaml
+# Example on_off.yaml entry
+language: "en"
+intents:
+  HassTurnOn:
+    data:
+      - sentences:
+          - "engage [the] {name}"
+  HassTurnOff:
+    data:
+      - sentences:
+          - "disengage [the] {name}"
+```
+
+
+You can now "engage" or "disengage" any entity.
+
+Lastly, let's add sentences for turning lights on and off in specific areas:
+
+
+```yaml
+# Example on_off.yaml entry
+language: "en"
+intents:
+  HassTurnOn:
+    data:
+      - sentences:
+          - "engage [the] {name}"
+      - sentences:
+          - "engage [all] lights in [the] {area}"
+        slots:
+          name: "all"
+          domain: "light"
+  HassTurnOff:
+    data:
+      - sentences:
+          - "disengage [the] {name}"
+      - sentences:
+          - "disengage [all] lights in [the] {area}"
+        slots:
+          name: "all"
+          domain: "light"
+```
+
+
+It's now possible to say "engage all lights in the bedroom", which will turn on every light in the area named "bedroom".
+
+{% include integrations/triggers.md %}
+
+{% include integrations/actions.md %}
+
+## Conversation automation examples
+
+With the [**Sentence** trigger](/triggers/conversation/), you can start an automation by saying or typing a sentence to Assist. Here is an idea to get you started.
+
+{% include docs/paste_yaml_tip.md %}
+
+### Automation: answer whether the garage door is open
+
+When you ask Assist "Is the garage door open?", this automation answers with the current state of the garage door, for example, "The garage door is closed."
+
+- **Trigger**: Sentence
+  - **Sentence**: `Is the garage door open`
+- **Action**: Set conversation response
+  - **Set conversation response**: {% raw %}`The garage door is {{ states('cover.garage_door') }}.`{% endraw %}
+
+{% details "YAML example for answering whether the garage door is open" %}
+
+{% example %}
+automation: |
+  alias: "Answer whether the garage door is open"
+  triggers:
+    - trigger: conversation
+      command: "Is the garage door open"
+  actions:
+    - set_conversation_response: >
+        The garage door is {{ states('cover.garage_door') }}.
+{% endexample %}
+
+{% enddetails %}

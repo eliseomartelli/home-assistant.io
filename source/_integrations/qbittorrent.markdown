@@ -1,51 +1,41 @@
 ---
-title: qBittorrent
 description: Instructions on how to integrate qBittorrent sensors within Home Assistant.
-ha_category:
-  - Downloading
 ha_release: 0.84
-ha_iot_class: Local Polling
 ha_domain: qbittorrent
-ha_codeowners:
-  - '@geoffreylagaisse'
-ha_platforms:
-  - sensor
 ---
 
-The `qbittorrent` platform allows you to monitor your downloads with [qBittorrent](https://www.qbittorrent.org/) from within Home Assistant and setup automations based on the information.
+The **qBittorrent** {% term integration %} allows you to monitor your downloads with [qBittorrent](https://www.qbittorrent.org/) from within Home Assistant and setup automations based on the information.
+You can control the alternative speed via the `Alternative speed` switch.
 
 ## Setup
 
 This sensor requires the qBittorrent Web UI enabled. The [official reference](https://github.com/qbittorrent/qBittorrent/wiki#webui-related) describes how to set up the Web UI.
 
-## Configuration
+{% include integrations/config_flow.md %}
 
-To enable this sensor, add the following lines to your `configuration.yaml`:
+## Sensors
 
-```yaml
-# Example configuration.yaml entry
-sensor:
-  - platform: qbittorrent
-    url: "http://<hostname>:<port>"
-    username: YOUR_USERNAME
-    password: YOUR_PASSWORD
-```
+The qBittorrent integration will add the following sensors:
 
-{% configuration %}
-url:
-  description: The URL of the Web UI of qBittorrent.
-  required: true
-  type: string
-name:
-  description: The name to use when displaying this qBittorrent instance.
-  required: false
-  type: string
-username:
-  description: The username of the Web UI of qBittorrent.
-  required: true
-  type: string
-password:
-  description: The password of the Web UI of qBittorrent.
-  required: true
-  type: string
-{% endconfiguration %}
+- `sensor.qbittorrent_status`: The status of qBittorrent - `up_down`, `seeding`, `downloading`, or `idle`.
+- `sensor.qbittorrent_connection_status`: The connection status of qBittorrent - `connected`, `firewalled`, or `disconnected`.
+- `sensor.qbittorrent_upload_speed`: The current total upload speed in kB/s.
+- `sensor.qbittorrent_download_speed`: The current total download speed in kB/s.
+- `sensor.qbittorrent_upload_speed_limit`: The active qBittorrent upload speed limit ([disabled by default](/docs/configuration/customizing-entities/#disabling-or-enabling-an-entity)).
+- `sensor.qbittorrent_download_speed_limit`: The active qBittorrent download speed limit (disabled by default).
+- `sensor.qbittorrent_alltime_upload`: The total amount of uploaded data.
+- `sensor.qbittorrent_alltime_download`: The total amount of downloaded data.
+- `sensor.qbittorrent_global_ratio`: The global share ratio (disabled by default).
+- `sensor.qbittorrent_all_torrents`: The current total torrents in qBittorrent.
+- `sensor.qbittorrent_active_torrents`: The current active torrents in qBittorrent.
+- `sensor.qbittorrent_inactive_torrents`: The current inactive torrents in qBittorrent.
+- `sensor.qbittorrent_paused_torrents`: The current paused torrents in qBittorrent.
+- `sensor.qbittorrent_errored_torrents`: The current errored torrents in qBittorrent.
+
+## Switch
+
+The qBittorrent integration adds the following switch:
+
+- `Alternative speed`: Allows you to enable or disable qBittorrent's alternative speed.
+
+{% include integrations/actions.md %}

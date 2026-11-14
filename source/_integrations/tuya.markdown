@@ -1,136 +1,111 @@
 ---
-title: Tuya
-description: Instructions on how to setup the Tuya hub within Home Assistant.
-ha_category:
-  - Climate
-  - Fan
-  - Light
-  - Scene
-  - Switch
-ha_iot_class: Cloud Push
+description: Instructions on how to set up the Tuya hub within Home Assistant.
 ha_release: 0.74
-ha_config_flow: true
 ha_domain: tuya
-ha_codeowners:
-  - '@Tuya'
-  - '@zlinoliver'
-  - '@METISU'
-ha_platforms:
-  - climate
-  - fan
-  - light
-  - scene
-  - switch
 ---
 
-The Tuya integration allows integrating all Powered by Tuya devices you have added to the Tuya Smart and Tuya Smart Life apps. This integration is officially maintained by Tuya.
+The **Tuya** {% term integration %} integrates all Powered by Tuya devices you have added to the Tuya Smart and Tuya Smart Life apps.
 
-## Supported platforms
+All Home Assistant platforms are supported by the Tuya integration, except the lock and remote platform.
 
-- **Climate**: air conditioner, heater, thermostat.
-- **Fan**: fan, air purifier, humidifier, dehumidifier.
-- **Light**: light, light strip, ambient light, light string, humidifier's light, ceiling light.
-- **Scene**: smart scene.
-- **Switch**: switch, socket, power strip, smart kettle, breaker, pet water feeder, air purifier, diffuser.
+## Prerequisites
 
-## Configuration of the Tuya IoT Platform
+You need to have the Tuya Smart or Smart Life app installed, with an account created and
+at least one device added to that account.
 
-### Prerequisites
+During the setup process, you will need:
+- A second screen (such as a phone, tablet, or another computer) to display the QR code that appears during configuration
+- The Smart Life or Tuya Smart app installed on your mobile device to scan the QR code
 
-- Your devices need to first be added in the [Tuya Smart or Smart Life app](https://developer.tuya.com/en/docs/iot/tuya-smart-app-smart-life-app-advantages?id=K989rqa49rluq#title-1-Download).
-- You will also need to create an account in the [Tuya IoT Platform](https://iot.tuya.com/).
-This is a separate account to the one you made for the app. You cannot log in with your app's credentials.
+If you have Bluetooth devices, add them to the app through a Tuya Bluetooth or multi-mode gateway, not directly through your phone. For more information, refer to [Bluetooth device is unavailable](#bluetooth-device-is-unavailable).
 
-### Create a project
+### Obtaining User Code for sign-in
 
-1. Log in to the [Tuya IoT Platform](https://iot.tuya.com/).
-2. In the left navigation bar, click `Cloud` > `Development`. If this is your first time setting up an account you will be asked to subscribe to a Cloud Development Plan. You can select and "purchase" the Trial Edition (it's free).
-3. On the page that appears, click `Create Cloud Project`.
-4. In the `Create Project` dialog box, configure `Project Name`, `Description`, `Industry`, and `Data Center`. For the `Development Method` field, select `Smart Home` from the dropdown list. For the `Data Center` field, select the zone you are located in.
-  ![](/images/integrations/tuya/image_001.png)
-5. Click `Create` to continue with project configuration.
-6. In Configuration Wizard, select the `Device Status Notification` API. `Smart Home` API products should already be selected by default.
-  ![](/images/integrations/tuya/image_002.png)
-7. Click `Authorize`.
+To sign-in, you will need to get your **User Code** from the Smart Life /
+Tuya Smart app. You can find it by opening the app and:
 
-### Link devices by app account
-
-1. Navigate to the `Devices` tab.
-2. Click `Link Tuya App Account` > `Add App Account`.
-  ![](/images/integrations/tuya/image_003.png)
-3. Scan the QR code that appears using the `Tuya Smart` app or `Smart Life` app.
-  ![](/images/integrations/tuya/image_004.png)
-4. Click `Confirm` in the app.
-5. To confirm that everything worked, navigate to the `All Devices` tab. Here you should be able to find the devices from the app.
-
-![](/images/integrations/tuya/image_005.png)
-
-### Get authorization key
-
-Click the created project to enter the `Project Overview` page and get the `Authorization Key`. You will need these for setting up the integration. in the next step.
-  ![](/images/integrations/tuya/image_006.png)
+1. On the tab bar, select **Me**.
+2. Select the **⚙️ (gear)** icon in the top-right corner.
+3. Tap **Account and Security**.
+4. At the bottom, **User Code** will be shown; you need to when setting up this integration.
 
 {% include integrations/config_flow.md %}
 
-{% configuration_basic %}
-  Country:
-    description: Choose the country you picked when signing up.
+### Scanning the QR code
 
-  "Tuya IoT Access ID":
-    description: Go to your cloud project on [Tuya IoT Platform](https://iot.tuya.com/). Find the **Access ID** under [Authorization Key](#get-authorization-key) on the **Project Overview** tab.
+To scan the QR code in the Smart Life app:
+1. Open the Smart Life app
+2. Tap the **+** button or **Add Device**
+3. Select **Scan** or look for the QR code scanner option
+4. Scan the QR code displayed on your Home Assistant screen
 
-  "Tuya IoT Access Secret":
-    description: Go to your cloud project on [Tuya IoT Platform](https://iot.tuya.com/). Find the **Access Secret** under [Authorization Key](#get-authorization-key) on the **Project Overview** tab.
+After adding new devices to your Tuya account through the Smart Life or Tuya Smart app, you need to reload the Tuya integration in Home Assistant for the new devices to appear:
 
-  Account:
-    description: Tuya Smart or Smart Life app account.
+1. Go to **{% my integrations title="Settings > Devices & services" %}**
+2. Find the Tuya integration
+3. Click the three dots menu
+4. Select **Reload**
 
-  Password:
-    description: The password of your app account.
+## Scenes
 
-{% endconfiguration_basic %}
+Tuya supports scenes in their app. These allow triggering some of the more complex modes of various devices such as light changing effects. Scenes created in the Tuya app will automatically appear in the Scenes list in Home Assistant the next time the integration updates.
 
-## Error codes and troubleshooting
+{% include integrations/actions.md %}
 
-{% configuration_basic %}
+## Troubleshooting
 
-"1004: sign invalid":
-  description: Incorrect Access ID or Access Secret. Please refer to [Tuya credential table](https://github.com/tuya/tuya-home-assistant/wiki/Install-Tuya-v2?_source=d10de34623e3daca5b02e3c31528a0c4#3-enter-your-tuya-credential).
+### Unsupported device or missing device functionality
 
-"1106: permission deny":
-  description: >-
-    - App account not linked with cloud project: On the [Tuya IoT Platform](https://iot.tuya.com/cloud/), you have linked devices by using Tuya Smart or Smart Life app in your cloud project. For more information, see [Link devices by app account](https://developer.tuya.com/en/docs/iot/Platform_Configuration_smarthome?id=Kamcgamwoevrx&_source=7a356dd493196a01bb9021b7680a2a45#title-3-Link%20devices%20by%20app%20account).
+This integration relies on the official [Python SDK provided by Tuya](https://github.com/tuya/tuya-device-sharing-sdk), which does not expose all functionality available in SmartLife.
 
-    - Incorrect username or password: Enter the correct account and password of the Tuya Smart or Smart Life app in the **Account** and **Password** fields. Note that the app account depends on which app (Tuya Smart or Smart Life) you used to link devices on the [Tuya IoT Platform](https://iot.tuya.com/cloud/).
+The data points provided by the SDK are visible in the Home Assistant device diagnostics JSON file, under the `status`, `status_range` and `function` keys:
 
-    - Incorrect availability zone: See [Availability Zone](https://github.com/tuya/tuya-home-assistant/wiki/Tuya-IoT-Platform-Configuration-Guide-Using-Smart-Home-PaaS#region--available-zone-correspondence) and select the correct availability zone.
+1. Go to **{% my integrations title="Settings > Devices & services" %}**
+2. Find the Tuya integration
+3. Select the device
+4. Under the device information, click the three dots menu
+5. Select **Download diagnostics**
+6. Open the diagnostic file, and check manually the `status`, `status_range` and `function` keys
 
-"1100: param is empty":
-  description: Empty parameter of username or app. Fill the parameters refer to [Tuya credential table](https://github.com/tuya/tuya-home-assistant/wiki/Install-Tuya-v2?_source=d10de34623e3daca5b02e3c31528a0c4#3-enter-your-tuya-credential).
+If `status`, `status_range` and `function` are all empty, then only scenes declared inside Tuya (if any) will be available inside Home Assistant.
 
-"2406: skill id invalid":
-  description: Make sure that your cloud project on the [Tuya IoT Platform](https://iot.tuya.com/cloud/) should be created after May 25, 2021. Otherwise, you need to create a new project or migrate data to a new project. For more information, see [Operation on the Tuya IoT Platform](https://developer.tuya.com/en/docs/iot/migrate-from-an-older-version?id=Kamee9wtbd00b#title-3-Operation%20on%20the%20Tuya%20IoT%20Platform).
+### Integration requires re-authenticating after every integration reload
 
-"28841105: No permissions. This project is not authorized to call this API":
-  description: >
-    Some APIs are not authorized, please [Subscribe](https://developer.tuya.com/en/docs/iot/applying-for-api-group-permissions?id=Ka6vf012u6q76#title-2-Subscribe%20to%20cloud%20products) then [Authorize](https://developer.tuya.com/en/docs/iot/applying-for-api-group-permissions?id=Ka6vf012u6q76#title-3-Authorize%20projects%20to%20call%20the%20cloud%20product). The following APIs must be subscribed for this tutorial:
+When Tuya updates the terms and conditions of iot.tuya.com, the integration will require repeated authentication.
 
-    - Authorization
+To fix this:
 
-    - Smart Home Devices Management
+1. Log in to [iot.tuya.com](https://iot.tuya.com), and accept the terms and conditions.
+2. Restart Home Assistant.
+3. Reconfigure the Tuya integration.
 
-    - Smart Home Family Management
+### Feeder meal plan not supported
 
-    - Smart Home Scene Linkage
 
-    - Smart Home Data Service
+#### Symptom: "Feeder not supported" warning
 
-    - Device status notification
+Home Assistant shows a warning that this particular feeder is not supported.
 
-{% endconfiguration_basic %}
+#### Description
 
-## Related Documents
+Feeders are dependent on [tuya-device-handlers](https://github.com/home-assistant-libs/tuya-device-handlers) to be integrated based on feeders `product_id`. 
 
-- [Supported Device Category](https://github.com/tuya/tuya-home-assistant/wiki/Supported-Device-Category?_source=f5f782752be3c4a9157ec47514d6091b)
-- [How to Develop a New Driver](https://github.com/tuya/tuya-home-assistant/wiki/How-to-Develop-a-New-Driver?_source=dbf3bf17966af48325e4328b2535eefe)
-- [FAQs](https://github.com/tuya/tuya-home-assistant/wiki/FAQs)
+#### Resolution
+
+Open a issue to [tuya-device-handlers](https://github.com/home-assistant-libs/tuya-device-handlers) with information provided from QueryThingsDataModel API result from iot.tuya.com (under Cloud / API Explorer / Device Control).
+
+### Bluetooth device is unavailable
+
+#### Symptom: "Unavailable" entities on a Bluetooth device
+
+The device works in the Tuya Smart or Smart Life app, but its entities are unavailable in Home Assistant.
+
+#### Description
+
+This integration only communicates with the Tuya cloud. It doesn't use Home Assistant's Bluetooth integration or Bluetooth proxies. The app can work because your phone connects to the device directly over Bluetooth, but Home Assistant relies on what the Tuya cloud reports.
+
+#### Resolution
+
+1. If the device is paired directly with your phone, add it to the app through a Tuya Bluetooth or multi-mode gateway instead. 
+2. If it's already connected through a gateway, make sure the gateway and device show as online in the app. 
+3. If they do and the entities are still unavailable, [open an issue](https://github.com/home-assistant/core/issues) and include the device diagnostics.

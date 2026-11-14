@@ -1,11 +1,6 @@
 ## Home Assistant via the command line
 
-<p class='img'>
-<img src='/images/hassio/screenshots/ssh-upgrade.png'>
-Home Assistant upgrade process from the SSH command line
-</p>
-
-On the SSH command line, you can use the `ha` command to retrieve logs, check the details of connected hardware, and more.
+On the command line of the [SSH app](/common-tasks/os/#installing-and-using-the-ssh-app), you can use the `ha` command to retrieve logs, check the details of connected hardware, and more.
 
 ### Home Assistant
 
@@ -16,6 +11,7 @@ ha core logs
 ha core options
 ha core rebuild
 ha core restart
+ha core restart --safe-mode
 ha core start
 ha core stats
 ha core stop
@@ -36,7 +32,6 @@ ha supervisor update
 ```bash
 ha host reboot
 ha host shutdown
-ha host update
 ```
 
 ### Hardware
@@ -54,11 +49,11 @@ To update Home Assistant to a specific version, use the command:
 ha core update --version x.y.z
 ```
 
-Replace x.y.z with the desired version like `--version {{current_version}}`
+Replace `x.y.z` with the version you want, for example `--version {{current_version}}`.
 
 You can get a better description of the CLI capabilities by typing `ha help`:
 
-```bash
+```txt
 The Home Assistant CLI is a small and simple command line utility that allows
 you to control and configure different aspects of Home Assistant
 
@@ -66,33 +61,40 @@ Usage:
   ha [command]
 
 Available Commands:
-  addons         Install, update, remove and configure Home Assistant add-ons
-  audio          Audio device handling.
-  authentication Authentication for Home Assistant users.
-  banner         Prints the CLI Home Assistant banner along with some useful information
-  cli            Get information, update or configure the Home Assistant cli backend
-  core           Provides control of the Home Assistant Core
-  dns            Get information, update or configure the Home Assistant DNS server
-  docker         Docker backend specific for info and OCI configuration
-  hardware       Provides hardware information about your system
-  help           Help about any command
-  host           Control the host/system that Home Assistant is running on
-  info           Provides a general Home Assistant information overview
-  jobs           Get information and manage running jobs
-  multicast      Get information, update or configure the Home Assistant Multicast
-  network        Network specific for updating, info and configuration imports
-  observer       Get information, update or configure the Home Assistant observer
-  os             Operating System specific for updating, info and configuration imports
-  resolution     Resolution center of Supervisor, show issues and suggest solutions
-  backups        Create, restore and remove backups
-  supervisor     Monitor, control and configure the Home Assistant Supervisor
+  apps              Install, update, remove and configure Home Assistant apps
+  audio             Audio device handling.
+  authentication    Authentication for Home Assistant users.
+  available-updates Provides information about current pending updates
+  backups           Create, restore and remove backups
+  banner            Prints the CLI Home Assistant banner along with some useful information
+  cli               Get information, update or configure the Home Assistant cli backend
+  completion        Generate the autocompletion script for the specified shell
+  core              Provides control of the Home Assistant Core
+  dns               Get information, update or configure the Home Assistant DNS server
+  docker            Docker backend specific for info and OCI configuration
+  hardware          Provides hardware information about your system
+  help              Help about any command
+  host              Control the host/system that Home Assistant is running on
+  info              Provides a general Home Assistant information overview
+  jobs              Get information and manage running jobs
+  mounts            Get information, update or configure mounts in Supervisor
+  multicast         Get information, update or configure the Home Assistant Multicast
+  network           Network specific for updating, info and configuration imports
+  observer          Get information, update or configure the Home Assistant observer
+  os                Operating System specific for updating, info and configuration imports
+  refresh-updates   Reload stores and version information
+  resolution        Resolution center of Supervisor, show issues and suggest solutions
+  security          Get information and manage security functionality
+  store             Install and update Home Assistant apps and manage stores
+  supervisor        Monitor, control and configure the Home Assistant Supervisor
+  time              Get information or configure Home Assistant OS time settings
 
 Flags:
       --api-token string   Home Assistant Supervisor API token
       --config string      Optional config file (default is $HOME/.homeassistant.yaml)
       --endpoint string    Endpoint for Home Assistant Supervisor (default is 'supervisor')
   -h, --help               help for ha
-      --log-level string   Log level (defaults to Warn)
+      --log-level string   Log level (defaults to WARN)
       --no-progress        Disable the progress spinner
       --raw-json           Output raw JSON from the API
 
@@ -100,8 +102,29 @@ Use "ha [command] --help" for more information about a command.
 ```
 
 {% if page.installation == "os" %}
+
 ### Console access
 
-You can also access the Home Assistant Operating System via a directly connected keyboard and monitor, the console. To log in to the physical console the username is `root`, with no password.
+You can also access the {% term "Home Assistant Operating System" %} via a directly connected keyboard and monitor, the console.
+
+#### Wiping the data disk from the command line
+
+In {% term "Home Assistant Operating System" %}, the `ha os datadisk wipe` command wipes the data disk. The command deletes all user data as well as Home Assistant Core, Supervisor, and any installed apps.
+
+The command `ha os datadisk wipe` marks the data partition (either internal on the eMMC or the SD card, or on an external attached data disk) as to be cleared on the next reboot. The command automatically reboots the system. Upon reboot, the data is cleared. Then the system continues to boot and reinstalls the latest version of all Home Assistant components.
+
+The `ha os datadisk wipe` command can only be run from the local terminal. Connect a display and keyboard and use the terminal.
+
+Some systems have a reset button that clears the data disk. Whether you can use it depends on your system:
+
+- If you have a Home Assistant Yellow with a Raspberry Pi Compute Module 5, use the command line steps described above.
+- If you have a Home Assistant Yellow with a Raspberry Pi Compute Module 4, there is a red hardware button to wipe the data disk. Follow the procedure on [resetting the Home Assistant Yellow](https://support.nabucasa.com/hc/articles/25463622043165).
+- If you have a Home Assistant Green, there is a black hardware button to wipe the data disk. Follow the procedure on [resetting the Home Assistant Green](https://support.nabucasa.com/hc/en-us/articles/25161225495837).
+
+#### Listing all users from the command line
+
+In {% term "Home Assistant Operating System" %}, the `ha auth list` command lists all users that are registered on your Home Assistant.
+
+The `ha auth list` command can only be run from the local terminal. Connect a display and keyboard and use the terminal.
 
 {% endif %}

@@ -1,19 +1,10 @@
 ---
-title: Smart Meter Texas
 description: Instructions on how to integrate Smart Meter Texas into Home Assistant.
-ha_category:
-  - Sensor
 ha_release: 0.115
-ha_iot_class: Cloud Polling
-ha_config_flow: true
-ha_codeowners:
-  - '@grahamwetzler'
 ha_domain: smart_meter_texas
-ha_platforms:
-  - sensor
 ---
 
-The [Smart Meter Texas](https://www.smartmetertexas.com/) integration allows Texas residents to integrate their electric meters into Home Assistant. This integration will create a sensor for each meter that shows the current reading.
+The [Smart Meter Texas](https://www.smartmetertexas.com/) {% term integration %} allows Texas residents to integrate their electric meters into Home Assistant. This integration will create a sensor for each meter that shows the current reading.
 
 On its own this sensor is not particularly useful. However, combined with a [`utility_meter`](/integrations/utility_meter/) sensor you can obtain usage over a month, for example.
 
@@ -29,8 +20,8 @@ Any Texas electricity consumer can register an account.
     - Your meter number
     - Your ESIID (Electric Service Identifier)
 
-<div class='note'>
+{% note %}
 Due to API limits, this sensor refreshes once per hour. The limit is 24 meter readings per calendar day.
-</div>
+{% endnote %}
 
 {% include integrations/config_flow.md %}

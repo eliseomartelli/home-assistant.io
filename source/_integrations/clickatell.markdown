@@ -1,16 +1,13 @@
 ---
-title: Clickatell
 description: Instructions on how to add Clickatell notifications to Home Assistant.
-ha_category:
-  - Notifications
-ha_iot_class: Cloud Push
 ha_release: 0.56
 ha_domain: clickatell
-ha_platforms:
-  - notify
+related:
+  - docs: /docs/configuration/
+    title: Configuration file
 ---
 
-The `clickatell` platform uses [Clickatell](https://clickatell.com) to deliver SMS notifications from Home Assistant.
+The **Clickatell** {% term integration %} uses [Clickatell](https://www.clickatell.com) to deliver SMS notifications from Home Assistant.
 
 ## Setup
 
@@ -25,7 +22,8 @@ Go to your [Clickatell SMS Platform Portal](https://portal.clickatell.com/#/) se
 
 ## Configuration
 
-To add Clickatell to your installation, add the following to your Home Assistant `configuration.yaml` file:
+To add Clickatell to your installation, add the following to your Home Assistant {% term "`configuration.yaml`" %} file.
+{% include integrations/restart_ha_after_config_inclusion.md %}
 
 ```yaml
 # Example configuration.yaml entry
@@ -38,7 +36,7 @@ notify:
 
 {% configuration %}
 name:
-  description: Setting the optional parameter name allows multiple notifiers to be created. The notifier will bind to the service notify.NOTIFIER_NAME.
+  description: Setting the optional parameter name allows multiple notifiers to be created. The notifier will bind to the `notify.NOTIFIER_NAME` action.
   required: false
   default: clickatell
   type: string
@@ -47,7 +45,7 @@ api_key:
   required: true
   type: string
 recipient:
-  description: Your phone number. This is where you want to send your notification SMS messages. e.g., `61444333444`.
+  description: Your phone number. This is where you want to send your notification SMS messages, for example, `61444333444`.
   required: true
   type: string
 {% endconfiguration %}

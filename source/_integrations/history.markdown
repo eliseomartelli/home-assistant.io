@@ -1,194 +1,70 @@
 ---
-title: History
 description: Instructions on how to enable history support for Home Assistant.
-ha_category:
-  - History
 ha_release: pre 0.7
-ha_quality_scale: internal
-ha_codeowners:
-  - '@home-assistant/core'
 ha_domain: history
+related:
+  - docs: /integrations/recorder/
+    title: Recorder integration
+  - url: https://contributors.home-assistant.io/data/
+    title: Data on the Home Assistant contributors website
 ---
 
-The `history` integration will track everything that is going on within Home
-Assistant and allows the user to browse through it. It depends on the [`recorder`](/integrations/recorder/)
-integration for storing the data and uses the same database setting.
-If any entities are excluded from being recorded,
-no history will be available for these entities.
+The **History** {% term integration %} shows how the states of your entities changed over time, so you can browse through what happened in your home. It depends on the [Recorder](/integrations/recorder/) integration for storing the data and uses the same database. If an entity is excluded from the Recorder, no history is available for that entity.
 
-This integration is by default enabled, unless you've disabled or removed the [`default_config:`](/integrations/default_config/) line from your configuration. If that is the case, the following example shows you how to enable this integration manually:
+## Viewing history in the History panel
+
+The **History** panel shows how the states of your entities changed over time. The panel stays empty until you select what you want to see.
+
+1. In the sidebar, select **History**.
+   - On a wide screen, the **Sources** pane opens on the left.
+   - On a narrow screen, such as a phone, select **Sources** {% icon "mdi:tune-variant" %} in the toolbar to open it.
+2. In the **Sources** pane, select **Add target**, then select the floors, areas, devices, entities, or labels you want to see.
+3. Optional: To narrow down your selection, use the filters below the targets:
+   - **Type**: shows only entities of the selected types. For example, select an area, then select the **Temperature** type under **Sensor** to see only the temperature sensors in that area.
+   - **Integrations**: shows only entities that are provided by the selected integrations.
+   - Home Assistant remembers your targets and filters the next time you open the panel. To remove all of them, select **Clear filter** {% icon "mdi:filter-variant-remove" %} at the top of the pane.
+4. To change the time period, select the date range in the toolbar.
+   - To move to the previous or next period, select the arrows next to the date range.
+5. Optional: To zoom in, drag across the part of a chart that you want to see.
+   - All charts on the panel zoom to the same period, so you can compare what several entities did at the same moment.
+   - To move the time period, or make it shorter or longer, use the slider in the bar at the bottom of the panel. You can also scroll sideways on a chart.
+   - To see the whole period again, select **Reset zoom** {% icon "mdi:restart" %}, or double-click the slider.
+
+## Exporting data from the History panel
+
+1. Select the sources and the time period, as described in [Viewing history in the History panel](#viewing-history-in-the-history-panel).
+2. In the top right corner, select **Menu** {% icon "mdi:dots-vertical" %}, then select **Download data**.
+   - **Result**: Your data is exported in CSV format.
+
+## Adding the current view to a dashboard
+
+To keep the graph you are looking at on a dashboard, add it as a [History graph card](/dashboards/history-graph/).
+
+1. Select the sources and the time period, as described in [Viewing history in the History panel](#viewing-history-in-the-history-panel).
+2. In the top right corner, select **Menu** {% icon "mdi:dots-vertical" %}, then select **Add current view as card**.
+3. Select the dashboard and view to add the card to.
+   - **Result**: The card shows the selected entities and covers the same number of hours as your selected time period.
+
+## About the data sources
+
+By default, the Recorder keeps the detailed history of your entities for 10 days. Older detailed data is purged automatically. Long-term statistics are not purged: they are kept indefinitely. The data for the last 10 days is taken from the detailed history.
+
+If you select a time period that goes back further than 10 days, the older data is taken from the {% term "long-term statistics" %}. Long-term statistics are saved for sensors with a state class of `measurement`, `total`, or `total_increasing`. To save storage, long-term statistics only keep hourly values. For these hours, the History panel shows the hourly average of sensors with the `measurement` state class, and the reading at the end of each hour for sensors with the `total` or `total_increasing` state class. Therefore, the values might look different from what you see in the detailed history, which shows the measured values at the sample rate defined for that sensor. The detailed data will be shown with a darker line on graphs.
+
+<img class="no-shadow" src='/images/integrations/history/history-panel_including-long-term-storage.png' alt='If the chosen time frame exceeds the retention period defined in the recorder, the long term statistics table is used as a data source.'>
+
+If you want to see the data in full resolution for a longer period of time, increase the [`purge_keep_days`](/integrations/recorder/#purge_keep_days) option of the Recorder. This option applies to the detailed history of all entities, not to a single sensor. If you increase it, you may need to increase the storage capacity of your device.
+
+## Configuration
+
+This integration is enabled by default, unless you've disabled or removed the [`default_config:`](/integrations/default_config/) line from your {% term "`configuration.yaml`" %} file. If that is the case, the following example shows you how to enable this integration manually:
 
 ```yaml
 # Basic configuration.yaml entry
 history:
 ```
 
-<p class='img'>
-  <a href='/images/screenshots/component_history_24h.png'>
-    <img src='/images/screenshots/component_history_24h.png' />
-  </a>
-</p>
-
-<div class='note'>
-Events are saved in a local database. Google Graphs is used to draw the graph.
-Drawing is happening 100% in your browser. No data is transferred to anyone at any time.
-</div>
-
-{% configuration %}
-exclude:
-  description: Configure which integrations should **not** be displayed.
-  required: false
-  type: map
-  keys:
-    entities:
-      description: The list of entity ids to be excluded from the history.
-      required: false
-      type: list
-    entity_globs:
-      description: Include all entities matching a listed pattern when creating logbook entries (e.g., `sensor.weather_*`).
-      required: false
-      type: list
-    domains:
-      description: The list of domains to be excluded from the history.
-      required: false
-      type: list
-include:
-  description: Configure which integrations should be displayed.
-  required: false
-  type: map
-  keys:
-    entities:
-      description: The list of entity ids to be included in the history.
-      required: false
-      type: list
-    entity_globs:
-      description: Include all entities matching a listed pattern when creating logbook entries (e.g., `sensor.weather_*`).
-      required: false
-      type: list
-    domains:
-      description: The list of domains to be included in the history.
-      required: false
-      type: list
-{% endconfiguration %}
-
-Without any `include` or `exclude` configuration the history displays graphs for
- every entity (well that's not exactly true -
- `scenes` are never shown) on a given date. If you are only interested in some
- of the entities you have several options:
-
-Define domains and entities to `exclude` (aka. blocklist). This is convenient
-when you are basically happy with the information displayed, but just want to
-remove some entities or domains. Usually these are entities/domains which do not
-change or rarely change (like `updater` or `automation`).
-
-```yaml
-# Example configuration.yaml entry with exclude
-history:
-  exclude:
-    domains:
-      - automation
-      - updater
-    entities:
-      - sensor.last_boot
-      - sensor.date
-    entity_globs:
-      - binary_sensor.*_occupancy
-```
-
-Define domains and entities to display by using the `include` configuration
-(aka. allowlist). If you have a lot of entities in your system and your
-`exclude` list is getting too large, it might be better just to define the
-entities or domains to `include`.
-
-```yaml
-# Example configuration.yaml entry with include
-history:
-  include:
-    domains:
-      - sensor
-      - switch
-      - media_player
-```
-
-Use the `include` list to define the domains/entities to display, and exclude
-some of them within the `exclude` list. This makes sense if you, for instance,
-include the `sensor` domain, but want to exclude some specific sensors. Instead
-of adding every sensor entity to the `include` `entities` list just include the
-`sensor` domain and exclude the sensor entities you are not interested in.
-Note that the order of any `include` `entities` will be displayed as listed in
-the configuration, otherwise, the display order is arbitrary.
-
-```yaml
-# Example configuration.yaml entry with include and exclude
-history:
-  include:
-    domains:
-      - sensor
-      - switch
-      - media_player
-  exclude:
-    entities:
-     - sensor.last_boot
-     - sensor.date
-```
-
-If you'd like the order of display of the sensors to follow the way they are
-listed in the included entity list,
-you can set the flag `use_include_order` to true.
-
-```yaml
-# Example configuration.yaml entry using specified entity display order
-history:
-  use_include_order: true
-  include:
-    entities:
-      - sun.sun
-      - light.front_porch
-```
-
-Filters are applied as follows:
-
-1. No includes or excludes - pass all entities
-2. Includes, no excludes - only include specified entities
-3. Excludes, no includes - only exclude specified entities
-4. Both includes and excludes - include specified entities and exclude specified entities from the remaining.
-
-The following characters can be used in entity globs:
-
-`*` - The asterisk represents zero, one, or multiple characters
-`.` - The period represents a single character
-
-#### Implementation details
-
-The history is stored in a SQLite database `home-assistant_v2.db` within your
-configuration directory unless the `recorder` integration is set up differently.
-
-- events table is all events except `time_changed` that happened while recorder integration was running.
-- states table contains all the `new_state` values of `state_changed` events.
-- Inside the states table you have:
-  - `entity_id`: the entity_id of the entity
-  - `state`: the state of the entity
-  - `attributes`: JSON of the state attributes
-  - `last_changed`: timestamp last time the state has changed.
-  - `last_updated`: timestamp anything has changed (state, attributes)
-  - `created`: timestamp this entry was inserted into the database
-
-When the `history` integration queries the states table it only selects states
-where the state has changed: `WHERE last_changed=last_updated`
-
-#### On dates
-
-SQLite databases do not support native dates. That's why all the dates are saved
-in seconds since the UNIX epoch. Convert them manually using
-[this site](https://www.epochconverter.com/) or in Python:
-
-```python
-from datetime import datetime
-
-datetime.fromtimestamp(1422830502)
-```
-
-#### API
+## API
 
 The history information is also available through the
 [RESTful API](/developers/rest_api/#get-apihistory).

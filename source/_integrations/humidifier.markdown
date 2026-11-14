@@ -1,98 +1,48 @@
 ---
-title: Humidifier
 description: Instructions on how to set up humidity control devices within Home Assistant.
-ha_category:
-  - Humidifier
 ha_release: '0.112'
 ha_domain: humidifier
-ha_quality_scale: internal
-ha_codeowners:
-  - '@home-assistant/core'
-  - '@Shulyaka'
+related:
+  - docs: /docs/configuration/customizing-entities/
+    title: Customizing devices
+  - docs: /dashboards/
+    title: Dashboard
 ---
 
-The `humidifier` integration is built for the controlling and monitoring of humidifiers, dehumidifiers, and hygrostat devices.
+The **Humidifier** {% term integration %} is built for the controlling and monitoring of humidifiers, dehumidifiers, and hygrostat devices.
 
-## Services
+{% include integrations/building_block_integration.md %}
 
-### Humidifier services
+## Humidifier states
 
-Available services: `humidifier.set_mode`, `humidifier.set_humidity`, `humidifier.turn_on`, `humidifier.turn_off`, `humidifier.toggle`
+A humidifier entity can have the following states. Each item shows the label you see in the Home Assistant interface, followed by the state as Home Assistant stores it. If you write templates or edit automations in YAML, use the stored state.
 
-<div class='note'>
+- **On** (`on`): The humidifier is turned on.
+- **Off** (`off`): The humidifier is turned off.
 
-Not all humidifier services may be available for your platform. Be sure to check the available services Home Assistant has enabled by checking the Services page in the [Developer Tools](/docs/tools/dev-tools/).
+In addition, the entity can have the following states:
 
-</div>
+- **Unavailable** (`unavailable`): The entity is currently unavailable.
+- **Unknown** (`unknown`): The state is not yet known.
 
-### Service `humidifier.set_mode`
+## Device class
 
-Set mode for the humidifier device. This service is only available if the device supports operating in several working modes. The list of available modes and the device functionality in every mode depend on the device itself.
+The device class tells Home Assistant whether a device adds humidity to the air or removes it. Google Assistant and Apple Home use the device class to show the device as a humidifier or a dehumidifier.
 
-| Service data attribute | Optional | Description |
-| ---------------------- | -------- | ----------- |
-| `entity_id` | yes | String or list of strings that point at `entity_id`'s of humidifier devices to control.
-| `mode` | no  | New mode.
+The integration that provides the humidifier sets the device class.
 
-#### Automation example
+### Device classes in automations and templates
 
-```yaml
-automation:
-  trigger:
-    - platform: time
-      at: "07:15:00"
-  action:
-    - service: humidifier.set_mode
-      target:
-        entity_id: humidifier.bedroom
-      data:
-        mode: "eco"
-```
+- Automations: The device class doesn't change how a humidifier works in automations.
+- Templates: The device class is the `device_class` attribute of the entity. Use the stored value, such as `dehumidifier`. For example, you can [find entities by device class](/docs/templating/patterns/#finding-entities-by-device-class).
 
-### Service `humidifier.set_humidity`
+### List of available device classes
 
-Set target humidity of the humidifier device
+Without a device class, Home Assistant treats the device as a humidifier.
 
-| Service data attribute | Optional | Description |
-| ---------------------- | -------- | ----------- |
-| `entity_id` | yes | String or list of strings that point at `entity_id`'s of humidifier devices to control.
-| `humidity` | no  | New target humidity for humidifier device
+Each item shows the name you see in the Home Assistant interface, followed by the device class as Home Assistant stores it.
 
-#### Automation example
+- **Humidifier** (`humidifier`): Adds humidity to the air around it.
+- **Dehumidifier** (`dehumidifier`): Removes humidity from the air around it.
 
-```yaml
-automation:
-  trigger:
-    - platform: time
-      at: "07:15:00"
-  action:
-    - service: humidifier.set_humidity
-      target:
-        entity_id: humidifier.bedroom
-      data:
-        humidity: 60
-```
-
-### Service `humidifier.turn_on`
-
-Turn the humidifier device on.
-
-| Service data attribute | Optional | Description |
-| ---------------------- | -------- | ----------- |
-| `entity_id` | yes | String or list of strings that point at `entity_id`'s of humidifier devices to control.
-
-### Service `humidifier.turn_off`
-
-Turn the humidifier device off.
-
-| Service data attribute | Optional | Description |
-| ---------------------- | -------- | ----------- |
-| `entity_id` | yes | String or list of strings that point at `entity_id`'s of humidifier devices to control.
-
-### Service `humidifier.toggle`
-
-Toggle the humidifier device on/off.
-
-| Service data attribute | Optional | Description |
-| ---------------------- | -------- | ----------- |
-| `entity_id` | yes | String or list of strings that point at `entity_id`'s of humidifier devices to control.
+{% include integrations/triggers_conditions_actions.md %}

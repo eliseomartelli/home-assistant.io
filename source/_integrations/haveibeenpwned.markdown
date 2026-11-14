@@ -1,24 +1,22 @@
 ---
-title: HaveIBeenPwned
 description: Instructions on how to integrate HaveIBeenPwned sensor into Home Assistant.
-ha_category:
-  - Sensor
 ha_release: 0.31
-ha_iot_class: Cloud Polling
 ha_domain: haveibeenpwned
-ha_platforms:
-  - sensor
+related:
+  - docs: /docs/configuration/
+    title: Configuration file
 ---
 
-The `haveibeenpwned` sensor platform creates sensors that check for breached email accounts on [haveibeenpwned](https://haveibeenpwned.com).
+The **HaveIBeenPwned** {% term integration %} creates sensors that check for breached email accounts on [haveibeenpwned](https://haveibeenpwned.com).
 
 ## Configuration
 
-In order to use this integration you need to purchase an API key. Visit the [API key page](https://haveibeenpwned.com/API/Key) on the HIBP website to purchase one.
+To use this integration you need to purchase an API key. Visit the [API key page](https://haveibeenpwned.com/API/Key) on the HIBP website to purchase one.
 
 ## Configuration
 
-To enable this sensor, add the following lines to your `configuration.yaml`, it will list every specified email address as a sensor showing the number of breaches on that email account.
+To enable this sensor, add the following lines to your {% term "`configuration.yaml`" %} file. It will list every specified email address as a sensor showing the number of breaches on that email account.
+{% include integrations/restart_ha_after_config_inclusion.md %}
 
 ```yaml
 # Example configuration.yaml entry using cloud based emoncms
@@ -51,8 +49,8 @@ account has been breached as well as the added date of the breach data. This dat
   <img src='/images/integrations/haveibeenpwned/sensor.png' />
 </p>
 
-<div class='note warning'>
-  The sensor will scan all email addresses specified with a 5 second delay between all breach data requests on Home Assistant startup.
-  After this initial startup scanning, the sensor will only scan one email account per 15 minutes to prevent abuse, and not hammer "the
-  Have I been Pwned" service, as this breach data almost never changes.
-</div>
+{% note %}
+The sensor will scan all email addresses specified with a 5 second delay between all breach data requests on Home Assistant startup.
+After this initial startup scanning, the sensor will only scan one email account per 15 minutes to prevent abuse, and not hammer "the
+Have I been Pwned" service, as this breach data almost never changes.
+{% endnote %}

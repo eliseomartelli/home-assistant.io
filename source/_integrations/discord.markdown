@@ -1,112 +1,200 @@
 ---
-title: Discord
 description: Instructions on how to add Discord notifications to Home Assistant.
-ha_category:
-  - Notifications
-ha_iot_class: Cloud Push
 ha_release: 0.37
 ha_domain: discord
-ha_platforms:
-  - notify
 ---
 
-The [Discord service](https://discordapp.com/) is a platform for the notify component. This allows integrations to send messages to the user using Discord.
+The **Discord** {% term integration %} lets you send notifications from Home Assistant to [Discord](https://discord.com/) channels and users via a bot. You can add channels or users as notification targets to send messages from the UI. You can use the notify action to attach files (such as images or videos) from local paths or remote URLs, and use Discord embeds for rich formatting.
 
-In order to get a token you need to go to the [Discord My Apps page](https://discordapp.com/developers/applications/me) and create a new application. Once the application is ready, create a [bot](https://discordapp.com/developers/docs/topics/oauth2#bots) user (**Create a Bot User**).
+{% note %}
+This integration is for outgoing messages only. It cannot read incoming Discord messages or use them as triggers for automations.
+{% endnote %}
 
-Retrieve the **Client ID** from the information section and the (hidden) **Token** of your bot for later.
+## Prerequisites
 
-When setting up the application you can use this [icon](/images/favicon-192x192-full.png).
+### Creating a Discord application
 
-To use Discord notifications, add the following to your `configuration.yaml` file:
+To send notifications from Home Assistant, first create a Discord application with a bot user:
 
-```yaml
-# Example configuration.yaml entry
-notify:
-  - platform: discord
-    token: YOUR_DISCORD_BOT_TOKEN
-```
+1. Open the [Discord Developer Portal](https://discord.com/developers/applications) and select **New Application**.
+2. Give the application a name and create it.
+3. In the application settings, open **Bot**.
+4. Under **Token**, select **Reset Token** to generate a bot token and store it securely. You will need this token when adding the Discord integration to Home Assistant.
 
-{% configuration %}
-name:
-  description: The notifier will bind to the service `notify.NAME`.
-  required: false
-  type: string
-  default: notify
-token:
-  description: Your bot's token.
-  required: true
-  type: string
-{% endconfiguration %}
+{% important %}
+Use the **bot token** from the **Bot** page. Do not use the **Public Key** or another application credential. Treat the bot token like a password and do not share it.
+{% endimportant %}
 
-### Setting up the bot
+The name you give your application determines the name of the notify action. For example, if you enter "Home Assistant Notifications", the action will be named `notify.home_assistant_notifications`.
 
-Bots can send messages to servers and users or attach local available images. To add the bot to a server you are an admin on, get the details of the bot from the [Discord My Apps page](https://discordapp.com/developers/applications/me).
+![Screenshot of the Bot page in the Discord Developer Portal showing the bot username and token controls](/images/integrations/discord/bot.png)
 
-<p class='img'>
-  <img src='/images/screenshots/discord-bot.png' />
-</p>
+### Installing the bot on a Discord server
 
-Now use the Discord Authorization page with the **Client ID** of your [bot](https://discordapp.com/developers/docs/topics/oauth2#bots).
+To allow the bot to send messages to a server:
 
-`https://discordapp.com/api/oauth2/authorize?client_id=[CLIENT_ID]&scope=bot&permissions=0`
+1. In the Discord Developer Portal, open **Installation** for your application.
+2. Under **Installation Contexts**, make sure **Guild Install** is enabled. **User Install** is not used by this Home Assistant integration and can be disabled.
+3. Under **Install Link**, select **Discord Provided Link**.
+4. Under **Default Install Settings** for **Guild Install**, add the `bot` scope.
+5. Select the permissions the bot needs. To send notifications, grant **Send Messages**. Also grant **Embed Links** or **Attach Files** if you plan to use embeds or attachments.
+6. Save the changes, copy the install link, and open it in your browser.
+7. Select **Add to server**, choose the server, and authorize the application.
 
-<p class='img'>
-  <img src='/images/screenshots/discord-auth.png' />
-</p>
+You need permission to manage the server to install the application.
 
-Wait for the confirmation which should say "Authorized".
+![Screenshot of the Installation page in the Discord Developer Portal showing Guild Install scopes and permissions](/images/integrations/discord/installation.png)
 
-Once the bot has been added to your server, get the channel ID of the channel you want the bot to operate in. In The Discord application go to **Settings** > **Advanced** > **Enable Developer Mode**.
+![Screenshot of the Discord authorization dialog for adding the Home Assistant Notifications bot to a server](/images/integrations/discord/authorize.png)
 
-<p class='img'>
-  <img src='/images/screenshots/discord-api.png' />
-</p>
+For more information, see Discord's [application installation documentation](https://docs.discord.com/developers/resources/application#install-links).
 
-Right click channel name and copy the channel ID (**Copy ID**).
+### Getting a channel ID
 
-This channel or user ID has to be used as the target when calling the notification service. Multiple channel or user IDs can be specified, across multiple servers or direct messages.
+After the bot has been added to your server, get the channel ID of the channel you want the bot to send messages to:
 
-### Discord Service Data
+1. Open Discord and go to **User Settings** > **Advanced**.
+2. Enable **Developer Mode**.
+3. Right-click the channel name and select **Copy Channel ID**.
 
-The following attributes can be placed inside the `data` key of the service call for extended functionality:
+The channel ID, or a user ID for direct messages, is used when adding a notification target or when calling the notification action.
 
-| Attribute              | Optional | Description |
-| ---------------------- | -------- | ----------- |
-| `images`               |      yes | The file(s) to attach to message.
-| `embed`                |      yes | Array of [Discord embeds](https://discordpy.readthedocs.io/en/latest/api.html#embed). *NOTE*: if using `embed`, `message` is still required.
+## Add Discord integration to Home Assistant
 
+{% include integrations/config_flow.md %}
+
+When adding the Discord integration, enter the **bot token** from the Discord application's **Bot** page when asked for the API key.
+
+## Notification targets
+
+A notification target is a Discord channel, user, or direct message that the bot can send messages to. Each target you add becomes a {% term entity %} of the type `notify`, so you can send a message to it from the UI, an automation, or a script without needing the channel or user ID each time.
+
+### Add a notification target
+
+1. Go to {% my integrations title="**Settings** > **Devices & services**" %} and select the Discord integration.
+2. Next to the Discord bot, select **Add target**.
+3. In **Target ID**, enter the ID of the channel, user, or direct message you want to send notifications to.
+4. Select **Submit**.
+
+Home Assistant creates a notify entity named after the channel or user. Repeat these steps to add more targets.
+
+### Test a notification target
+
+After adding a target, you can test it without creating an automation first:
+
+1. Go to {% my developer_services title="**Settings** > **Tools** > **Actions**" %}.
+2. Select the **Notify entity: Send a message** action.
+3. In **Target**, select the notify entity for your Discord target.
+4. Enter a message.
+5. Select **Perform action**.
+
+## Legacy notify action
+
+Discord also provides a `notify` action that matches the name of your Discord application. Use this action when you need Discord embeds or file attachments, which the notify entity does not support.
+
+### Test a Discord notification
+
+After setting up the integration, you can test the legacy action without creating an automation first:
+
+1. In Home Assistant, go to {% my tools_actions title="**Settings** > **Tools** > **Actions**" %}.
+2. Select the `notify` action that matches the name of your Discord application, for example `notify.home_assistant_notifications`.
+3. Enter a message.
+4. In **Target**, enter the Discord channel ID or user ID.
+5. Select **Perform action**.
+
+If the action does not appear, check that the Discord integration is configured successfully.
+
+## Use Discord in an automation
+
+To send a message to a notification target from the automation editor:
+
+1. Go to {% my automations title="**Settings** > **Automations & scenes**" %} and create or edit an automation.
+2. Add an action and select **Notify entity: Send a message**.
+3. In **Target**, select the notify entity for your Discord target and enter the message.
+4. Save the automation.
+
+To use Discord embeds or file attachments, use the legacy `notify` action instead. The examples below show the available Discord-specific options.
+
+## Set Message entry
+
+The `message` field treats all input as literal text, including quotation marks.
+
+For example: `message: Hello, world!` will appear exactly as is, while `message: "Hello, world!"` will include the quotation marks in the message.
+
+## Set Channel IDs as necessary
+
+The `target` field is for the channel IDs where the message should be sent. Accepted data type is `string` for a single channel or `string[]` for multiple channels.
+
+For example: `"someChannelID"` or `["someChannelID", "anotherChannelID"]`
+
+## Pinging users, roles, or linking to other channels in the same server
+
+You can use standard Discord methods to ping users, roles, and channels within the server.
+
+| Type      | Format         |
+| --------- | -------------- |
+| `User`    | `<@userID>`    |
+| `Role`    | `<@&roleID>`   |
+| `Channel` | `<#channelID>` |
+
+## Discord action data
+
+The following attributes can be placed inside the `data` key of the action for extended functionality:
+
+| Attribute    | Optional | Description                                                                                                                                  |
+| ------------ | -------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `images`     | yes      | The file(s) to attach to message.                                                                                                            |
+| `urls`       | yes      | The file(s) to download from a remote URL and attach to message.                                                                             |
+| `verify_ssl` | yes      | A boolean to determine if SSL certs should be verified when calling the remote URLs in the `url` attribute. Defaults to `True`.              |
+| `embed`      | yes      | Array of [Discord embeds](https://discordpy.readthedocs.io/en/latest/api.html#embed). *NOTE*: if using `embed`, `message` is still required. |
 
 To include messages with embedding, use these attributes underneath the `embed` key:
 
-| Attribute              | Optional | Description |
-| ---------------------- | -------- | ----------- |
-| `title`                    |      yes  | Title of the embed.
-| `description`               |      yes | Description of the embed.
-| `color`                    |      yes  | Color code of the embed.  This value is an *int*.
-| `url`               |      yes | URL of the embed.
-| `author`                    |      yes  | Sets the footer for the embed content.
-| `footer`               |      yes | Sets the footer for the embed content.
-| `thumbnail`               |      yes | Sets the thumbnail for the embed content.
-| `fields`               |      yes | Adds a field to the embed object.  `name` and `value` are *required*, `inline` is *true* by default.
+| Attribute     | Optional | Description                                                                                          |
+| ------------- | -------- | ---------------------------------------------------------------------------------------------------- |
+| `title`       | yes      | Title of the embed.                                                                                  |
+| `description` | yes      | Description of the embed.                                                                            |
+| `color`       | yes      | Color code of the embed. This value is an *int*.                                                    |
+| `url`         | yes      | Sets an embedded link for the title.                                                                  |
+| `author`      | yes      | Sets the author for the embed content.                                                               |
+| `footer`      | yes      | Sets the footer for the embed content.                                                               |
+| `thumbnail`   | yes      | Sets the thumbnail for the embed content.                                                            |
+| `image`       | yes      | Sets the image for the embed content.                                                                |
+| `fields`      | yes      | Adds a field to the embed object. `name` and `value` are *required*, `inline` is *true* by default. |
 
-
-#### Example service call
+### Example action
 
 ```yaml
-- service: notify.discord
+- action: notify.home_assistant_notifications
   data:
     message: "A message from Home Assistant"
     target: ["1234567890", "0987654321"]
     data:
-      images: 
-      - "/tmp/garage_cam"
-      - "/tmp/garage.jpg"
+      images:
+        - "/tmp/garage_cam"
+        - "/tmp/garage.jpg"
 ```
 
-#### Example embed service call
+### Example action with attachments sourced from remote URLs
+
 ```yaml
-- service: notify.discord
+- action: notify.home_assistant_notifications
+  data:
+    message: "A message from Home Assistant"
+    target: ["1234567890", "0987654321"]
+    data:
+      verify_ssl: false
+      urls:
+        - "https://example.com/image.jpg"
+        - "https://example.com/video.mp4"
+```
+
+Note that `verify_ssl` defaults to `True`, and that any remote hosts will need to be in your [`allowlist_external_urls`](/integrations/homeassistant/#allowlist_external_urls) list. Discord limits attachment size to 8MB, so anything exceeding this will be skipped and noted in the error log.
+
+### Example embed action
+
+```yaml
+- action: notify.home_assistant_notifications
   data:
     message: ""
     target: ["1234567890", "0987654321"]
@@ -125,6 +213,8 @@ To include messages with embedding, use these attributes underneath the `embed` 
           icon_url: 'https://www.home-assistant.io'
         thumbnail:
           url: 'https://www.home-assistant.io/images/favicon-192x192-full.png'
+        image:
+          url: 'https://www.home-assistant.io/images/favicon-192x192-full.png'
         fields:
           - name: 'fieldname1'
             value: 'valuename1'
@@ -138,12 +228,12 @@ To include messages with embedding, use these attributes underneath the `embed` 
             inline: false
 ```
 
-### Notes
+## Notes
 
-You can tag any user inside a channel by using their user ID in the message like so: `<@userid>` replacing `userid` with the ID you copied. To get the user ID right click on the user name to copy the ID like you did for the channel ID up above.
+You can tag any user inside a channel by using their user ID in the message like so: `<@userid>` replacing `userid` with the ID you copied. To get the user ID, right-click on the username to copy the ID like you did for the channel ID up above.
 
-For more information about creating and authorizing bots, visit the [OAuth2 information page](https://discordapp.com/developers/docs/topics/oauth2)
+For more information about creating and authorizing bots, see Discord's [developer documentation](https://docs.discord.com/developers/quick-start/getting-started).
 
-To use notifications effectively, please see the [getting started with automation page](/getting-started/automation/).
+To use notifications effectively, see the [getting started with automation page](/getting-started/automation/).
 
-Images are uploaded to Discord when a message is sent. As such, a local path to the image is required (i.e., `/config/www/garage.jpg` as opposed to `/local/garage.jpg`), and updating an image after sending it in a message will not update the message in Discord.
+Images are uploaded to Discord when a message is sent. As such, a local path to the image is required (that is, `/config/www/garage.jpg` as opposed to `/local/garage.jpg`), and updating an image after sending it in a message will not update the message in Discord.

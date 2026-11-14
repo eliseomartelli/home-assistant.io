@@ -1,21 +1,13 @@
 ---
-title: Flume
 description: Documentation about the flume sensor.
-ha_category:
-  - Sensor
-ha_iot_class: Cloud Polling
 ha_release: 0.103
-ha_config_flow: true
-ha_codeowners:
-  - '@ChrisMandich'
-  - '@bdraco'
 ha_domain: flume
-ha_dhcp: true
-ha_platforms:
-  - sensor
+related:
+  - docs: /docs/configuration/
+    title: Configuration file
 ---
 
-The `flume` sensor will show you the current [flume](https://portal.flumewater.com) status for the given Device ID.
+The **Flume** {% term integration %} will show you the current [Flume](https://flumewater.com/) status for the given Device ID.
 
 Flume monitors the real-time status of your home water meter. Allowing the end-user to detect small leaks, gain real-time information on household water consumption, set water goals and budgets, and receive push notifications when suspicious water activities occur. 
 
@@ -23,25 +15,60 @@ Flume monitors the real-time status of your home water meter. Allowing the end-u
 
 You can find your Client ID and Client Secret under "API Access" on the [settings page](https://portal.flumewater.com/#settings).
 
-The Flume API access is available to Flume Insight users only, which may require a paid subscription.
+To add `Flume` to your installation, go to {% my integrations title="**Settings** > **Devices & services**" %} in the UI, click the button with `+` sign and from the list of integrations select **Flume**.
 
-To add `Flume` to your installation, go to **Configuration** >> **Integrations** in the UI, click the button with `+` sign and from the list of integrations select **Flume**.
+## Notifications
 
-## Configuration for Binary Sensor
+Flume notifications are fetched every 5 minutes and are available via the `flume.list_notifications` action. Some notifications are available via the following binary sensors:
+
+- High flow
+- Leak detected
+
+To clear these notifications, use your Flume app or the [Flume notifications portal](https://portal.flumewater.com/notifications). The **High flow** and **Leak detected** sensors stay on until you do.
+
+The **Battery** and **Connectivity** sensors do not use notifications. They report what your Flume device reports directly and are checked every hour. After you replace the batteries, the battery status updates on its own, with nothing for you to clear. The **Low battery** notification stays in your Flume app, and in the `flume.list_notifications` response, until you clear it.
+
+Example of an automation that sends a Home Assistant notification of the most recent usage alert:
+
+```yaml
+alias: "Notify: flume"
+triggers:
+  - trigger: time_pattern
+    minutes: /5
+actions:
+  - action: flume.list_notifications
+    data:
+      config_entry: 1234 # replace this with your config entry id
+    response_variable: notifications
+  - if:
+      - condition: template
+        value_template: >-
+          {{ notifications.notifications | selectattr('type', 'equalto', 1) | 
+          sort(attribute == ('created_datetime', reverse == true) | length > 0 }}
+    then:
+      - action: notify.all
+        data:
+          message: >-
+            {%- set usage_alert == notifications.notifications |
+            selectattr('type', 'equalto', 1) |
+            sort(attribute == 'created_datetime', reverse == true) | first %}
+            {{ usage_alert.message }}
+          title: >-
+            {%- set usage_alert == notifications.notifications |
+            selectattr('type', 'equalto', 1) |
+            sort(attribute == 'created_datetime', reverse=true) | first %}
+            {{ usage_alert.title }}
+```
+
+## Configuration for binary sensor
 
 The following YAML creates a binary sensor. This requires the default sensor to be configured successfully.
 
-{% raw %}
-
 ```yaml
 # Example configuration.yaml entry
-binary_sensor:
-  - platform: template
-    sensors:
-      flume_status:
-        friendly_name: "Flume Flow Status"
-        value_template: >-
-          {{ states.sensor.flume_sensor.state != "0" }}
+template:
+  - binary_sensor:
+    - name: "Flume Flow Status"
+      state: >-
+        {{ states('sensor.flume_sensor') != "0" }}
 ```
-
-{% endraw %}

@@ -1,26 +1,14 @@
 ---
-title: ProgettiHWSW Automation
 description: Instructions on how to integrate the ProgettiHWSW remote relay boards into Home Assistant.
-ha_category:
-  - DIY
-  - Binary Sensor
-  - Switch
 ha_release: 0.115
-ha_iot_class: Local Polling
 ha_domain: progettihwsw
-ha_codeowners:
-  - '@ardaseremet'
-ha_config_flow: true
-ha_platforms:
-  - binary_sensor
-  - switch
 ---
 
-The `progettihwsw` integration brings the automation experience with ProgettiHWSW boards to Home Assistant.
+The **ProgettiHWSW Automation** {% term integration %} brings the automation experience with ProgettiHWSW boards to Home Assistant.
 
 {% include integrations/config_flow.md %}
 
-## Binary Sensor
+## Binary sensor
 
 The `progettihwsw` binary sensor platform allows you to read the input values of a [ProgettiHWSW Board](http://www.progetti-hw-sw.it/).
 

@@ -1,22 +1,18 @@
 ---
-title: Open ERZ
 description: Instructions on how to integrate a OpenERZ API for Zurich city waste disposal with Home Assistant
-ha_category:
-  - Sensor
 ha_release: 0.109
-ha_iot_class: Cloud Polling
 ha_domain: openerz
-ha_codeowners:
-  - '@misialq'
-ha_platforms:
-  - sensor
+related:
+  - docs: /docs/configuration/
+    title: Configuration file
 ---
 
-This `openerz` sensor platform uses [OpenERZ](http://openerz.metaodi.ch/) API to access data from Entsorgung und Recycling Zürich (ERZ). It reports the next pickup date for the specified zip and waste type.
+The **Open ERZ** {% term integration %} uses [OpenERZ](http://openerz.metaodi.ch/) API to access data from Entsorgung und Recycling Zürich (ERZ). It reports the next pickup date for the specified zip and waste type.
 
 ## Configuration
 
-To enable this sensor in your installation, add the following to your `configuration.yaml` file:
+To enable this {% term integration %} in your installation, add the following to your {% term "`configuration.yaml`" %} file.
+{% include integrations/restart_ha_after_config_inclusion.md %}
 
 ```yaml
 # Example configuration.yaml entry

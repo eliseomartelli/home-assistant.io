@@ -1,15 +1,7 @@
 ---
-title: Thinking Cleaner
 description: Instructions on how to integrate a ThinkingCleaner within Home Assistant.
-ha_category:
-  - Sensor
-  - Switch
-ha_iot_class: Local Polling
 ha_release: 0.18
 ha_domain: thinkingcleaner
-ha_platforms:
-  - sensor
-  - switch
 ---
 
 There is currently support for the following device types within Home Assistant:
@@ -19,9 +11,9 @@ There is currently support for the following device types within Home Assistant:
 
 ## Sensor
 
-The `thinkingcleaner` sensor platform simple displays information about your [Thinking Cleaner](https://www.thinkingcleaner.com/) add-on.
+The `thinkingcleaner` sensor platform simple displays information about your [Thinking Cleaner (archived website)](https://web.archive.org/web/20220802042114/https://www.thinkingcleaner.com/) add-on.
 
-To enable this sensor in your installation, add the following to your `configuration.yaml` file:
+To enable this sensor in your installation, add the following to your {% term "`configuration.yaml`" %} file:
 
 ```yaml
 sensor:
@@ -40,9 +32,9 @@ This will automatically add sensors for each Thinking Cleaner in your network.
 
 ## Switch
 
-The `thinkingcleaner` switch platform allows you to control your [Thinking Cleaner](https://www.thinkingcleaner.com/) add-on.
+The `thinkingcleaner` switch platform allows you to control your [Thinking Cleaner (archived website)](https://web.archive.org/web/20220802042114/https://www.thinkingcleaner.com/) add-on.
 
-To enable this switch in your installation, add the following to your `configuration.yaml` file:
+To enable this switch in your installation, add the following to your {% term "`configuration.yaml`" %} file:
 
 ```yaml
 switch:

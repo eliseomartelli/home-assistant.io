@@ -1,24 +1,22 @@
 ---
 title: "MQTT Scene"
 description: "Instructions on how to integrate MQTT scenes into Home Assistant."
-ha_category:
-  - Scene
 ha_release: 2020.12
 ha_iot_class: Configurable
 ha_domain: mqtt
 ---
 
-The `mqtt` scene platform lets you control your MQTT enabled scenes.
+The **MQTT Scene** {% term integration %} lets you control your MQTT enabled scenes.
 
 ## Configuration
 
-To enable a MQTT scene in your installation, add the following to your `configuration.yaml` file:
+{% include integrations/mqtt_config_methods.md item="scene entity" platform="scene" subentry=false %}
 
 ```yaml
 # Example configuration.yaml entry
-scene:
-  - platform: mqtt
-    command_topic: zigbee2mqtt/living_room_group/set
+mqtt:
+  - scene:
+      command_topic: zigbee2mqtt/living_room_group/set
 ```
 
 {% configuration %}
@@ -41,28 +39,83 @@ availability:
       description: An MQTT topic subscribed to receive availability (online/offline) updates.
       required: true
       type: string
+    value_template:
+      description: "Defines a [template](/docs/templating/where-to-use/#mqtt) to extract device's availability from the `topic`. To determine the devices's availability result of this template will be compared to `payload_available` and `payload_not_available`."
+      required: false
+      type: template
 availability_mode:
   description: When `availability` is configured, this controls the conditions needed to set the entity to `available`. Valid entries are `all`, `any`, and `latest`. If set to `all`, `payload_available` must be received on all configured availability topics before the entity is marked as online. If set to `any`, `payload_available` must be received on at least one configured availability topic before the entity is marked as online. If set to `latest`, the last `payload_available` or `payload_not_available` received on any configured availability topic controls the availability.
   required: false
   type: string
   default: latest
+availability_template:
+  description: "Defines a [template](/docs/templating/where-to-use/#mqtt) to extract device's availability from the `availability_topic`. To determine the devices's availability result of this template will be compared to `payload_available` and `payload_not_available`."
+  required: false
+  type: template
 availability_topic:
   description: The MQTT topic subscribed to receive availability (online/offline) updates. Must not be used together with `availability`.
   required: false
   type: string
 command_topic:
-  description: The MQTT topic to publish commands to change the scene state.
+  description: The MQTT topic to publish `payload_on` to activate the scene.
   required: false
   type: string
+default_entity_id:
+  description: Use `default_entity_id` instead of name for automatic generation of the entity ID. For example, `scene.foobar`. When used without a `unique_id`, the entity ID will update during restart or reload if the entity ID is available. If the entity ID already exists, the entity ID will be created with a number at the end. When used with a `unique_id`, the `default_entity_id` is only used when the entity is added for the first time. When set, this overrides a user-customized entity ID if the entity was deleted and added again.
+  required: false
+  type: string
+{% include integrations/mqtt_device.md %}
 enabled_by_default:
-  description: Flag which defines if the entity should be enabled when first added.
+  description: Controls whether this entity is enabled by default. When set to `true`, the entity is enabled and usable immediately. When set to `false`, Home Assistant adds the entity as disabled. A disabled entity has no state, and you can't use it in automations or dashboards until you [enable it](/docs/configuration/customizing-entities/#disabling-or-enabling-an-entity).
   required: false
   type: boolean
   default: true
+entity_category:
+  description: The [category](https://contributors.home-assistant.io/core/entities/entity-class/#generic-properties) of the entity.
+  required: false
+  type: string
+entity_picture:
+  description: "Picture URL for the entity."
+  required: false
+  type: string
+encoding:
+  description: The encoding of the published messages.
+  required: false
+  type: string
+  default: "utf-8"
 icon:
   description: Icon for the scene.
   required: false
   type: icon
+json_attributes_template:
+  description: "Defines a [template](/docs/templating/where-to-use/#mqtt) to extract the JSON dictionary from messages received on the `json_attributes_topic`. Usage example can be found in [MQTT sensor](/integrations/sensor.mqtt/#json-attributes-template-configuration) documentation."
+  required: false
+  type: template
+json_attributes_topic:
+  description: The MQTT topic subscribed to receive a JSON dictionary payload and then set as sensor attributes. Usage example can be found in [MQTT sensor](/integrations/sensor.mqtt/#json-attributes-topic-configuration) documentation.
+  required: false
+  type: string
+message_expiry_interval:
+  description: "Controls how long queued or retained messages sent from Home Assistant persist at the broker for offline subscribers. This option prevents the broker from retaining stale messages. The expected value for this option is a JSON mapping, for example, `{\"days\": 1, \"hours\": 2, \"minutes\": 20, \"seconds\": 30}` or `{\"seconds\": 3600}`."
+  required: false
+  type: map
+  keys:
+    days:
+      description: "Number of days published messages are queued or retained for offline subscribers."
+      required: false
+      type: integer
+    hours:
+      description: "Number of hours published messages are queued or retained for offline subscribers."
+      required: false
+      type: integer
+    minutes:
+      description: "Number of minutes published messages are queued or retained for offline subscribers."
+      required: false
+      type: integer
+    seconds:
+      description: "Number of seconds published messages are queued or retained for offline subscribers."
+      required: false
+      type: integer
 name:
   description: The name to use when displaying this scene.
   required: false
@@ -79,12 +132,16 @@ payload_not_available:
   type: string
   default: offline
 payload_on:
-  description: The payload that represents `on` state. If specified, will be used for both comparing to the value in the `state_topic` (see `value_template` and `state_on`  for details) and sending as `on` command to the `command_topic`.
+  description: The payload that will be sent to `command_topic` when activating the MQTT scene.
   required: false
   type: string
   default: "ON"
+platform:
+  description: Must be `scene`. Only allowed and required in [MQTT auto discovery device messages](/integrations/mqtt/#device-discovery-payload).
+  required: true
+  type: string
 qos:
-  description: The maximum QoS level of the state topic. Default is 0 and will also be used to publishing messages.
+  description: The maximum QoS level to be used when receiving and publishing messages.
   required: false
   type: integer
   default: 0
@@ -94,16 +151,19 @@ retain:
   type: boolean
   default: false
 unique_id:
-  description: An ID that uniquely identifies this scene entity. If two scenes have the same unique ID, Home Assistant will raise an exception.
+  description: An ID that uniquely identifies this scene entity. If two scenes have the same unique ID, Home Assistant will raise an exception. Required when used with device-based discovery.
   required: false
   type: string
+visible_by_default:
+  description: Control whether this entity is visible by default. When set to false, the entity is hidden and does not appear on dashboards until you manually make it visible in its settings.
+  required: false
+  type: boolean
+  default: true
 {% endconfiguration %}
 
-<div class='note warning'>
-
+{% important %}
 Make sure that your topic matches exactly. `some-topic/` and `some-topic` are different topics.
-
-</div>
+{% endimportant %}
 
 ## Examples
 
@@ -115,16 +175,19 @@ The example below shows a full configuration for a scene.
 
 ```yaml
 # Example configuration.yaml entry
-scene:
-  - platform: mqtt
-    unique_id: living_room_party_scene
-    name: "Living Room Party Scene"
-    command_topic: "home/living_room/party_scene/set"
-    availability:
-      - topic: "home/living_room/party_scene/available"
-    payload_on: "ON"
-    qos: 0
-    retain: true
+mqtt:
+  - scene:
+      unique_id: living_room_party_scene
+      name: "Party Scene"
+      command_topic: "home/living_room/party_scene/set"
+      availability:
+        - topic: "home/living_room/party_scene/available"
+      payload_on: "ON"
+      qos: 0
+      retain: true
+      device:
+        name: "Living Room"
+        identifiers: "livingroom_lights" 
 ```
 
 ### Use with a JSON Payload
@@ -133,10 +196,10 @@ The example below shows a configuration using a JSON payload.
 
 ```yaml
 # Example configuration.yaml entry
-scene:
-  - platform: mqtt
-    name: Living Room Blue Scene
-    unique_id: living_room_blue_scene
-    command_topic: "home/living_room/set"
-    payload_on: '{"activate_scene": "Blue Scene"}'
+mqtt:
+  - scene:
+      name: Living Room Blue Scene
+      unique_id: living_room_blue_scene
+      command_topic: "home/living_room/set"
+      payload_on: '{"activate_scene": "Blue Scene"}'
 ```

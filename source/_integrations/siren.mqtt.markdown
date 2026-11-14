@@ -1,0 +1,284 @@
+---
+title: "MQTT Siren"
+description: "Instructions on how to integrate MQTT sirens into Home Assistant."
+ha_release: 2022.3
+ha_iot_class: Configurable
+ha_domain: mqtt
+---
+
+The **MQTT Siren** {% term integration %} lets you control your MQTT enabled sirens and text based notification devices.
+
+## Configuration
+
+In an ideal scenario, the MQTT device will have a `state_topic` to publish state changes. If these messages are published with a `RETAIN` flag, the MQTT siren will receive an instant state update after subscription, and will start with the correct state. Otherwise, the initial state of the siren will be `false` / `off`.
+
+When a `state_topic` is not available, the siren will work in optimistic mode. In this mode, the siren will immediately change state after every command. Otherwise, the siren will wait for state confirmation from the device (message from `state_topic`).
+
+Optimistic mode can be forced, even if the `state_topic` is available. Try to enable it, if experiencing incorrect operation.
+
+{% include integrations/mqtt_config_methods.md item="siren" platform="siren" subentry=true %}
+
+```yaml
+# Example configuration.yaml entry
+mqtt:
+  - siren:
+      command_topic: "home/bedroom/siren/set"
+```
+
+{% configuration %}
+availability:
+  description: A list of MQTT topics subscribed to receive availability (online/offline) updates. Must not be used together with `availability_topic`.
+  required: false
+  type: list
+  keys:
+    payload_available:
+      description: The payload that represents the available state.
+      required: false
+      type: string
+      default: online
+    payload_not_available:
+      description: The payload that represents the unavailable state.
+      required: false
+      type: string
+      default: offline
+    topic:
+      description: An MQTT topic subscribed to receive availability (online/offline) updates.
+      required: true
+      type: string
+    value_template:
+      description: "Defines a [template](/docs/templating/where-to-use/#mqtt) to extract device's availability from the `topic`. To determine the devices's availability result of this template will be compared to `payload_available` and `payload_not_available`."
+      required: false
+      type: template
+availability_mode:
+  description: When `availability` is configured, this controls the conditions needed to set the entity to `available`. Valid entries are `all`, `any`, and `latest`. If set to `all`, `payload_available` must be received on all configured availability topics before the entity is marked as online. If set to `any`, `payload_available` must be received on at least one configured availability topic before the entity is marked as online. If set to `latest`, the last `payload_available` or `payload_not_available` received on any configured availability topic controls the availability.
+  required: false
+  type: string
+  default: latest
+availability_template:
+  description: "Defines a [template](/docs/templating/where-to-use/#mqtt) to extract device's availability from the `availability_topic`. To determine the devices's availability result of this template will be compared to `payload_available` and `payload_not_available`."
+  required: false
+  type: template
+availability_topic:
+  description: The MQTT topic subscribed to receive availability (online/offline) updates. Must not be used together with `availability`.
+  required: false
+  type: string
+available_tones:
+  description: A list of available tones the siren supports. When configured, this enables the support for setting a `tone` and enables the `tone` state attribute.
+  required: false
+  type: list
+command_template:
+  description: Defines a [template](/docs/templating/where-to-use/#mqtt) to generate a custom payload to send to `command_topic`. The variable `value` will be assigned with the configured `payload_on` or `payload_off` setting. The siren turn on action parameters `tone`, `volume_level` or `duration` can be used as variables in the template. When operation in optimistic mode the corresponding state attributes will be set. Turn on parameters will be filtered if a device misses the support.
+  required: false
+  type: template
+command_off_template:
+  description: Defines a [template](/docs/templating/where-to-use/#mqtt) to generate a custom payload to send to `command_topic` when the siren turn off action is called. By default `command_template` will be used as template for action turn off. The variable `value` will be assigned with the configured `payload_off` setting.
+  required: false
+  type: template
+command_topic:
+  description: >
+    The MQTT topic to publish commands to change the siren state. Without command templates, a default JSON payload like `{"state":"ON", "tone": "bell", "duration": 10, "volume_level": 0.5 }` is published. When the siren turn on action is performed, the startup parameters will be added to the JSON payload. The `state` value of the JSON payload will be set to the `payload_on` or `payload_off` configured payload.
+  required: false
+  type: string
+default_entity_id:
+  description: Use `default_entity_id` instead of name for automatic generation of the entity ID. For example, `siren.foobar`. When used without a `unique_id`, the entity ID will update during restart or reload if the entity ID is available. If the entity ID already exists, the entity ID will be created with a number at the end. When used with a `unique_id`, the `default_entity_id` is only used when the entity is added for the first time. When set, this overrides a user-customized entity ID if the entity was deleted and added again.
+  required: false
+  type: string
+{% include integrations/mqtt_device.md %}
+enabled_by_default:
+  description: Controls whether this entity is enabled by default. When set to `true`, the entity is enabled and usable immediately. When set to `false`, Home Assistant adds the entity as disabled. A disabled entity has no state, and you can't use it in automations or dashboards until you [enable it](/docs/configuration/customizing-entities/#disabling-or-enabling-an-entity).
+  required: false
+  type: boolean
+  default: true
+encoding:
+  description: The encoding of the payloads received and published messages. Set to `""` to disable decoding of incoming payload.
+  required: false
+  type: string
+  default: "utf-8"
+entity_category:
+  description: The [category](https://contributors.home-assistant.io/core/entities/entity-class/#generic-properties) of the entity.
+  required: false
+  type: string
+entity_picture:
+  description: "Picture URL for the entity."
+  required: false
+  type: string
+group:
+  description: A list of unique IDs of the member siren entities. Set this if the siren entity represents a siren group.
+  required: false
+  type: list
+icon:
+  description: "[Icon](/integrations/homeassistant/#icon) for the entity."
+  required: false
+  type: icon
+json_attributes_template:
+  description: "Defines a [template](/docs/templating/where-to-use/#mqtt) to extract the JSON dictionary from messages received on the `json_attributes_topic`. Usage example can be found in [MQTT sensor](/integrations/sensor.mqtt/#json-attributes-template-configuration) documentation."
+  required: false
+  type: template
+json_attributes_topic:
+  description: The MQTT topic subscribed to receive a JSON dictionary payload and then set as sensor attributes. Usage example can be found in [MQTT sensor](/integrations/sensor.mqtt/#json-attributes-topic-configuration) documentation.
+  required: false
+  type: string
+message_expiry_interval:
+  description: "Controls how long queued or retained messages sent from Home Assistant persist at the broker for offline subscribers. This option prevents the broker from retaining stale messages. The expected value for this option is a JSON mapping, for example, `{\"days\": 1, \"hours\": 2, \"minutes\": 20, \"seconds\": 30}` or `{\"seconds\": 3600}`."
+  required: false
+  type: map
+  keys:
+    days:
+      description: "Number of days published messages are queued or retained for offline subscribers."
+      required: false
+      type: integer
+    hours:
+      description: "Number of hours published messages are queued or retained for offline subscribers."
+      required: false
+      type: integer
+    minutes:
+      description: "Number of minutes published messages are queued or retained for offline subscribers."
+      required: false
+      type: integer
+    seconds:
+      description: "Number of seconds published messages are queued or retained for offline subscribers."
+      required: false
+      type: integer
+name:
+  description: The name to use when displaying this siren. Can be set to `null` if only the device name is relevant.
+  required: false
+  type: string
+  default: MQTT Siren
+optimistic:
+  description: Flag that defines if siren works in optimistic mode.
+  required: false
+  type: boolean
+  default: "`true` if no `state_topic` defined, else `false`."
+payload_available:
+  description: The payload that represents the available state.
+  required: false
+  type: string
+  default: online
+payload_not_available:
+  description: The payload that represents the unavailable state.
+  required: false
+  type: string
+  default: offline
+payload_off:
+  description: The payload that represents `off` state. If specified, will be used for both comparing to the value in the `state_topic` (see `value_template` and `state_off` for details) and sending as `off` command to the `command_topic`.
+  required: false
+  type: string
+  default: "OFF"
+payload_on:
+  description: The payload that represents `on` state. If specified, will be used for both comparing to the value in the `state_topic` (see `value_template` and `state_on`  for details) and sending as `on` command to the `command_topic`.
+  required: false
+  type: string
+  default: "ON"
+platform:
+  description: Must be `siren`. Only allowed and required in [MQTT auto discovery device messages](/integrations/mqtt/#device-discovery-payload).
+  required: true
+  type: string
+qos:
+  description: The maximum QoS level to be used when receiving and publishing messages.
+  required: false
+  type: integer
+  default: 0
+retain:
+  description: If the published message should have the retain flag on or not.
+  required: false
+  type: boolean
+  default: false
+state_off:
+  description: The payload that represents the `off` state. Used when value that represents `off` state in the `state_topic` is different from value that should be sent to the `command_topic` to turn the device `off`.
+  required: false
+  type: string
+  default: "`payload_off` if defined, else `'OFF'`"
+state_on:
+  description: The payload that represents the `on` state. Used when value that represents `on` state in the `state_topic` is different from value that should be sent to the `command_topic` to turn the device `on`.
+  required: false
+  type: string
+  default: "`payload_on` if defined, else `'ON'`"
+state_topic:
+  description: "The MQTT topic subscribed to receive state updates. The state update may be either JSON or a simple string. When a JSON payload is detected, the `state` value of the JSON payload should supply the `payload_on` or `payload_off` defined payload to turn the siren on or off. Additionally, the state attributes `duration`, `tone` and `volume_level` can be updated. Use `value_template` to transform the received state update to a compliant JSON payload. Attributes will only be set if the function is supported by the device and a valid value is supplied. When a non JSON payload is detected, it should be either of the `payload_on` or `payload_off` defined payloads or `None` to reset the siren's state to `unknown`. The initial state will be `unknown`. The state will be reset to `unknown` if a `None` payload or `null` JSON value is received as a state update."
+  required: false
+  type: string
+state_value_template:
+  description: "Defines a [template](/docs/templating/where-to-use/#mqtt) to extract device's state from the `state_topic`. To determine the siren's state result of this template will be compared to `state_on` and `state_off`. Alternatively `value_template` can be used to render to a valid JSON payload."
+  required: false
+  type: template
+support_duration:
+  description: Set to `true` if the MQTT siren supports the `duration` turn on action parameter and enables the `duration` state attribute.
+  required: false
+  type: boolean
+  default: true
+support_volume_set:
+  description: Set to `true` if the MQTT siren supports the `volume_set` turn on action parameter and enables the `volume_level` state attribute.
+  required: false
+  type: boolean
+  default: true
+unique_id:
+  description: An ID that uniquely identifies this siren device. If two sirens have the same unique ID, Home Assistant will raise an exception. Required when used with device-based discovery.
+  required: false
+  type: string
+visible_by_default:
+  description: Control whether this entity is visible by default. When set to false, the entity is hidden and does not appear on dashboards until you manually make it visible in its settings.
+  required: false
+  type: boolean
+  default: true
+{% endconfiguration %}
+
+{% important %}
+Make sure that your topic matches exactly. `some-topic/` and `some-topic` are different topics.
+{% endimportant %}
+
+## Examples
+
+In this section, you will find an example of how to use this siren platform.
+
+### Full configuration
+
+The example below shows a full configuration for a siren.
+
+```yaml
+# Example configuration.yaml entry
+mqtt:
+  - siren:
+      unique_id: custom_siren
+      name: "Intrusion siren"
+      state_topic: "home/alarm/siren1"
+      command_topic: "home/alarm/siren1/set"
+      available_tones:
+        - ping
+        - siren
+      availability:
+        - topic: "home/alarm/siren1/available"
+      payload_on: "ON"
+      payload_off: "OFF"
+      state_on: "ON"
+      state_off: "OFF"
+      optimistic: false
+      qos: 0
+      retain: true
+```
+
+### On/Off only siren controlling a Tasmota relay
+
+The example below shows a configuration for an On/Off type siren, which does not accept JSON commands.
+
+```yaml
+# Example configuration.yaml entry
+mqtt:
+  - siren:
+      unique_id: tasmota_siren
+      name: "garage"
+      state_topic: "stat/SIREN/RESULT"
+      command_topic: "cmnd/SIREN/POWER"
+      availability_topic: "tele/SIREN/LWT"
+      command_template: "{{ value }}"
+      state_value_template: "{{ value_json.POWER }}"
+      payload_on: "ON"
+      payload_off: "OFF"
+      payload_available: "Online"
+      payload_not_available: "Offline"
+```
+
+For a check, you can use the command line tools `mosquitto_pub` shipped with `mosquitto` to send MQTT messages. This allows you to operate your siren manually:
+
+```bash
+mosquitto_pub -h 127.0.0.1 -t home/alarm/siren1 -m "ON"
+```

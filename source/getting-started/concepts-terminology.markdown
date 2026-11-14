@@ -1,0 +1,83 @@
+---
+title: "Concepts and terminology"
+description: "The core concepts behind Home Assistant: integrations, devices, entities, areas, and automations."
+---
+Now that you are in Home Assistant, let's look at the most important concepts. Home Assistant is built around a small set of building blocks: integrations, devices, entities, areas, and automations. Once you understand how they fit together, the rest of the platform falls into place.
+
+## Integrations
+
+Integrations are pieces of software that allow Home Assistant to connect to other software and platforms. For example, a product by Philips called Hue would use the Philips Hue {% term integration %} and allow Home Assistant to talk to the hardware controller Hue Bridge. Any Home Assistant compatible {% term devices %} connected to the Hue Bridge would appear in Home Assistant as [devices](#devices).
+
+![Integrations](/images/getting-started/integrations.png)
+
+Some integration cards show an icon:
+
+- The globe icon <img height="28px" src="/images/getting-started/globe-icon.png" alt="Globe icon"/> indicates that this integration requires the internet.
+- The file icon <img height="28px" src="/images/getting-started/config-file_icon.png" alt="Configuration file icon"/> indicates that this integration was not set up via the UI. You have either set it up in your {% term "`configuration.yaml`" %} file, or it is a dependency set up by another integration. If you want to configure it, you will need to do so in your {% term "`configuration.yaml`" %} file.
+- The custom icon <img height="28px" src="/images/getting-started/custom-icon.png" alt="Custom icon"/> indicates that this is not an official Home Assistant integration but that it was custom made. It could be imported from another source, for example downloaded from HACS.
+
+For a full list of compatible {% term integrations %}, refer to the [integrations](/integrations) documentation.
+
+Once an {% term integration %} has been added, the hardware and/or data are represented in Home Assistant as [devices and entities](#devices).
+
+## Devices
+
+Devices are a logical grouping for one or more {% term entities %}. A {% term device %} may represent a physical {% term device %}, which can have one or more sensors. The sensors appear as entities associated with the {% term device %}. For example, a motion sensor is represented as a {% term device %}. It may provide motion detection, temperature, and light levels as {% term entities %}. Entities have states such as *detected* when motion is detected and *clear* when there is no motion.
+
+![Home Assistant device](/images/getting-started/home-assistant-device_01.png)
+
+Devices and entities are used throughout Home Assistant. To name a few examples:
+
+- [Dashboards](/getting-started/onboarding_dashboard/) can show a state of an {% term entity %}. For example, if a light is on or off.
+- An [automation](#automations) can be triggered from a state change on an {% term entity %}. For example, a motion sensor entity detects motion and triggers a light to turn on.
+- A predefined color and brightness setting for a light can be saved as a [scene](#scenes).
+
+![Home Assistant device](/images/getting-started/home-assistant-device_02.png)
+
+## Entities
+
+Entities are the basic building blocks to hold data in Home Assistant. An {% term entity %} represents a {% term sensor %}, {% term actor %}, or function in Home Assistant. Entities are used to monitor physical properties or to control other {% term entities %}. An {% term entity %} is usually part of a {% term device %} or a {% term service %}. Entities have {% term states %}.
+
+<p class='img'><img src='/images/getting-started/entities.png' style='border: 0;box-shadow: none;' alt="Screenshot showing the Entities table">Screenshot of the Entities table. Each line represents an entity.</p>
+
+## Areas
+
+An area in Home Assistant is a logical grouping of {% term devices %} and {% term entities %} that are meant to match areas (or rooms) in the physical world: your home. For example, the `living room` area groups devices and entities in your living room. Areas allow you to target actions at an entire group of devices. For example, turning off all the lights in the living room.
+These are locations within your home, such as the living room or the dance floor. Areas can be assigned to {% term floors %}.
+Areas can also be used for automatically generated cards, such as the [Area card](/dashboards/area/).
+
+## Automations
+
+An automation runs a set of steps by itself when something changes in your home. For example, it turns on the lights in the living room when the sun sets. In the visual automation editor, an automation has three sections:
+
+- **When**: the {% term triggers %}
+  - A trigger reacts to a change and starts the automation, for example, when the sun sets or a motion sensor detects motion.
+- **And if**: the {% term conditions %}, which are optional
+  - A condition is a test that must be true for the automation to continue, for example, someone is home.
+- **Then do**: the {% term actions %}
+  - The actions are what the automation does, for example, turn on a light, send a notification, or activate a scene.
+  - You can also add a condition between the actions. The actions after it then only run if the condition is true.
+
+To learn the basics about {% term automations %}, refer to the [automation basics](/docs/automation/basics/) page or try [creating an automation](/getting-started/automation) yourself.
+
+## Scripts
+
+A script is a saved list of steps that runs when you start it, for example, from a button on a dashboard, with Assist, or from an {% term automation %}. A step can be an {% term action %}, such as turning on a light, or a building block, such as waiting a few seconds. Unlike an automation, a script has no triggers, so it doesn't start by itself. Scripts are useful when you want to start the same steps from several places, or pass different values to the script each time, such as a message or a brightness level. To learn how to create and use scripts, refer to [Scripts](/docs/script/).
+
+![Scripts](/images/getting-started/script_01.png)
+
+## Scenes
+
+Scenes allow you to create predefined settings for your {% term devices %}. Similar to a driving mode on phones, or driver profiles in cars, it can change an environment to suit you. For example, your *watching films* {% term scene %} may dim the lighting, switch on the TV and increase its volume. This can be saved as a {% term scene %} and used without having to set individual {% term devices %} every time.
+
+To learn how to use {% term scenes %}, refer to the [scene](/integrations/scene/) documentation.
+
+![Scenes](/images/getting-started/scene_02.png)
+
+## Apps
+
+Apps are applications that run alongside Home Assistant on the same system, such as a file editor. Apps are only available on {% term "Home Assistant Operating System" %}. For details, refer to [Apps and integrations](/docs/apps-and-integrations/#apps).
+
+Among the most used apps are the ones that provide [file access and edit files](/docs/configuration/#to-set-up-access-to-the-files-and-prepare-an-editor) in Home Assistant.
+
+{% include getting-started/next_step.html step="Edit the dashboard" link="/getting-started/onboarding_dashboard/" %}

@@ -1,32 +1,23 @@
 ---
-title: IHC Controller
 description: Instructions on how to integrate the IHC integrations with Home Assistant
-ha_category:
-  - Hub
-  - Binary Sensor
-  - Sensor
-  - Light
-  - Switch
 ha_release: 0.62
-ha_iot_class: Local Push
 ha_domain: ihc
-ha_platforms:
-  - binary_sensor
-  - light
-  - sensor
-  - switch
+related:
+  - docs: /docs/configuration/
+    title: Configuration file
 ---
 
-IHC Controller integration for Home Assistant allows you to connect the LK IHC controller to Home Assistant. The controller is sold under other names in different countries - "ELKO Living system" in Sweden and Norway.
+The **IHC Controller** {% term integration %} for Home Assistant allows you to connect the LK IHC controller to Home Assistant. The controller is sold under other names in different countries - "ELKO Living system" in Sweden and Norway.
 
 There is currently support for the following device types within Home Assistant:
 
-- [Binary Sensor](#binary-sensor)
+- [Binary sensor](#binary-sensor)
 - [Sensor](#sensor)
 - [Light](#light)
 - [Switch](#switch)
 
-An `ihc` section must be present in the `configuration.yaml` file and contain the following options:
+An `ihc` section must be present in the {% term "`configuration.yaml`" %} file and contain the following options:
+{% include integrations/restart_ha_after_config_inclusion.md %}
 
 ```yaml
 # Example configuration.yaml entry for two IHC controllers
@@ -58,7 +49,7 @@ auto_setup:
   type: boolean
   default: true
 info:
-  description: Shows the IHC "name", "note" and "position" attributes of each component. This will make it easier to identify the IHC products within Home Assistant.
+  description: Shows the IHC "name", "note" and "position" attributes of each integration. This will make it easier to identify the IHC products within Home Assistant.
   required: false
   type: boolean
   default: true
@@ -68,11 +59,11 @@ info:
 
 If the auto setup is enabled, the `ihc` integration will automatically find IHC products and insert these as devices in Home Assistant. To disable this set auto_setup to false. See the individual device types for a list of IHC products to be recognized automatically.
 
-Components will get a default name that is a combination of the IHC group and IHC resource id. If you want to change the display names use the [Customizing entities](/docs/configuration/customizing-devices/).
+Components will get a default name that is a combination of the IHC group and IHC resource id. If you want to change the display names use the [Customizing entities](/docs/configuration/customizing-entities/).
 
 ## Manual setup
 
-Each device is associated with an IHC resource id. To manually setup integrations you specify resource ids from the IHC project. The IHC project is the file you edit/upload to the IHC Controller using LK IHC Visual - or similar program if your controller is not the LK brand.
+Each device is associated with an IHC resource id. To manually set up integrations you specify resource ids from the IHC project. The IHC project is the file you edit/upload to the IHC Controller using LK IHC Visual - or similar program if your controller is not the LK brand.
 
 The project file is an XML file and you can view it with any text/XML editor. You can rename it to have the XML extension and use a browser like Chrome or Internet Explorer. The resources are the \<airlink_xxx> or \<dataline_xxx> elements. Shown as inputs or outputs of products in the IHC application. You can also use inputs and outputs from function blocks. These are the \<resource_input> and \<resource_output> elements from the project file.
 
@@ -82,9 +73,9 @@ If you want an easier way to get the IHC resource ids, you can download the [Alt
 
 See the manual of each device type for configuration options.
 
-## Binary Sensor
+## Binary sensor
 
-Before you can use the IHC Binary Sensor platform, you must setup the IHC Component.
+Before you can use the IHC Binary Sensor platform, you must set up the IHC integration.
 
 When auto setup is enabled the following products will be found in the IHC project and setup as binary sensors:
 
@@ -118,7 +109,7 @@ ihc:
 
 {% configuration %}
 binary_sensor:
-  description: List of binary sensors to setup manually.
+  description: List of binary sensors to set up manually.
   required: false
   type: map
   keys:
@@ -153,7 +144,7 @@ The resource id should be an id of a boolean IHC resource. For more information 
 
 ## Sensor
 
-Before you can use the IHC Sensor platform, you must setup the IHC Component.
+Before you can use the IHC Sensor platform, you must set up the IHC integration.
 
 When auto setup is enabled the following products will be found in the IHC project and setup as sensors:
 
@@ -181,7 +172,7 @@ ihc:
 
 {% configuration %}
 sensor:
-  description: List of sensors to setup manually.
+  description: List of sensors to set up manually.
   required: false
   type: map
   keys:
@@ -211,15 +202,18 @@ The resource id should be a IHC float resource. For more information about IHC r
 
 ## Light
 
-Before you can use the IHC Light platform, you must setup the IHC Component.
+Before you can use the IHC Light platform, you must set up the IHC integration.
 
 When auto setup is enabled the following products will be found in the IHC project and setup as light devices:
 
 - Wireless lamp outlet dimmer
 - Wireless dimmer
 - Wireless combi dimmer 4 buttons
+- Wireless combi dimmer 4 buttons touch
+- Wireless combi dimmer 2 buttons touch
 - Wireless lamp outlet relay
 - Wireless combi relay 4 buttons
+- Wireless combi relay 2 buttons
 - Wireless mobile dimmer
 - Dataline lamp outlet
 
@@ -239,7 +233,7 @@ ihc:
 
 {% configuration %}
 light:
-  description: List of lights to setup manually
+  description: List of lights to set up manually
   required: false
   type: map
   keys:
@@ -261,7 +255,7 @@ light:
       required: false
       type: integer
     name:
-      description: The name of the component
+      description: The name of the integration
       required: false
       type: string
     note:
@@ -278,7 +272,7 @@ In the example above 12345 is ihc resource id and "tablelight" is the name. The 
 
 ## Switch
 
-Before you can use the IHC Switch platform, you must setup the IHC Component.
+Before you can use the IHC Switch platform, you must set up the IHC integration.
 
 When auto setup is enabled the following products will be found in the ihc project and setup as switch devices:
 
@@ -302,7 +296,7 @@ ihc:
 
 {% configuration %}
 switch:
-  description: List of switches to setup manually
+  description: List of switches to set up manually
   required: false
   type: map
   keys:
@@ -319,7 +313,7 @@ switch:
       required: false
       type: integer
     name:
-      description: The name of the component
+      description: The name of the integration
       required: false
       type: string
     note:
@@ -334,46 +328,4 @@ switch:
 
 The resource id should be a boolean resource (On/Off). For more information about IHC resource ids see [Manual Setup](#manual-setup).
 
-## Services
-
-Below are the service functions for the IHC integrations.
-
-### Service `ihc.pulse`
-
-| Service data attribute | Optional | Description                                                                                         |
-| ---------------------- | -------- | --------------------------------------------------------------------------------------------------- |
-| `controller_id`        | yes      | If you have multiple controller, this is the index of you controller starting with 0 (0 is default) |
-| `ihc_id`               | no       | The boolean IHC resource ID.                                                                        |
-
-This service will send a pulse to the specified IHC resource.
-On and Off with a 400ms delay.
-
-### Service `ihc.set_runtime_value_bool`
-
-| Service data attribute | Optional | Description                                                                                         |
-| ---------------------- | -------- | --------------------------------------------------------------------------------------------------- |
-| `controller_id`        | yes      | If you have multiple controller, this is the index of you controller starting with 0 (0 is default) |
-| `ihc_id`               | no       | The boolean IHC resource ID.                                                                        |
-| `value`                | no       | The boolean value to set. (true or false)                                                           |
-
-This service will set the specified boolean resource on the IHC controller.
-
-### Service `ihc.set_runtime_value_float`
-
-| Service data attribute | Optional | Description                                                                                         |
-| ---------------------- | -------- | --------------------------------------------------------------------------------------------------- |
-| `controller_id`        | yes      | If you have multiple controller, this is the index of you controller starting with 0 (0 is default) |
-| `ihc_id`               | no       | The float IHC resource ID.                                                                          |
-| `value`                | no       | The float value to set.                                                                             |
-
-This service will set the specified float resource on the IHC controller.
-
-### Service `ihc.set_runtime_value_int`
-
-| Service data attribute | Optional | Description                                                                                         |
-| ---------------------- | -------- | --------------------------------------------------------------------------------------------------- |
-| `controller_id`        | yes      | If you have multiple controller, this is the index of you controller starting with 0 (0 is default) |
-| `ihc_id`               | no       | The integer IHC resource ID.                                                                        |
-| `value`                | no       | The integer value to set.                                                                           |
-
-This service will set the specified integer resource on the IHC controller.
+{% include integrations/actions.md %}

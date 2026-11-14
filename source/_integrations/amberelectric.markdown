@@ -1,29 +1,18 @@
 ---
-title: Amber Electric
 description: Instructions on how to integrate Amber Electric live prices within Home Assistant.
-ha_category:
-  - Sensor
-  - Energy
 ha_release: '2021.10'
-ha_iot_class: Cloud Polling
-ha_config_flow: true
-ha_codeowners:
-  - '@madpilot'
 ha_domain: amberelectric
-ha_platforms:
-  - binary_sensor
-  - sensor
 ---
 
-[Amber](https://www.amber.com.au/) is an Australian electricity retailer that provides access to wholesale electricity prices. Customers monitor the wholesale price and shift their energy usage to cheaper, greener times. This saves them money and supports the shift to a more renewably-powered Australia.
+[Amber](https://www.amber.com.au/) is an Australian electricity retailer that provides access to wholesale electricity prices. Customers monitor the wholesale price and shift their energy usage to cheaper, greener times. This saves them money and supports Australia's shift towards more renewable energy. Customers can also sell their unused electricity for fluctuating prices. This differs from other wholesale providers, where selling prices vary based on grid demand.
 
-Using this integration, customers can go a step further - setting up devices to automatically shift energy usage to cheaper and greener times, based on real-time electricity prices and forecasts
+Using the **Amber Electric** {% term integration %}, customers can go a step further - setting up devices to automatically shift energy usage to cheaper and greener times, based on real-time electricity prices and forecasts
 
 ## Getting an API Key
 
-To use this integration, you will need to generate an API key.
+To use this {% term integration %}, you will need to generate an API key.
 
-1. Login to your Amber account at: https://app.amber.com.au
+1. Log in to your [Amber account](https://app.amber.com.au)
 2. Click _Settings_
 3. Enable _Developer Mode_
 4. Click _Generate API Key_
@@ -40,12 +29,15 @@ Prices are split up into three channel types:
 - **Controlled Load** - A special channel that is only activated during off-peak times. Often electric hot water systems are connected to the controlled load channel.
 - **Feed In** - A channel that records exported power from solar panels and batteries.
 
-It exposes the following sensors for each channel type:
+It exposes the following {% term sensors %} for each channel type:
 
 - **Price** - Your current electricity price in $/kWh
 - **Forecast** - The forecasted prices for the next 12 hours
+- **Descriptor** - A description of the price. Useful if you want to create an Amber light that matches the app. Possible values: `extremely_low`, `very_low`, `low`, `neutral`, `high`, and `spike`.
 
 There are two additional sensors:
 
 - **Price Spike** - A binary sensor that indicates when the current price is over $3/kWh.
 - **Renewables** - The percentage of renewable energy currently in the grid.
+
+{% include integrations/actions.md %}

@@ -1,20 +1,18 @@
 ---
-title: Skybeacon
 description: Instructions on how to integrate MiFlora BLE plant sensor with Home Assistant.
-ha_category:
-  - DIY
 ha_release: 0.37
-ha_iot_class: Local Polling
 ha_domain: skybeacon
-ha_platforms:
-  - sensor
+related:
+  - docs: /docs/configuration/
+    title: Configuration file
 ---
 
-The `skybeacon` sensor platform supports [CR2477](https://cnsky9.en.alibaba.com/)-powered [iBeacon](https://en.wikipedia.org/wiki/IBeacon)/eddystone sensors that come with temperature/sensor module.
+The **Skybeacon** {% term integration %} supports [CR2477](https://cnsky9.en.alibaba.com/)-powered [iBeacon](https://en.wikipedia.org/wiki/IBeacon)/eddystone sensors that come with temperature/sensor module.
 
 ## Configuration
 
-To use your Skybeacon sensor in your installation, add the following to your `configuration.yaml` file:
+To use your Skybeacon {% term integration %} in your installation, add the following to your {% term "`configuration.yaml`" %} file.
+{% include integrations/restart_ha_after_config_inclusion.md %}
 
 ```yaml
 # Example configuration.yaml entry

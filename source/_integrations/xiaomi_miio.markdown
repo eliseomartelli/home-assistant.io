@@ -1,169 +1,262 @@
 ---
-title: Xiaomi Miio
-description: Instructions on how to integrate Xiaomi devices using the Xiaomi Miio integration within Home Assistant.
-ha_category:
-  - Hub
-  - Fan
-  - Alarm
-  - Presence Detection
-  - Remote
-  - Health
-  - Vacuum
-  - Light
-ha_iot_class: Local Polling
+description: Instructions on how to integrate Xiaomi devices using the Xiaomi Home integration within Home Assistant.
 ha_release: 0.51
-ha_codeowners:
-  - '@rytilahti'
-  - '@syssi'
-  - '@starkillerOG'
-  - '@bieniu'
 ha_domain: xiaomi_miio
-ha_config_flow: true
-ha_zeroconf: true
-ha_platforms:
-  - air_quality
-  - alarm_control_panel
-  - binary_sensor
-  - device_tracker
-  - fan
-  - humidifier
-  - light
-  - number
-  - remote
-  - sensor
-  - select
-  - switch
-  - vacuum
 ---
 
-The Xiaomi Miio integration supports the following devices:
+The **Xiaomi Home** {% term integration %} supports the following devices:
 
 - [Xiaomi Gateway](#xiaomi-gateway)
-- [Xiaomi device tracker (Xiaomi Mi WiFi Repeater 2)](#xiaomi-device-tracker-xiaomi-mi-wifi-repeater-2)
+- [Xiaomi device tracker](#xiaomi-device-tracker)
 - [Xiaomi Air Purifier, Air Humidifier and Standing Fan](#xiaomi-air-purifier-air-humidifier-and-standing-fan)
 - [Xiaomi Air Quality Monitor](#xiaomi-air-quality-monitor)
 - [Xiaomi IR Remote](#xiaomi-ir-remote)
 - [Xiaomi Mi Robot Vacuum](#xiaomi-mi-robot-vacuum)
 - [Xiaomi Philips Light](#xiaomi-philips-light)
-- [Xiaomi Smart WiFi Socket and Smart Power Strip](#xiaomi-smart-wifi-socket-and-smart-power-strip)
+- [Xiaomi Smart Wi-Fi Socket and Smart Power Strip](#xiaomi-smart-wi-fi-socket-and-smart-power-strip)
 
 ## Prerequisites
 
-Most Xiaomi Miio devices support configuration using the Home Assistant UI,
-except for the [Xiaomi device tracker](#xiaomi-device-tracker-xiaomi-mi-wifi-repeater-2)
-and [Xiaomi IR Remote](#xiaomi-ir-remote).
+Most Xiaomi Home devices are configured using the Home Assistant UI.
+The [Xiaomi device tracker](#xiaomi-device-tracker) and [Xiaomi IR Remote](#xiaomi-ir-remote) require manual YAML configuration.
 
-Please read the linked sections for those devices for more information.
+Before you add a device to Home Assistant:
+
+1. Install the Xiaomi Home app and sign in to your account.
+2. Add the device to the Xiaomi Home app.
+3. Use the Xiaomi Home app instead of a vendor-specific app, such as the Roborock app.
+
+{% note %}
+Xiaomi Home devices might not be discovered across subnets or VLANs.
+For network requirements and possible solutions, see the [python-miio troubleshooting guide](https://python-miio.readthedocs.io/en/latest/troubleshooting.html#discover-devices-across-subnets).
+{% endnote %}
 
 {% include integrations/config_flow.md %}
 
-It is recommend to supply your Xiaomi cloud credentials during configuration
-to automatically connect to your devices. You need to specify the cloud server
-you used in the Xiaomi Home App (where you initially setup the device). There are
-6 servers: `cn`, `de`, `i2`, `ru`, `sg` and `us`; please see
-[this page](https://www.openhab.org/addons/bindings/miio/#country-servers) for
-the server to use for each country.
+During setup, enter your Xiaomi Home account credentials and select the server region you use in the Xiaomi Home app.
+Home Assistant retrieves your device's connection information and API token, then connects to the device over your local network.
+
+If you cannot use your Xiaomi Home account, select **Configure manually (not recommended)**.
+You need the device's IP address and 32-character API token.
+For instructions on finding the API token, refer to [Retrieving the access token](#retrieving-the-access-token).
+
+{% configuration_basic %}
+Username:
+  description: The email address or username for your Xiaomi Home account.
+Password:
+  description: The password for your Xiaomi Home account.
+Server region:
+  description: The server region you use in the Xiaomi Home app. For a list of regions, refer to the [country server list](https://www.openhab.org/addons/bindings/miio/#country-servers).
+Configure manually (not recommended):
+  description: Turn this on to set up a device using its IP address and API token instead of your Xiaomi Home account.
+IP address:
+  description: The IP address of the device. You only need it when you set up a device manually and Home Assistant has not discovered it.
+API token:
+  description: The 32-character API token for the device.
+{% endconfiguration_basic %}
+
+## Troubleshooting
+
+{% details "Devices on different subnets are not discovered" %}
+
+### Symptom: The device is not discovered
+
+Your Xiaomi Home device is not discovered when it is on a different subnet or VLAN from Home Assistant.
+
+#### Description
+
+Xiaomi Home devices might not communicate across subnets or VLANs.
+
+#### Resolution
+
+For network requirements and possible solutions, see the [python-miio troubleshooting guide](https://python-miio.readthedocs.io/en/latest/troubleshooting.html#discover-devices-across-subnets).
+
+{% enddetails %}
+
+{% details "Roborock vacuum is not detected" %}
+
+### Symptom: The vacuum is not discovered
+
+Your Roborock vacuum is not discovered by the Xiaomi Home integration.
+
+#### Description
+
+The Xiaomi Home integration requires the vacuum to be connected to the Xiaomi Home app, not the Roborock app.
+
+#### Resolution
+
+Connect the vacuum to the Xiaomi Home app.
+For more information, see the [python-miio troubleshooting guide](https://python-miio.readthedocs.io/en/latest/troubleshooting.html#roborock-vacuum-not-detected).
+
+{% enddetails %}
+
+{% details "Connection is intermittent" %}
+
+### Symptom: The device is intermittently unavailable
+
+The device periodically stops responding in Home Assistant.
+
+#### Description
+
+Blocking network access can cause the device to stop responding until its internal watchdog restarts its software.
+
+#### Resolution
+
+If you block the vacuum's internet access, configure your firewall to reject connections (`REJECT`) instead of silently dropping them (`DROP`).
+For more information, see the [python-miio troubleshooting guide](https://python-miio.readthedocs.io/en/latest/troubleshooting.html#intermittent-connection-issues-timeouts-xiaomi-vacuum).
+
+{% enddetails %}
 
 ## Xiaomi Gateway
 
-The `xiaomi_miio` gateway integration allows you to control the gateway and its connected subdevices.
+The Xiaomi Home {% term integration %} allows you to control the gateway and its connected subdevices.
 
-### Supported Xiaomi gateway models:
+### Supported Xiaomi gateway models
 
-| Gateway name       | Zigbee id           | model                    | supported                                 |
-| ------------------ | ------------------- | ------------------------ |------------------------------------------ |
-| Chinese version    | lumi.gateway.v3     | DGNWG02LM                | yes                                       |
-| European version   | lumi.gateway.mieu01 | ZHWG11LM-763 / DGNWQ05LM | yes (cloud credentials needed)            |
-| Aqara hub          | lumi.gateway.aqhm01 | ZHWG11LM                 | yes                                       |
-| Mijia Zigbee 3.0   | lumi.gateway.mgl03  | ZNDMWG03LM               | yes                                       |
-| Aqara AC Companion | lumi.acpartner.v1   | KTBL01LM                 | untested                                  |
-| Mi AC Companion    | lumi.acpartner.v2   | KTBL02LM                 | untested                                  |
-| Aqara AC Companion | lumi.acpartner.v3   | KTBL11LM                 | yes                                       |
+| Gateway            | Model                       | Zigbee ID             | Home Assistant support |
+| ------------------ | --------------------------- | --------------------- | ---------------------- |
+| European version   | `ZHWG11LM-763`, `DGNWQ05LM` | `lumi.gateway.mieu01` | Supported with Xiaomi Home credentials |
+| Aqara AC Companion | `KTBL11LM`                  | `lumi.acpartner.v3`   | Supported              |
+| Aqara hub          | `ZHWG11LM`                  | `lumi.gateway.aqhm01` | Supported              |
+| Chinese version    | `DGNWG02LM`                 | `lumi.gateway.v3`     | Supported              |
+| Mijia Zigbee 3.0   | `ZNDMWG03LM`                | `lumi.gateway.mgl03`  | Supported              |
+| Aqara AC Companion | `KTBL01LM`                  | `lumi.acpartner.v1`   | Not tested             |
+| Mi AC Companion    | `KTBL02LM`                  | `lumi.acpartner.v2`   | Not tested             |
 
-Some gateways (lumi.gateway.mieu01) do not support getting the connected subdevices locally. For those gateways, cloud credentials can be specified during the config flow and the "Use cloud to get connected subdevices" can be enabled in the options flow (after setting up the integration, click Configuration in the sidebar, then click Integrations and then click Options on the already set up Xiaomi Miio Gateway integration). The connected subdevices will then be retrieved from the Xiaomi Miio cloud (internet), control and status updates of those subdevices will then further take place over local network connection. A re-authentication flow may be triggered when no cloud credentials are provided yet and are needed for that particular gateway model.
+### Retrieving connected subdevices through Xiaomi Home
 
-### Gateway Features
+Some gateways, such as `lumi.gateway.mieu01`, cannot retrieve connected subdevices locally.
+To add their subdevices, use the Xiaomi Home service.
 
-- Gateway alarm control (Turn on/off; see status `armed_away`, `disarmed`, `arming`)
-- Gateway light control (Turn on/off; change brightness; change color; see status)
-- Gateway illuminance sensor readout (illuminance value in lux)
+1. During setup, provide your Xiaomi Home account credentials.
+2. Go to {% my integrations title="**Settings** > **Devices & services**" %}.
+3. Select **Xiaomi Home**, then select the cogwheel {% icon "mdi:cog-outline" %} (**Configure**) next to your gateway.
+4. Turn on **Use Xiaomi Home service to get connected subdevices**, then select **Submit**.
 
-Not yet implemented features (but possible):
+Home Assistant retrieves the subdevices from Xiaomi Home, then controls them and receives their status updates over your local network.
+If credentials are required but have not been provided, Home Assistant starts a reauthentication flow.
 
-- Gateway internet radio (only chinese stations)
-- Gateway ringtones/sounds
+### Gateway features
+
+- **Alarm**: Arms or disarms the gateway alarm, and shows whether it is armed away, disarmed, or arming.
+- **Light**: Turns the gateway light on or off, and sets its brightness and color.
+- **Illuminance**: Shows the illuminance measured by the gateway, in lux.
 
 ### Supported subdevices
 
-These subdevices are fully implemented in HomeAssistant:
+Home Assistant supports these subdevices:
 
-| Subdevice name                   | Zigbee id               | model           | features                                         |
-| -------------------------------- | ----------------------- | --------------- | ------------------------------------------------ |
-| Weather sensor                   | lumi.sensor_ht          | WSDCGQ01LM      | readout `temperature` and `humidity`             |
-| Weather sensor                   | lumi.weather.v1         | WSDCGQ11LM      | readout `temperature`, `humidity` and `pressure` |
-| Wall switch single               | lumi.ctrl_ln1           | QBKG11LM        | load_power, status, turn_on, turn_off, toggle    |
-| Wall switch single               | lumi.ctrl_ln1.aq1       | QBKG11LM        | load_power, status, turn_on, turn_off, toggle    |
-| Wall switch no neutral           | lumi.ctrl_neutral1.v1   | QBKG04LM        | status, turn_on, turn_off, toggle                |
-| Wall switch double               | lumi.ctrl_ln2           | QBKG12LM        | load_power, status, turn_on, turn_off, toggle    |
-| Wall switch double               | lumi.ctrl_ln2.aq1       | QBKG12LM        | load_power, status, turn_on, turn_off, toggle    |
-| Wall switch double no neutral    | lumi.ctrl_neutral2      | QBKG03LM        | status, turn_on, turn_off, toggle                |
-| D1 wall switch triple            | lumi.switch.n3acn3      | QBKG26LM        | load_power, status, turn_on, turn_off, toggle    |
-| D1 wall switch triple no neutral | lumi.switch.l3acn3      | QBKG25LM        | load_power, status, turn_on, turn_off, toggle    |
-| Wall outlet                      | lumi.ctrl_86plug.v1     | QBCZ11LM        | status, turn_on, turn_off, toggle                |
-| Wall outlet                      | lumi.ctrl_86plug.aq1    | QBCZ11LM        | load_power, status, turn_on, turn_off, toggle    |
-| Plug                             | lumi.plug               | ZNCZ02LM        | load_power, status, turn_on, turn_off, toggle    |
-| Relay                            | lumi.relay.c2acn01      | LLKZMK11LM      | load_power, status, turn_on, turn_off, toggle    |
-| Smart bulb E27                   | lumi.light.aqcn02       | ZNLDP12LM       | on/off, brightness, color temperature            |
-| IKEA smart bulb E27 white        | ikea.light.led1545g12   | LED1545G12      | on/off, brightness, color temperature            |
-| IKEA smart bulb E27 white        | ikea.light.led1546g12   | LED1546G12      | on/off, brightness, color temperature            |
-| IKEA smart bulb E12 white        | ikea.light.led1536g5    | LED1536G5       | on/off, brightness, color temperature            |
-| IKEA smart bulb GU10 white       | ikea.light.led1537r6    | LED1537R6       | on/off, brightness, color temperature            |
-| IKEA smart bulb E27 white        | ikea.light.led1623g12   | LED1623G12      | on/off, brightness, color temperature            |
-| IKEA smart bulb GU10 white       | ikea.light.led1650r5    | LED1650R5       | on/off, brightness, color temperature            |
-| IKEA smart bulb E12 white        | ikea.light.led1649c5    | LED1649C5       | on/off, brightness, color temperature            |
+- **Weather sensor (WSDCGQ01LM)**
+  - Zigbee ID: `lumi.sensor_ht`
+  - Features: Temperature and humidity sensors
+- **Weather sensor (WSDCGQ11LM)**
+  - Zigbee ID: `lumi.weather.v1`
+  - Features: Temperature, humidity, and pressure sensors
+- **Wall switch single (QBKG11LM)**
+  - Zigbee ID: `lumi.ctrl_ln1`
+  - Features: On/off and toggle control, and a load power sensor
+- **Wall switch single (QBKG11LM)**
+  - Zigbee ID: `lumi.ctrl_ln1.aq1`
+  - Features: On/off and toggle control, and a load power sensor
+- **Wall switch no neutral (QBKG04LM)**
+  - Zigbee ID: `lumi.ctrl_neutral1.v1`
+  - Features: On/off and toggle control
+- **Wall switch double (QBKG12LM)**
+  - Zigbee ID: `lumi.ctrl_ln2`
+  - Features: On/off and toggle control, and a load power sensor
+- **Wall switch double (QBKG12LM)**
+  - Zigbee ID: `lumi.ctrl_ln2.aq1`
+  - Features: On/off and toggle control, and a load power sensor
+- **Wall switch double no neutral (QBKG03LM)**
+  - Zigbee ID: `lumi.ctrl_neutral2`
+  - Features: On/off and toggle control
+- **D1 wall switch triple (QBKG26LM)**
+  - Zigbee ID: `lumi.switch.n3acn3`
+  - Features: On/off and toggle control, and a load power sensor
+- **D1 wall switch triple no neutral (QBKG25LM)**
+  - Zigbee ID: `lumi.switch.l3acn3`
+  - Features: On/off and toggle control, and a load power sensor
+- **Wall outlet (QBCZ11LM)**
+  - Zigbee ID: `lumi.ctrl_86plug.v1`
+  - Features: On/off and toggle control
+- **Wall outlet (QBCZ11LM)**
+  - Zigbee ID: `lumi.ctrl_86plug.aq1`
+  - Features: On/off and toggle control, and a load power sensor
+- **Plug (ZNCZ02LM)**
+  - Zigbee ID: `lumi.plug`
+  - Features: On/off and toggle control, and a load power sensor
+- **Relay (LLKZMK11LM)**
+  - Zigbee ID: `lumi.relay.c2acn01`
+  - Features: On/off and toggle control, and a load power sensor
+- **Smart bulb E27 (ZNLDP12LM)**
+  - Zigbee ID: `lumi.light.aqcn02`
+  - Features: On/off, brightness, and color temperature control
+- **IKEA smart bulb E27 white (LED1545G12)**
+  - Zigbee ID: `ikea.light.led1545g12`
+  - Features: On/off, brightness, and color temperature control
+- **IKEA smart bulb E27 white (LED1546G12)**
+  - Zigbee ID: `ikea.light.led1546g12`
+  - Features: On/off, brightness, and color temperature control
+- **IKEA smart bulb E12 white (LED1536G5)**
+  - Zigbee ID: `ikea.light.led1536g5`
+  - Features: On/off, brightness, and color temperature control
+- **IKEA smart bulb GU10 white (LED1537R6)**
+  - Zigbee ID: `ikea.light.led1537r6`
+  - Features: On/off, brightness, and color temperature control
+- **IKEA smart bulb E27 white (LED1623G12)**
+  - Zigbee ID: `ikea.light.led1623g12`
+  - Features: On/off, brightness, and color temperature control
+- **IKEA smart bulb GU10 white (LED1650R5)**
+  - Zigbee ID: `ikea.light.led1650r5`
+  - Features: On/off, brightness, and color temperature control
+- **IKEA smart bulb E12 white (LED1649C5)**
+  - Zigbee ID: `ikea.light.led1649c5`
+  - Features: On/off, brightness, and color temperature control
 
-### Recognized subdevices (not yet implemented)
+### Recognized but unsupported subdevices
 
-These subdevices are recognized by the python-miio code but are still being worked on (not yet implemented).
+Home Assistant recognizes these subdevices but does not create entities for them.
 
-| Subdevice name                   | Zigbee id               | model           |
-| -------------------------------- | ----------------------- | --------------- |
-| Button                           | lumi.sensor_switch      | WXKG01LM        |
-| Button                           | lumi.sensor_switch.aq2  | WXKG11LM 2015   |
-| Button                           | lumi.sensor_switch.aq3  | WXKG12LM        |
-| Button                           | lumi.remote.b1acn01     | WXKG11LM 2018   |
-| Cube                             | lumi.sensor_cube.v1     | MFKZQ01LM       |
-| Cube                             | lumi.sensor_cube.aqgl01 | MFKZQ01LM       |
-| Motion sensor                    | lumi.sensor_motion      | RTCGQ01LM       |
-| Motion sensor                    | lumi.sensor_motion.aq2  | RTCGQ11LM       |
-| Door sensor                      | lumi.sensor_magnet      | MCCGQ01LM       |
-| Door sensor                      | lumi.sensor_magnet.aq2  | MCCGQ11LM       |
-| Vibration sensor                 | lumi.vibration.aq1      | DJT11LM         |
-| Honeywell smoke detector         | lumi.sensor_smoke       | JTYJ-GD-01LM/BW |
-| Honeywell natural gas detector   | lumi.sensor_natgas      | JTQJ-BF-01LM/BW |
-| Water leak sensor                | lumi.sensor_wleak.aq1   | SJCGQ11LM       |
-| Remote switch single             | lumi.sensor_86sw1.v1    | WXKG03LM 2016   |
-| Remote switch single             | lumi.remote.b186acn01   | WXKG03LM 2018   |
-| D1 remote switch single          | lumi.remote.b186acn02   | WXKG06LM        |
-| Remote switch double             | lumi.sensor_86sw2.v1    | WXKG02LM 2016   |
-| Remote switch double             | lumi.remote.b286acn01   | WXKG02LM 2018   |
-| D1 remote switch double          | lumi.remote.b286acn02   | WXKG07LM        |
-| Curtain                          | lumi.curtain            | ZNCLDJ11LM      |
-| Curtain                          | lumi.curtain.aq2        | ZNGZDJ11LM      |
-| Curtain B1                       | lumi.curtain.hagl04     | ZNCLDJ12LM      |
-| Door lock S1                     | lumi.lock.aq1           | ZNMS11LM        |
-| Door lock S2                     | lumi.lock.acn02         | ZNMS12LM        |
-| Door lock S2 pro                 | lumi.lock.acn03         | ZNMS13LM        |
-| Vima cylinder lock               | lumi.lock.v1            | A6121           |
-| Thermostat S2                    | lumi.airrtc.tcpecn02    | KTWKQ03ES       |
+Each item lists the device name, model number, and Zigbee ID.
 
-## Xiaomi device tracker (Xiaomi Mi WiFi Repeater 2)
+- **Button** (WXKG01LM): `lumi.sensor_switch`
+- **Button** (WXKG11LM 2015): `lumi.sensor_switch.aq2`
+- **Button** (WXKG12LM): `lumi.sensor_switch.aq3`
+- **Button** (WXKG11LM 2018): `lumi.remote.b1acn01`
+- **Cube** (MFKZQ01LM): `lumi.sensor_cube.v1`
+- **Cube** (MFKZQ01LM): `lumi.sensor_cube.aqgl01`
+- **Motion sensor** (RTCGQ01LM): `lumi.sensor_motion`
+- **Motion sensor** (RTCGQ11LM): `lumi.sensor_motion.aq2`
+- **Door sensor** (MCCGQ01LM): `lumi.sensor_magnet`
+- **Door sensor** (MCCGQ11LM): `lumi.sensor_magnet.aq2`
+- **Vibration sensor** (DJT11LM): `lumi.vibration.aq1`
+- **Honeywell smoke detector** (JTYJ-GD-01LM/BW): `lumi.sensor_smoke`
+- **Honeywell natural gas detector** (JTQJ-BF-01LM/BW): `lumi.sensor_natgas`
+- **Water leak sensor** (SJCGQ11LM): `lumi.sensor_wleak.aq1`
+- **Remote switch single** (WXKG03LM 2016): `lumi.sensor_86sw1.v1`
+- **Remote switch single** (WXKG03LM 2018): `lumi.remote.b186acn01`
+- **D1 remote switch single** (WXKG06LM): `lumi.remote.b186acn02`
+- **Remote switch double** (WXKG02LM 2016): `lumi.sensor_86sw2.v1`
+- **Remote switch double** (WXKG02LM 2018): `lumi.remote.b286acn01`
+- **D1 remote switch double** (WXKG07LM): `lumi.remote.b286acn02`
+- **Curtain** (ZNCLDJ11LM): `lumi.curtain`
+- **Curtain** (ZNGZDJ11LM): `lumi.curtain.aq2`
+- **Curtain B1** (ZNCLDJ12LM): `lumi.curtain.hagl04`
+- **Door lock S1** (ZNMS11LM): `lumi.lock.aq1`
+- **Door lock S2** (ZNMS12LM): `lumi.lock.acn02`
+- **Door lock S2 pro** (ZNMS13LM): `lumi.lock.acn03`
+- **Vima cylinder lock** (A6121): `lumi.lock.v1`
+- **Thermostat S2** (KTWKQ03ES): `lumi.airrtc.tcpecn02`
 
-The `xiaomi_miio` device tracker platform is observing your Xiaomi Mi WiFi Repeater 2 and reporting all associated WiFi clients.
+## Xiaomi device tracker
 
-Please follow the instructions on [Retrieving the Access Token](/integrations/xiaomi_miio/#retrieving-the-access-token) to get the API token.
+The Xiaomi Mi Wi-Fi Repeater 2 device tracker requires manual YAML configuration.
+It reports the Wi-Fi clients associated with the repeater.
 
-To add a Xiaomi Mi WiFi Repeater device tracker to your installation, add the following to your `configuration.yaml` file:
+### Configure the device tracker
+
+To configure the device tracker, add its IP address and access token to your {% term "`configuration.yaml`" %} file.
+For instructions on finding the access token, refer to [Retrieving the access token](#retrieving-the-access-token).
 
 ```yaml
 device_tracker:
@@ -174,11 +267,11 @@ device_tracker:
 
 {% configuration %}
 host:
-  description: The IP address of your miio device.
+  description: The IP address of your Xiaomi device.
   required: true
   type: string
 token:
-  description: The API token of your miio device.
+  description: The access token of your Xiaomi Mi Wi-Fi Repeater 2.
   required: true
   type: string
 {% endconfiguration %}
@@ -187,791 +280,994 @@ token:
 
 The Air Purifiers, Air Humidifiers and Standing Fans use multiple platforms to allow you to set the control modes and settings of the device.
 
-Supported devices:
+### Supported device models
 
-| Name                   | Model                  | Model no. |
-| ---------------------- | ---------------------- | --------- |
-| Air Purifier           | zhimi.airpurifier.v1   | |
-| Air Purifier 2         | zhimi.airpurifier.v2   | FJY4006CN |
-| Air Purifier V3        | zhimi.airpurifier.v3   | |
-| Air Purifier V5        | zhimi.airpurifier.v5   | |
-| Air Purifier Pro       | zhimi.airpurifier.v6   | |
-| Air Purifier Pro V7    | zhimi.airpurifier.v7   | |
-| Air Purifier 2 (mini)  | zhimi.airpurifier.m1   | |
-| Air Purifier (mini)    | zhimi.airpurifier.m2   | |
-| Air Purifier MA1       | zhimi.airpurifier.ma1  | |
-| Air Purifier MA2       | zhimi.airpurifier.ma2  | |
-| Air Purifier 2S        | zhimi.airpurifier.mc1  | |
-| Air Purifier Super     | zhimi.airpurifier.sa1  | |
-| Air Purifier Super 2   | zhimi.airpurifier.sa2  | |
-| Air Purifier 3 (2019)  | zhimi.airpurifier.ma4  | |
-| Air Purifier 3H (2019) | zhimi.airpurifier.mb3  | |
-| Air Purifier 3C        | zhimi.airpurifier.mb4  | |
-| Air Fresh VA2          | zhimi.airfresh.va2     | |
-| Air Humidifier         | zhimi.humidifier.v1    | |
-| Air Humidifier CA1     | zhimi.humidifier.ca1   | |
-| Air Humidifier CA4     | zhimi.humidifier.ca4   | |
-| Air Humidifier CB1     | zhimi.humidifier.cb1   | |
-| Air Humidifier JSQ     | deerma.humidifier.jsq  | |
-| Air Humidifier JSQ1    | deerma.humidifier.jsq1 | |
-| Air Humidifier MJJSQ   | deerma.humidifier.mjjsq| |
-| Standing Fan 1X        | dmaker.fan.p5          | |
-| Inverter Pedestal Fan  | zhimi.fan.za1          | |
-| Standing Fan 2         | zhimi.fan.za3          | |
-| Standing Fan 2S        | zhimi.fan.za4          | |
-| Standing Fan           | zhimi.fan.sa1          | |
-| DC Pedestal Fan        | zhimi.fan.v2           | |
-| DC Pedestal Fan        | zhimi.fan.v3           | |
-| Standing Fan 1C        | dmaker.fan.1c          | |
-| Tower Fan              | dmaker.fan.p9          | |
-| Standing Fan 2         | dmaker.fan.p10         | |
-| Standing Fan Pro       | dmaker.fan.p11         | |
-| Standing Fan 3         | zhimi.fan.za5          | |
+The following list shows each device name and model ID.
 
-### Features
+- **Air Purifier**: `zhimi.airpurifier.v1`
+- **Air Purifier 2** (FJY4006CN): `zhimi.airpurifier.v2`
+- **Air Purifier V3**: `zhimi.airpurifier.v3`
+- **Air Purifier V5**: `zhimi.airpurifier.v5`
+- **Air Purifier Pro**: `zhimi.airpurifier.v6`
+- **Air Purifier Pro V7**: `zhimi.airpurifier.v7`
+- **Air Purifier 2 (mini)**: `zhimi.airpurifier.m1`
+- **Air Purifier (mini)**: `zhimi.airpurifier.m2`
+- **Air Purifier MA1**: `zhimi.airpurifier.ma1`
+- **Air Purifier MA2**: `zhimi.airpurifier.ma2`
+- **Air Purifier 2S**: `zhimi.airpurifier.mc1`
+- **Air Purifier Super**: `zhimi.airpurifier.sa1`
+- **Air Purifier Super 2**: `zhimi.airpurifier.sa2`
+- **Air Purifier 3 (2019) (AC-M6-SC)**: `zhimi.airpurifier.ma4`
+- **Air Purifier 3H (2019)**: `zhimi.airpurifier.mb3`
+- **Air Purifier Pro H**: `zhimi.airpurifier.va1`
+- **Air Purifier Pro H EU**: `zhimi.airpurifier.vb2`
+- **Air Purifier 3C**: `zhimi.airpurifier.mb4`
+- **Air Purifier 3C**: `zhimi.airp.mb4a`
+- **Air Purifier ZA1**: `zhimi.airpurifier.za1`
+- **Air Purifier 4 (AC-M16-SC)**: `zhimi.airp.mb5`
+- **Air Purifier 4 PRO (AC-M15-SC)**: `zhimi.airp.vb4`
+- **Air Fresh A1 (MJXFJ-150-A1)**: `dmaker.airfresh.a1`
+- **Air Fresh VA2**: `zhimi.airfresh.va2`
+- **Air Fresh VA4**: `zhimi.airfresh.va4`
+- **Air Fresh T2017 (MJXFJ-300-G1)**: `dmaker.airfresh.t2017`
+- **Air Humidifier**: `zhimi.humidifier.v1`
+- **Air Humidifier CA1**: `zhimi.humidifier.ca1`
+- **Air Humidifier CA4**: `zhimi.humidifier.ca4`
+- **Air Humidifier CB1**: `zhimi.humidifier.cb1`
+- **Air Humidifier JSQ**: `deerma.humidifier.jsq`
+- **Air Humidifier JSQ1**: `deerma.humidifier.jsq1`
+- **Air Humidifier MJJSQ**: `deerma.humidifier.mjjsq`
+- **Standing Fan 1X**: `dmaker.fan.p5`
+- **Inverter Pedestal Fan**: `zhimi.fan.za1`
+- **Standing Fan 2**: `zhimi.fan.za3`
+- **Standing Fan 2S**: `zhimi.fan.za4`
+- **Standing Fan**: `zhimi.fan.sa1`
+- **DC Pedestal Fan**: `zhimi.fan.v2`
+- **DC Pedestal Fan**: `zhimi.fan.v3`
+- **Standing Fan 1C**: `dmaker.fan.1c`
+- **Tower Fan**: `dmaker.fan.p9`
+- **Standing Fan 2**: `dmaker.fan.p10`
+- **Standing Fan Pro**: `dmaker.fan.p11`
+- **Standing Fan 2**: `dmaker.fan.p18`
+- **Standing Fan 2 Pro**: `dmaker.fan.p33`
+- **Standing Fan 3**: `zhimi.fan.za5`
 
-### Air Purifier 2 (zhimi.airpurifier.v2)
+Depending on the model, air purifiers that don't have their own section on this page can provide the following controls and entities.
 
-- Power (on, off)
-- Operation modes (Auto, Silent, Favorite, Idle)
-- Attributes (fan platform)
-  - `model`
-  - `mode`
-  - `sleep_time`
-  - `sleep_mode_learn_count`
-  - `extra_features`
-  - `turbo_mode_supported`
-  - `use_time`
-  - `button_pressed`
-  - `sleep_mode`
-- Number entities
+### Controls
 
-Number                  | Description
------------------------ | -----------------------
-Favorite Level          | Set the favorite level
+- Turn the air purifier on or off.
+- Select a preset mode: Auto, Silent, Favorite, or Idle.
 
-- Sensor entities
+### Attributes
 
-Sensor                  | Description
------------------------ | -----------------------
-Filter Life Remaining   | The remaining life of the filter
-Filter Use              | Filter usage time in hours
-Humidity                | The current humidity measured
-Motor Speed             | The current motor speed measured in rpm
-PM2.5                   | The current particulate matter 2.5 measured
-Purify Volume           | The volume of purified air in qubic meter
-Temperature             | The current temperature measured
+In addition to the standard fan attributes, the fan entity shows these attributes.
 
-- Switch entities
+- `extra_features`
+- `turbo_mode_supported`
+- `button_pressed`
+- `sleep_time`
+- `sleep_mode_learn_count`
+- `use_time`
+- `sleep_mode`
 
-Switch                  | Description
------------------------ | -----------------------
-Buzzer                  | Turn on/off the buzzer
-Child Lock              | Turn on/off the child lock
-Learn Mode              | Turn on/off the learn mode
-LED                     | Turn on/off the LED
+### Number entities
 
-### Air Purifier Pro (zhimi.airpurifier.v6)
+- **Favorite level**: Sets the fan level used in Favorite mode.
 
-- Power (on, off)
-- Operation modes (Auto, Silent, Favorite)
-- Attributes (fan platform)
-  - `sleep_time`
-  - `sleep_mode_learn_count`
-  - `extra_features`
-  - `turbo_mode_supported`
-  - `auto_detect`
-  - `use_time`
-  - `button_pressed`
-- Number entities
+### Sensor entities
 
-Number                  | Description
------------------------ | -----------------------
-Favorite Level          | Set the favorite level
-Volume                  | Set the volume
+- **Filter life remaining**: Shows the remaining filter life, as a percentage. Enabled by default.
+- **Filter use**: Shows how long the filter has been in use, in hours. Enabled by default.
+- **Humidity**: Shows the measured humidity. Enabled by default.
+- **Motor speed**: Shows the current motor speed, in rpm. Enabled by default.
+- **PM2.5**: Shows the measured PM2.5 concentration. Enabled by default.
+- **Purify volume**: Shows the total volume of purified air, in cubic meters. Disabled by default.
+- **Temperature**: Shows the measured temperature. Enabled by default.
+- **Use time**: Shows the total device usage time. [Disabled by default](/docs/configuration/customizing-entities/#disabling-or-enabling-an-entity).
 
-- Sensor entities
+### Switch entities
 
-Sensor                  | Description
------------------------ | -----------------------
-Filter Life Remaining   | The remaining life of the filter
-Filter Use              | Filter usage time in hours
-Humidity                | The current humidity measured
-Illuminance             | The current illuminance measured
-Motor Speed             | The current motor speed measured in rpm
-PM2.5                   | The current particulate matter 2.5 measured
-Purify Volume           | The volume of purified air in qubic meter
-Second Motor Speed      | The current second motor speed measured in rpm
-Temperature             | The current temperature measured
+- **Buzzer**: Turns the buzzer on or off.
+- **Child lock**: Turns the child lock on or off.
+- **Learn mode**: Turns learn mode on or off.
+- **LED**: Turns the LED on or off.
 
-- Switch entities
+### Air Purifier Pro
 
-Switch                  | Description
------------------------ | -----------------------
-Child Lock              | Turn on/off the child lock
-Learn Mode              | Turn on/off the learn mode
-LED                     | Turn on/off the LED
+Supported model ID: `zhimi.airpurifier.v6`.
 
-### Air Purifier Pro V7 (zhimi.airpurifier.v7)
+#### Controls
 
-- Power (on, off)
-- Operation modes (Auto, Silent, Favorite)
-- Attributes (fan platform)
-  - `extra_features`
-  - `turbo_mode_supported`
-  - `button_pressed`
-- Number entities
+- Turn the air purifier on or off.
+- Select a preset mode: Auto, Silent, or Favorite.
 
-Number                  | Description
------------------------ | -----------------------
-Favorite Level          | Set the favorite level
-Volume                  | Set the volume
+#### Attributes
 
-- Sensor entities
+In addition to the standard fan attributes, the fan entity shows these attributes.
 
-Sensor                  | Description
------------------------ | -----------------------
-Filter Life Remaining   | The remaining life of the filter
-Filter Use              | Filter usage time in hours
-Humidity                | The current humidity measured
-Illuminance             | The current illuminance measured
-Motor Speed             | The current motor speed measured in rpm
-PM2.5                   | The current particulate matter 2.5 measured
-Second Motor Speed      | The current second motor speed measured in rpm
-Temperature             | The current temperature measured
+- `extra_features`
+- `turbo_mode_supported`
+- `button_pressed`
+- `use_time`
+- `sleep_time`
+- `sleep_mode_learn_count`
 
-- Switch entities
+#### Number entities
 
-Switch                  | Description
------------------------ | -----------------------
-Child Lock              | Turn on/off the child lock
-Learn Mode              | Turn on/off the learn mode
-LED                     | Turn on/off the LED
+- **Favorite level**: Sets the fan level used in Favorite mode.
+- **Volume**: Sets the device volume.
 
-### Air Purifier 2S (zhimi.airpurifier.mc1)
+#### Sensor entities
 
-- Power (on, off)
-- Operation modes (Auto, Silent, Favorite)
-- Attributes (fan platform)
-  - `extra_features`
-  - `turbo_mode_supported`
-  - `button_pressed`
-- Number entities
+- **Filter life remaining**: Shows the remaining filter life, as a percentage. Enabled by default.
+- **Filter use**: Shows how long the filter has been in use, in hours. Enabled by default.
+- **Humidity**: Shows the measured humidity. Enabled by default.
+- **Illuminance**: Shows the measured light level. Enabled by default.
+- **Motor speed**: Shows the current motor speed, in rpm. Enabled by default.
+- **PM2.5**: Shows the measured PM2.5 concentration. Enabled by default.
+- **Purify volume**: Shows the total volume of purified air, in cubic meters. Disabled by default.
+- **Second motor speed**: Shows the current speed of the second motor, in rpm. Enabled by default.
+- **Temperature**: Shows the measured temperature. Enabled by default.
+- **Use time**: Shows the total device usage time. Disabled by default.
 
-Number                  | Description
------------------------ | -----------------------
-Favorite Level          | Set the favorite level
+#### Switch entities
 
-- Sensor entities
+- **Child lock**: Turns the child lock on or off.
+- **Learn mode**: Turns learn mode on or off.
+- **LED**: Turns the LED on or off.
 
-Sensor                  | Description
------------------------ | -----------------------
-Filter Life Remaining   | The remaining life of the filter
-Filter Use              | Filter usage time in hours
-Humidity                | The current humidity measured
-Motor Speed             | The current motor speed measured in rpm
-PM2.5                   | The current particulate matter 2.5 measured
-Temperature             | The current temperature measured
+### Air Purifier Pro V7
 
-- Switch entities
+Supported model ID: `zhimi.airpurifier.v7`.
 
-Switch                  | Description
------------------------ | -----------------------
-Buzzer                  | Turn on/off the buzzer
-Child Lock              | Turn on/off the child lock
-Learn Mode              | Turn on/off the learn mode
-LED                     | Turn on/off the LED
+#### Controls
 
-### Air Purifier 3/3H (2019) (zhimi.airpurifier.ma4/zhimi.airpurifier.mb3)
+- Turn the air purifier on or off.
+- Select a preset mode: Auto, Silent, or Favorite.
 
-This model uses newer MiOT communication protocol.
+#### Attributes
 
-- Power (on, off)
-- Operation modes (Auto, Silent, Favorite, Fan)
-- Attributes (fan platform)
-  - `use_time`
-- Number entities
+In addition to the standard fan attributes, the fan entity shows these attributes.
 
-Number                  | Description
------------------------ | -----------------------
-Fan Level               | Set the fan level
-Favorite Level          | Set the favorite level
+- `extra_features`
+- `turbo_mode_supported`
+- `button_pressed`
 
-- Select entities
+#### Number entities
 
-Select                  | Description
------------------------ | -----------------------
-LED Brightness          | Controls the brightness of the LEDs (bright, dim, off)
+- **Favorite level**: Sets the fan level used in Favorite mode.
+- **Volume**: Sets the device volume.
 
-- Sensor entities
+#### Sensor entities
 
-Sensor                  | Description
------------------------ | -----------------------
-Filter Life Remaining   | The remaining life of the filter
-Filter Use              | Filter usage time in hours
-Humidity                | The current humidity measured
-Motor Speed             | The current motor speed measured in rpm
-PM2.5                   | The current particulate matter 2.5 measured
-Purify Volume           | The volume of purified air in qubic meter
-Temperature             | The current temperature measured
+- **Filter life remaining**: Shows the remaining filter life, as a percentage. Enabled by default.
+- **Filter use**: Shows how long the filter has been in use, in hours. Enabled by default.
+- **Humidity**: Shows the measured humidity. Enabled by default.
+- **Illuminance**: Shows the measured light level. Enabled by default.
+- **Motor speed**: Shows the current motor speed, in rpm. Enabled by default.
+- **PM2.5**: Shows the measured PM2.5 concentration. Enabled by default.
+- **Second motor speed**: Shows the current speed of the second motor, in rpm. Enabled by default.
+- **Temperature**: Shows the measured temperature. Enabled by default.
+- **Use time**: Shows the total device usage time. Disabled by default.
 
-- Switch entities
+#### Switch entities
 
-Switch                  | Description
------------------------ | -----------------------
-Buzzer                  | Turn on/off the buzzer
-Child Lock              | Turn on/off the child lock
+- **Child lock**: Turns the child lock on or off.
+- **Learn mode**: Turns learn mode on or off.
+- **LED**: Turns the LED on or off.
 
-### Air Purifier 3C (zhimi.airpurifier.mb4)
+### Air Purifier MA2
 
-- Power (on, off)
-- Operation modes (Auto, Silent, Favorite)
-- Number entities
+Supported model ID: `zhimi.airpurifier.ma2`.
 
-Number                  | Description
------------------------ | -----------------------
-Favorite Motor Speed    | Set the favorite motor speed
-LED Brihtness           | Set the LED brightness
+#### Controls
 
-- Sensor entities
+- Turn the air purifier on or off.
+- Select a preset mode: Auto, Silent, Favorite, or Idle.
 
-Sensor                  | Description
------------------------ | -----------------------
-Filter Life Remaining   | The remaining life of the filter
-Filter Use              | Filter usage time in hours
-Motor Speed             | The current motor speed measured in rpm
-PM2.5                   | The current particulate matter 2.5 measured
+#### Attributes
 
-- Switch entities
+In addition to the standard fan attributes, the fan entity shows these attributes.
 
-Switch                  | Description
------------------------ | -----------------------
-Buzzer                  | Turn on/off the buzzer
-Child Lock              | Turn on/off the child lock
+- `extra_features`
+- `turbo_mode_supported`
+- `button_pressed`
+- `sleep_time`
+- `sleep_mode_learn_count`
+- `use_time`
+- `sleep_mode`
 
-### Air Purifier V3 (zhimi.airpurifier.v3)
+#### Number entities
 
-- Power (on, off)
-- Operation modes (Auto, Silent, Favorite, Idle, Medium, High, Strong)
-- Attributes (fan platform)
-  - `sleep_time`
-  - `sleep_mode_learn_count`
-  - `extra_features`
-  - `use_time`
-  - `button_pressed`
-- Sensor entities
+- **Favorite level**: Sets the fan level used in Favorite mode.
 
-Sensor                  | Description
------------------------ | -----------------------
-PM2.5                   | The current particulate matter 2.5 measured
-Illuminance             | The current illuminance measured
-Filter Life Remaining   | The remaining life of the filter
-Filter Use              | Filter usage time in hours
-Motor Speed             | The current motor speed measured in rpm
-Second Motor Speed      | The current second motor speed measured in rpm
-Purify Volume           | The volume of purified air in qubic meter
+#### Sensor entities
 
-- Switch entities
+- **Filter life remaining**: Shows the remaining filter life, as a percentage. Enabled by default.
+- **Filter use**: Shows how long the filter has been in use, in hours. Enabled by default.
+- **Humidity**: Shows the measured humidity. Enabled by default.
+- **Motor speed**: Shows the current motor speed, in rpm. Enabled by default.
+- **PM2.5**: Shows the measured PM2.5 concentration. Enabled by default.
+- **Temperature**: Shows the measured temperature. Enabled by default.
+- **Illuminance**: Shows the light level measured on top of the device. Enabled by default.
+- **Use time**: Shows the total device usage time. Disabled by default.
 
-Switch                  | Description
------------------------ | -----------------------
-Buzzer                  | Turn on/off the buzzer
-Child Lock              | Turn on/off the child lock
-LED                     | Turn on/off the LED
+#### Switch entities
+
+- **Buzzer**: Turns the buzzer on or off.
+- **Child lock**: Turns the child lock on or off.
+- **Learn mode**: Turns learn mode on or off.
+- **LED**: Turns the LED on or off.
+
+### Air Purifier 2S
+
+Supported model ID: `zhimi.airpurifier.mc1`.
+
+#### Controls
+
+- Turn the air purifier on or off.
+- Select a preset mode: Auto, Silent, or Favorite.
+
+#### Attributes
+
+In addition to the standard fan attributes, the fan entity shows these attributes.
+
+- `extra_features`
+- `turbo_mode_supported`
+- `button_pressed`
+
+#### Number entities
+
+- **Favorite level**: Sets the fan level used in Favorite mode.
+
+#### Sensor entities
+
+- **Filter life remaining**: Shows the remaining filter life, as a percentage. Enabled by default.
+- **Filter use**: Shows how long the filter has been in use, in hours. Enabled by default.
+- **Humidity**: Shows the measured humidity. Enabled by default.
+- **Motor speed**: Shows the current motor speed, in rpm. Enabled by default.
+- **PM2.5**: Shows the measured PM2.5 concentration. Enabled by default.
+- **Temperature**: Shows the measured temperature. Enabled by default.
+- **Use time**: Shows the total device usage time. Disabled by default.
+
+#### Switch entities
+
+- **Buzzer**: Turns the buzzer on or off.
+- **Child lock**: Turns the child lock on or off.
+- **Learn mode**: Turns learn mode on or off.
+- **LED**: Turns the LED on or off.
+
+### Air Purifier 3 and 3H (2019)
+
+Supported model IDs:
+
+- `zhimi.airpurifier.ma4`
+- `zhimi.airpurifier.mb3`
+
+These models use the newer MiOT communication protocol.
+
+#### Controls
+
+- Turn the air purifier on or off.
+- Select a preset mode: Auto, Silent, Favorite, or Fan.
+
+#### Attributes
+
+In addition to the standard fan attributes, the fan entity shows the `use_time` attribute.
+
+#### Number entities
+
+- **Fan level**: Sets the fan level used in Fan mode, from 1 to 3.
+- **Favorite level**: Sets the fan level used in Favorite mode.
+
+#### Select entities
+
+- **LED brightness**: Sets the brightness of the LEDs: Bright, Dim, or Off.
+
+#### Sensor entities
+
+- **Filter life remaining**: Shows the remaining filter life, as a percentage. Enabled by default.
+- **Filter use**: Shows how long the filter has been in use, in hours. Enabled by default.
+- **Humidity**: Shows the measured humidity. Enabled by default.
+- **Motor speed**: Shows the current motor speed, in rpm. Enabled by default.
+- **PM2.5**: Shows the measured PM2.5 concentration. Enabled by default.
+- **Purify volume**: Shows the total volume of purified air, in cubic meters. Disabled by default.
+- **Temperature**: Shows the measured temperature. Enabled by default.
+- **Use time**: Shows the total device usage time. Disabled by default.
+
+#### Switch entities
+
+- **Buzzer**: Turns the buzzer on or off.
+- **Child lock**: Turns the child lock on or off.
+
+### Air Purifier Pro H and Pro H EU
+
+Supported model IDs:
+
+- `zhimi.airpurifier.va1`
+- `zhimi.airpurifier.vb2`
+
+#### Controls
+
+- Turn the air purifier on or off.
+- Select a preset mode: Auto, Silent, Favorite, or Fan.
+
+#### Attributes
+
+In addition to the standard fan attributes, the fan entity shows the `use_time` attribute.
+
+#### Number entities
+
+- **Fan level**: Sets the fan level used in Fan mode, from 1 to 3.
+- **Favorite level**: Sets the fan level used in Favorite mode.
+
+#### Select entities
+
+- **LED brightness**: Sets the brightness of the LEDs: Bright, Dim, or Off.
+
+#### Sensor entities
+
+- **Filter life remaining**: Shows the remaining filter life, as a percentage. Enabled by default.
+- **Filter use**: Shows how long the filter has been in use, in hours. Enabled by default.
+- **Humidity**: Shows the measured humidity. Enabled by default.
+- **Motor speed**: Shows the current motor speed, in rpm. Enabled by default.
+- **PM2.5**: Shows the measured PM2.5 concentration. Enabled by default.
+- **Purify volume**: Shows the total volume of purified air, in cubic meters. Disabled by default.
+- **Temperature**: Shows the measured temperature. Enabled by default.
+- **Use time**: Shows the total device usage time. Disabled by default.
+
+#### Switch entities
+
+- **Buzzer**: Turns the buzzer on or off.
+- **Child lock**: Turns the child lock on or off.
+
+### Air Purifier 3C
+
+Supported model IDs:
+
+- `zhimi.airpurifier.mb4`
+- `zhimi.airp.mb4a`
+
+#### Controls
+
+- Turn the air purifier on or off.
+- Select a preset mode: Auto, Silent, or Favorite.
+
+#### Number entities
+
+- **Favorite motor speed**: Sets the motor speed used in Favorite mode, in rpm.
+- **LED brightness**: Sets the brightness of the display.
+
+#### Sensor entities
+
+- **Filter life remaining**: Shows the remaining filter life, as a percentage. Enabled by default.
+- **Filter use**: Shows how long the filter has been in use, in hours. Enabled by default.
+- **Motor speed**: Shows the current motor speed, in rpm. Enabled by default.
+- **PM2.5**: Shows the measured PM2.5 concentration. Enabled by default.
+
+#### Switch entities
+
+- **Buzzer**: Turns the buzzer on or off.
+- **Child lock**: Turns the child lock on or off.
+
+### Air Purifier ZA1
+
+Supported model ID: `zhimi.airpurifier.za1`.
+
+#### Controls
+
+- Turn the air purifier on or off.
+- Select a preset mode: Auto, Silent, or Favorite.
+
+#### Attributes
+
+In addition to the standard fan attributes, the fan entity shows the `use_time` attribute.
+
+#### Number entities
+
+- **Favorite level**: Sets the fan level used in Favorite mode.
+
+#### Sensor entities
+
+- **Filter life remaining**: Shows the remaining filter life, as a percentage. Enabled by default.
+- **Filter use**: Shows how long the filter has been in use, in hours. Enabled by default.
+- **Humidity**: Shows the measured humidity. Enabled by default.
+- **Motor speed**: Shows the current motor speed, in rpm. Enabled by default.
+- **PM2.5**: Shows the measured PM2.5 concentration. Enabled by default.
+- **Temperature**: Shows the measured temperature. Enabled by default.
+- **TVOC**: Shows the measured concentration of total volatile organic compounds (TVOC). Enabled by default.
+
+#### Switch entities
+
+- **Buzzer**: Turns the buzzer on or off.
+- **Child lock**: Turns the child lock on or off.
+
+#### Select entities
+
+- **LED brightness**: Sets the brightness of the display: Bright, Dim, or Off.
+
+### Air Purifier V3
+
+Supported model ID: `zhimi.airpurifier.v3`.
+
+#### Controls
+
+- Turn the air purifier on or off.
+- Select a preset mode: Auto, Silent, Favorite, Idle, Medium, High, or Strong.
+
+#### Attributes
+
+In addition to the standard fan attributes, the fan entity shows these attributes.
+
+- `sleep_time`
+- `sleep_mode_learn_count`
+- `extra_features`
+- `use_time`
+- `button_pressed`
+
+#### Sensor entities
+
+- **Filter life remaining**: Shows the remaining filter life, as a percentage. Enabled by default.
+- **Filter use**: Shows how long the filter has been in use, in hours. Enabled by default.
+- **Illuminance**: Shows the measured light level. Enabled by default.
+- **Motor speed**: Shows the current motor speed, in rpm. Enabled by default.
+- **PM2.5**: Shows the measured PM2.5 concentration. Enabled by default.
+- **Purify volume**: Shows the total volume of purified air, in cubic meters. Disabled by default.
+- **Second motor speed**: Shows the current speed of the second motor, in rpm. Enabled by default.
+- **Use time**: Shows the total device usage time. Disabled by default.
+
+#### Switch entities
+
+- **Buzzer**: Turns the buzzer on or off.
+- **Child lock**: Turns the child lock on or off.
+- **LED**: Turns the LED on or off.
+
+### Air Purifier 4 and 4 Pro
+
+Supported model IDs:
+
+- `zhimi.airp.mb5`
+- `zhimi.airp.vb4`
+
+These models use the newer MiOT communication protocol.
+
+#### Controls
+
+- Turn the air purifier on or off.
+- Select a preset mode: Auto, Silent, Favorite, or Fan.
+
+#### Attributes
+
+In addition to the standard fan attributes, the fan entity shows the `use_time` attribute.
+
+#### Number entities
+
+- **Fan level**: Sets the fan level used in Fan mode, from 1 to 3.
+- **Favorite level**: Sets the fan level used in Favorite mode.
+
+#### Select entities
+
+- **LED brightness**: Sets the brightness of the display: Bright, Dim, or Off.
+
+#### Sensor entities
+
+- **Filter life remaining**: Shows the remaining filter life, as a percentage. Enabled by default.
+- **Filter lifetime remaining**: Shows the remaining filter life, in days. Enabled by default.
+- **Filter use**: Shows how long the filter has been in use, in hours. Enabled by default.
+- **Humidity**: Shows the measured humidity. Enabled by default.
+- **Motor speed**: Shows the current motor speed, in rpm. Enabled by default.
+- **PM2.5**: Shows the measured PM2.5 concentration. Enabled by default.
+- **PM10**: Shows the measured PM10 concentration. Available on the Air Purifier 4 Pro only. Enabled by default.
+- **Purify volume**: Shows the total volume of purified air, in cubic meters. Disabled by default.
+- **Temperature**: Shows the measured temperature. Enabled by default.
+
+#### Switch entities
+
+- **Buzzer**: Turns the buzzer on or off.
+- **Child lock**: Turns the child lock on or off.
+- **Ionizer**: Turns the negative ion generator on or off.
+
+### Air Fresh A1
+
+Supported model ID: `dmaker.airfresh.a1`.
+
+#### Controls
+
+- Turn the device on or off.
+- Select a preset mode: Auto, Sleep, or Favorite.
+
+#### Binary sensor entities
+
+- **Auxiliary heat status**: Shows whether the heater is currently on.
+
+#### Button entities
+
+- **Reset dust filter**: Resets the remaining life and usage of the dust filter.
+
+#### Sensor entities
+
+- **Carbon dioxide**: Shows the measured carbon dioxide concentration, in ppm. Enabled by default.
+- **Dust filter life remaining**: Shows the remaining dust filter life, as a percentage. Enabled by default.
+- **Dust filter lifetime remaining days**: Shows the remaining dust filter life, in days. Enabled by default.
+- **PM2.5**: Shows the measured PM2.5 concentration. Enabled by default.
+- **Temperature**: Shows the measured outdoor temperature. Enabled by default.
+- **Control speed**: Shows the current motor speed, in rpm. Enabled by default.
+- **Favorite speed**: Shows the motor speed used in Favorite mode, in rpm. Enabled by default.
+
+#### Switch entities
+
+- **Buzzer**: Turns the buzzer on or off.
+- **Child lock**: Turns the child lock on or off.
+- **Display**: Turns the display on or off.
+- **Auxiliary heat**: Turns the heater on or off.
 
 ### Air Fresh VA2
 
-- Power (on, off)
-- Operation modes (Auto, Silent, Interval, Low, Middle, Strong)
-- Attributes (fan platform)
-  - `use_time`
-  - `extra_features`
-- Sensor entities
-
-Sensor                  | Description
------------------------ | -----------------------
-Carbon Dioxide          | The current carbon dioxide measured in ppm
-Filter Life Remaining   | The remaining life of the filter
-Filter Use              | Filter usage time in hours
-Humidity                | The current humidity measured
-Illuminance             | The current illuminance measured
-PM2.5                   | The current particulate matter 2.5 measured
-Temperature             | The current temperature measured
-
-- Select entities
-
-Select                  | Description
------------------------ | -----------------------
-LED Brightness          | Controls the brightness of the LEDs (bright, dim, off)
-
-- Switch entities
-
-Switch                  | Description
------------------------ | -----------------------
-Buzzer                  | Turn on/off `buzzer`
-Child Lock              | Turn on/off `child lock`
-LED                     | Turn on/off `led`
-
-### Air Humidifier (zhimi.humidifier.v1)
-
-- On, Off
-- Operation modes (Silent, Medium, High, Strong)
-- Target humidity (30, 40, 50, 60, 70, 80)
-- Attributes (humidifier platform)
-
-Attribute               | Description
------------------------ | -----------------------
-`available_modes`       | A list with the operation modes available
-`humidity`              | The current target humidity
-`max_humidity`          | The maximum settable target humidity
-`min_humidity`          | The minimum settable target humidity
-`mode`                  | The current operation mode selected
-
-- Binary sensor entities
-
-Binary sensor           | Description
------------------------ | -----------------------
-Water Tank              | Indicates whether the water tank is connected or not
+Supported model ID: `zhimi.airfresh.va2`.
 
-- Select entities
-
-Select                  | Description
------------------------ | -----------------------
-LED Brightness          | Controls the brightness of the LEDs (bright, dim, off)
-
-- Sensor entities
-
-Sensor                  | Description
------------------------ | -----------------------
-Humidity                | The current humidity measured
-Temperature             | The current temperature measured
-Water Level             | The current water level percentage measured
-
-- Switch entities
-
-Switch                  | Description
------------------------ | -----------------------
-Buzzer                  | Turn on/off the buzzer
-Child Lock              | Turn on/off the child lock
-
-### Air Humidifier CA (zhimi.humidifier.ca1)
-
-- On, Off
-- Operation modes (Silent, Medium, High, Auto)
-- Target humidity (30, 40, 50, 60, 70, 80)
-- Attributes (humidifier platform)
-
-Attribute               | Description
------------------------ | -----------------------
-`available_modes`       | A list with the operation modes available
-`humidity`              | The current target humidity
-`max_humidity`          | The maximum settable target humidity
-`min_humidity`          | The minimum settable target humidity
-`mode`                  | The current operation mode selected
-
-- Binary sensor entities
-
-Binary sensor           | Description
------------------------ | -----------------------
-Water Tank              | Indicates whether the water tank is connected or not
-
-- Select entities
-
-Select                  | Description
------------------------ | ---
-LED Brightness          | Controls the brightness of the LEDs (bright, dim, off)
-
-- Sensor entities
+#### Controls
 
-Sensor | Description
------------------------ | -----------------------
-Humidity                | The current humidity measured
-Temperature             | The current temperature measured
-Water Level             | The current water level percentage measured
+- Turn the device on or off.
+- Select a preset mode: Auto or Interval.
+- Set the fan speed.
 
-- Switch entities
+#### Attributes
 
-Switch                  | Description
------------------------ | -----------------------
-Buzzer                  | Turn on/off the buzzer
-Child Lock              | Turn on/off the child lock
-Dry Mode                | Turn on/off the dry mode
+In addition to the standard fan attributes, the fan entity shows these attributes.
 
-### Air Humidifier CA (zhimi.humidifier.ca4)
+- `use_time`
+- `extra_features`
 
-- On, Off
-- Operation modes (Auto, Low, Medium, High)
-- Target humidity (30 - 80)
-- Attributes (humidifier platform)
+#### Sensor entities
 
-Attribute               | Description
------------------------ | -----------------------
-`available_modes`       | A list with the operation modes available
-`humidity`              | The current target humidity
-`max_humidity`          | The maximum settable target humidity
-`min_humidity`          | The minimum settable target humidity
-`mode`                  | The current operation mode selected
-
-- Binary sensor entities
+- **Carbon dioxide**: Shows the measured carbon dioxide concentration, in ppm. Enabled by default.
+- **Filter life remaining**: Shows the remaining filter life, as a percentage. Enabled by default.
+- **Filter use**: Shows how long the filter has been in use, in hours. Enabled by default.
+- **Humidity**: Shows the measured humidity. Enabled by default.
+- **PM2.5**: Shows the measured PM2.5 concentration. Enabled by default.
+- **Temperature**: Shows the measured temperature. Enabled by default.
+- **Use time**: Shows the total device usage time. Disabled by default.
 
-Binary sensor           | Description
------------------------ | -----------------------
-Water Tank              | Indicates whether the water tank is connected or not
+#### Select entities
 
-- Number entities
+- **LED brightness**: Sets the brightness of the LEDs: Bright, Dim, or Off.
 
-Number                  | Description
------------------------ | -----------------------
-Motor Speed             | Set the motor speed
-
-- Select entities
+#### Switch entities
 
-Select                  | Description
------------------------ | -----------------------
-LED Brightness          | Controls the brightness of the LEDs (bright, dim, off)
+- **Buzzer**: Turns the buzzer on or off.
+- **Child lock**: Turns the child lock on or off.
+- **LED**: Turns the LED on or off.
 
-- Sensor entities
+### Air Fresh VA4
 
-Sensor                  | Description
------------------------ | -----------------------
-Actual Speed            | The current motor speed measured in rpm
-Humidity                | The current humidity measured
-Temperature             | The current temperature measured
-Water Level             | The current water level percentage measured
+Supported model ID: `zhimi.airfresh.va4`.
 
-- Switch entities
+#### Controls
 
-Switch                  | Description
------------------------ | -----------------------
-Buzzer                  | Turn on/off the buzzer
-Child Lock              | Turn on/off the child lock
-Clean Mode              | Turn on/off the clean mode
-Dry Mode                | Turn on/off the dry mode
+- Turn the device on or off.
+- Select a preset mode: Auto or Interval.
+- Set the fan speed.
 
-<div class='note'>
-Clean mode and Motor speed can only be set when the device is turned on.
-</div>
+#### Attributes
 
-### Air Humidifier CB (zhimi.humidifier.cb1)
+In addition to the standard fan attributes, the fan entity shows these attributes.
 
-- On, Off
-- Operation modes (Silent, Medium, High, Auto)
-- Target humidity (30, 40, 50, 60, 70, 80)
-- Attributes (humidifier platform)
+- `use_time`
+- `extra_features`
 
-Attribute               | Description
------------------------ | -----------------------
-`available_modes`       | A list with the operation modes available
-`humidity`              | The current target humidity
-`max_humidity`          | The maximum settable target humidity
-`min_humidity`          | The minimum settable target humidity
-`mode`                  | The current operation mode selected
+#### Sensor entities
 
-- Binary sensor entities
+- **Carbon dioxide**: Shows the measured carbon dioxide concentration, in ppm. Enabled by default.
+- **Filter life remaining**: Shows the remaining filter life, as a percentage. Enabled by default.
+- **Filter use**: Shows how long the filter has been in use, in hours. Enabled by default.
+- **Humidity**: Shows the measured humidity. Enabled by default.
+- **PM2.5**: Shows the measured PM2.5 concentration. Enabled by default.
+- **Temperature**: Shows the measured temperature. Enabled by default.
+- **Use time**: Shows the total device usage time. Disabled by default.
 
-Binary sensor           | Description
------------------------ | -----------------------
-Water Tank              | Indicates whether the water tank is connected or not
+#### Select entities
 
-- Select entities
+- **LED brightness**: Sets the brightness of the LEDs: Bright, Dim, or Off.
 
-Select                  | Description
------------------------ | -----------------------
-LED Brightness          | Controls the brightness of the LEDs (bright, dim, off)
+#### Switch entities
 
-- Sensor entities
+- **Buzzer**: Turns the buzzer on or off.
+- **Child lock**: Turns the child lock on or off.
+- **LED**: Turns the LED on or off.
+- **Auxiliary heat**: Turns the heater on or off.
 
-Sensor                  | Description
------------------------ | -----------------------
-Humidity                | The current humidity measured
-Temperature             | The current temperature measured
-Water Level             | The current water level percentage measured
+### Air Fresh T2017
 
-- Switch entities
+Supported model ID: `dmaker.airfresh.t2017`.
 
-Switch                  | Description
------------------------ | -----------------------
-Buzzer                  | Turn on/off the buzzer
-Child Lock              | Turn on/off the child lock
-Dry Mode                | Turn on/off the dry mode
+#### Controls
 
-### Air Humidifier JSQ/JSQ1/MJJSQ (deerma.humidifier.jsq/deerma.humidifier.jsq1/deerma.humidifier.mjjsq)
+- Turn the device on or off.
+- Select a preset mode: Auto, Sleep, or Favorite.
 
-- On, Off
-- Operation modes (low, medium, high, humidity)
-- Target humidity (30, 40, 50, 60, 70, 80)
-- Attributes (humidifier platform)
+#### Binary sensor entities
 
-Attribute               | Description
------------------------ | -----------------------
-`available_modes`       | A list with the operation modes available
-`humidity`              | The current target humidity
-`max_humidity`          | The maximum settable target humidity
-`min_humidity`          | The minimum settable target humidity
-`mode`                  | The current operation mode selected
+- **Auxiliary heat status**: Shows whether the heater is currently on.
 
-- Binary sensor entities
+#### Button entities
 
-Binary sensor           | Description
------------------------ | -----------------------
-Water Tank              | Indicates whether the water tank is connected or not
-Water Tank Empty        | Indicates whether the water tank is empty or not
+- **Reset dust filter**: Resets the remaining life and usage of the dust filter.
+- **Reset upper filter**: Resets the remaining life and usage of the upper filter.
 
-- Sensor entities
+#### Select entities
 
-Sensor                  | Description
------------------------ | -----------------------
-Humidity                | The current humidity measured
-Temperature             | The current temperature measured
+- **Auxiliary heat level**: Sets the heater level: Low, Medium, or High.
+- **Display orientation**: Sets the orientation of the display: Forward, Left, or Right.
 
-- Switch entities
+#### Sensor entities
 
-Switch                  | Description
------------------------ | -----------------------
-Buzzer                  | Turn on/off the buzzer
-LED                     | Turn on/off the LED
+- **Carbon dioxide**: Shows the measured carbon dioxide concentration, in ppm. Enabled by default.
+- **Dust filter life remaining**: Shows the remaining dust filter life, as a percentage. Enabled by default.
+- **Dust filter lifetime remaining days**: Shows the remaining dust filter life, in days. Enabled by default.
+- **Upper filter life remaining**: Shows the remaining upper filter life, as a percentage. Enabled by default.
+- **Upper filter lifetime remaining days**: Shows the remaining upper filter life, in days. Enabled by default.
+- **PM2.5**: Shows the measured PM2.5 concentration. Enabled by default.
+- **Temperature**: Shows the measured outdoor temperature. Enabled by default.
+- **Control speed**: Shows the current motor speed, in rpm. Enabled by default.
+- **Favorite speed**: Shows the motor speed used in Favorite mode, in rpm. Enabled by default.
 
-### Standing Fan 1X (dmaker.fan.p5)
+#### Switch entities
 
-- Power (on, off)
-- Operation modes (Normal, Nature)
-- Oscillation (on, off)
-- Number entities
+- **Buzzer**: Turns the buzzer on or off.
+- **Child lock**: Turns the child lock on or off.
+- **Display**: Turns the display on or off.
+- **Auxiliary heat**: Turns the heater on or off.
 
-Number                  | Description
------------------------ | -----------------------
-Delay Off Countdown     | Set the delay off countdown in minutes
-Oscillation Angle       | Set the oscillation angle in degrees
+### Air Humidifier
 
-- Switch entities
+Supported model ID: `zhimi.humidifier.v1`.
 
-Switch                  | Description
------------------------ | -----------------------
-Buzzer                  | Turn on/off `buzzer`
-Child Lock              | Turn on/off `child lock`
-LED                     | Turn on/off `led`
+#### Controls
 
-### Standing Fan (zhimi.fan.za1, zhimi.fan.za3, zhimi.fan.za4, zhimi.fan.sa1)
+- Turn the humidifier on or off.
+- Select a mode: Silent, Medium, High, or Strong.
+- Set the target humidity from 30% to 80%, in steps of 10%.
 
-- Power (on, off)
-- Operation modes (Normal, Nature)
-- Oscillation (on, off)
-- Number entities
+#### Binary sensor entities
 
-Number                  | Description
------------------------ | -----------------------
-Delay Off Countdown     | Set the delay off countdown in minutes
-Oscillation Angle       | Set the oscillation angle in degrees
+- **Water tank**: Shows whether the water tank is attached.
 
-- Select entities
+#### Select entities
 
-Select                  | Description
------------------------ | -----------------------
-LED Brightness          | Controls the brightness of the LEDs (bright, dim, off)
+- **LED brightness**: Sets the brightness of the LEDs: Bright, Dim, or Off.
 
-- Switch entities
+#### Sensor entities
 
-Switch                  | Description
------------------------ | -----------------------
-Buzzer                  | Turn on/off `buzzer`
-Child Lock              | Turn on/off `child lock`
+- **Humidity**: Shows the measured humidity. Enabled by default.
+- **Temperature**: Shows the measured temperature. Enabled by default.
+- **Use time**: Shows the total device usage time. Disabled by default.
+- **Water level**: Shows the water level in the tank, as a percentage. Enabled by default.
 
-### DC Pedestal Fan (zhimi.fan.v2, zhimi.fan.v3)
+#### Switch entities
 
-- Power (on, off)
-- Operation modes (Normal, Nature)
-- Oscillation (on, off)
-- Number entities
+- **Buzzer**: Turns the buzzer on or off.
+- **Child lock**: Turns the child lock on or off.
 
-Number                  | Description
------------------------ | -----------------------
-Delay Off Countdown     | Set the delay off countdown in minutes
-Oscillation Angle       | Set the oscillation angle in degrees
+### Air Humidifier CA1
 
-- Select entities
+Supported model ID: `zhimi.humidifier.ca1`.
 
-Select                  | Description
------------------------ | -----------------------
-LED Brightness          | Controls the brightness of the LEDs (bright, dim, off)
+#### Controls
 
-- Sensor entities
+- Turn the humidifier on or off.
+- Select a mode: Silent, Medium, High, or Auto.
+- Set the target humidity from 30% to 80%, in steps of 10%.
 
-Sensor                  | Description
------------------------ | -----------------------
-Battery                 | The current battery level in percentage
-Humidity                | The current humidity measured
-Temperature             | The current temperature measured
+#### Binary sensor entities
 
-- Switch entities
+- **Water tank**: Shows whether the water tank is attached.
 
-Switch                  | Description
------------------------ | -----------------------
-Buzzer                  | Turn on/off `buzzer`
-Child Lock              | Turn on/off `child lock`
+#### Select entities
 
-### Standing Fan 1C (dmaker.fan.1c)
+- **LED brightness**: Sets the brightness of the LEDs: Bright, Dim, or Off.
 
-- Power (on, off)
-- Operation modes (Normal, Nature)
-- Oscillation (on, off)
-- Number entities
+#### Sensor entities
 
-Number                  | Description
------------------------ | -----------------------
-Delay Off Countdown     | Set the delay off countdown in minutes
+- **Humidity**: Shows the measured humidity. Enabled by default.
+- **Motor speed**: Shows the current motor speed, in rpm. Enabled by default.
+- **Temperature**: Shows the measured temperature. Enabled by default.
+- **Use time**: Shows the total device usage time. Disabled by default.
+- **Water level**: Shows the water level in the tank, as a percentage. Enabled by default.
 
-- Switch entities
+#### Switch entities
 
-Switch                  | Description
------------------------ | -----------------------
-Buzzer                  | Turn on/off the Buzzer
-Child Lock              | Turn on/off the Child Lock
-LED                     | Turn on/off the LED
+- **Buzzer**: Turns the buzzer on or off.
+- **Child lock**: Turns the child lock on or off.
+- **Dry mode**: Turns dry mode on or off.
 
-### Tower Fan/Standing Fan 2/Standing Fan Pro (dmaker.fan.p9/dmaker.fan.p10/dmaker.fan.p11)
+### Air Humidifier CA4
 
-- Power (on, off)
-- Operation modes (Normal, Nature)
-- Oscillation (on, off)
-- Number entities
+Supported model ID: `zhimi.humidifier.ca4`.
 
-Number                  | Description
------------------------ | -----------------------
-Delay Off Countdown     | Set the delay off countdown in minutes
-Oscillation Angle       | Set the oscillation angle in degrees
+#### Controls
 
-- Switch entities
+- Turn the humidifier on or off.
+- Select a mode: Auto, Low, Mid, or High.
+- Set the target humidity from 30% to 80%.
 
-Switch                  | Description
------------------------ | -----------------------
-Buzzer                  | Turn on/off the Buzzer
-Child Lock              | Turn on/off the Child Lock
-LED                     | Turn on/off the LED
+#### Binary sensor entities
 
-### Standing Fan 3 (zhimi.fan.za5)
+- **Water tank**: Shows whether the water tank is attached.
 
-- Power (on, off)
-- Operation modes (Normal, Nature)
-- Oscillation (on, off)
-- Binary sensor entities
+#### Number entities
 
-Binary sensor           | Description
------------------------ | -----------------------
-Power Supply            | Indicates whether the power supply is connected or not
+- **Motor speed**: Sets the motor speed, in rpm.
 
-- Number entities
+#### Select entities
 
-Number                  | Description
------------------------ | -----------------------
-Delay Off Countdown     | Set the delay off countdown in minutes
-Oscillation Angle       | Set the oscillation angle in degrees
+- **LED brightness**: Sets the brightness of the LEDs: Bright, Dim, or Off.
 
-- Sensor entities
+#### Sensor entities
 
-Sensor                  | Description
------------------------ | -----------------------
-Humidity                | The current humidity measured
-Temperature             | The current temperature measured
+- **Actual speed**: Shows the current motor speed, in rpm. Enabled by default.
+- **Humidity**: Shows the measured humidity. Enabled by default.
+- **Temperature**: Shows the measured temperature. Enabled by default.
+- **Use time**: Shows the total device usage time. Disabled by default.
+- **Water level**: Shows the water level in the tank, as a percentage. Enabled by default.
 
-- Switch entities
+#### Switch entities
 
-Switch                  | Description
------------------------ | -----------------------
-Buzzer                  | Turn on/off the Buzzer
-Child Lock              | Turn on/off the Child Lock
-Ionizer                 | Turn on/off the Ionizer
-LED                     | Turn on/off the LED
+- **Buzzer**: Turns the buzzer on or off.
+- **Child lock**: Turns the child lock on or off.
+- **Clean mode**: Turns clean mode on or off.
+- **Dry mode**: Turns dry mode on or off.
 
-### Platform Services
+{% note %}
+You can only change **Clean mode** and **Motor speed** while the humidifier is on.
+{% endnote %}
 
-### Service `humidifier.set_humidity`
+### Air Humidifier CB1
 
-Set the target humidity.
+Supported model ID: `zhimi.humidifier.cb1`.
 
-| Service data attribute    | Optional | Description                                                         |
-|---------------------------|----------|---------------------------------------------------------------------|
-| `entity_id`               |       no | Only act on a specific Xiaomi miIO humidifier entity.               |
-| `humidity`                |       no | Target humidity                                                     |
+#### Controls
 
-### Service `humidifier.set_mode`
+- Turn the humidifier on or off.
+- Select a mode: Silent, Medium, High, or Auto.
+- Set the target humidity from 30% to 80%, in steps of 10%.
 
-Set the humidifier operation mode.
+#### Binary sensor entities
 
-| Service data attribute    | Optional | Description                                                         |
-|---------------------------|----------|---------------------------------------------------------------------|
-| `entity_id`               |       no | Only act on a specific Xiaomi miIO humidifier entity.               |
-| `mode`                    |       no | The Xiaomi miIO operation mode                                      |
+- **Water tank**: Shows whether the water tank is attached.
 
-### Service `fan.set_percentage`
+#### Select entities
 
-Set the fan speed percentage.
+- **LED brightness**: Sets the brightness of the LEDs: Bright, Dim, or Off.
 
-| Service data attribute    | Optional | Description                                                         |
-|---------------------------|----------|---------------------------------------------------------------------|
-| `entity_id`               |       no | Only act on a specific Xiaomi miIO fan entity.                      |
-| `percentage`              |       no | Fan speed. Percentage speed setting                                 |
+#### Sensor entities
 
-### Service `fan.set_preset_mode`
+- **Humidity**: Shows the measured humidity. Enabled by default.
+- **Motor speed**: Shows the current motor speed, in rpm. Enabled by default.
+- **Temperature**: Shows the measured temperature. Enabled by default.
+- **Use time**: Shows the total device usage time. Disabled by default.
+- **Water level**: Shows the water level in the tank, as a percentage. Enabled by default.
 
-Set the fan operation mode.
+#### Switch entities
 
-| Service data attribute    | Optional | Description                                                         |
-|---------------------------|----------|---------------------------------------------------------------------|
-| `entity_id`               |       no | Only act on a specific Xiaomi miIO fan entity.                      |
-| `preset_mode`             |       no | The Xiaomi miIO operation mode                                      |
+- **Buzzer**: Turns the buzzer on or off.
+- **Child lock**: Turns the child lock on or off.
+- **Dry mode**: Turns dry mode on or off.
 
-### Service `xiaomi_miio.fan_reset_filter` (Air Purifier 2 only)
+### Air Humidifier JSQ, JSQ1, and MJJSQ
 
-Reset the filter lifetime and usage.
+Supported model IDs:
 
-| Service data attribute    | Optional | Description                                             |
-|---------------------------|----------|---------------------------------------------------------|
-| `entity_id`               |       no | Only act on a specific Xiaomi miIO fan entity.          |
+- `deerma.humidifier.jsq`
+- `deerma.humidifier.jsq1`
+- `deerma.humidifier.mjjsq`
 
-### Service `xiaomi_miio.fan_set_extra_features` (Air Purifier only)
+#### Controls
 
-Set the extra features.
+- Turn the humidifier on or off.
+- Select a mode: Low, Medium, High, or Humidity.
+- Set the target humidity from 30% to 80%.
 
-| Service data attribute    | Optional | Description                                             |
-|---------------------------|----------|---------------------------------------------------------|
-| `entity_id`               |       no | Only act on a specific Xiaomi miIO fan entity.          |
-| `features`                |       no | Integer, known values are 0 and 1.                      |
+#### Binary sensor entities
 
-### Troubleshooting `Unable to find device` error messages
+- **Water tank**: Shows whether the water tank is attached.
+- **Water tank empty**: Shows whether the water tank is empty.
 
-Check if the device is in the same subnet as the Home Assistant instance. Otherwise, you should configure your router/firewall to put this device in the same VLAN as the Home Assistant instance.
+#### Sensor entities
 
-If it's not possible to use VLANs for some reason, your last resort may be using NAT translation, between the IPs.
+- **Humidity**: Shows the measured humidity. Enabled by default.
+- **Temperature**: Shows the measured temperature. Enabled by default.
+
+#### Switch entities
+
+- **Buzzer**: Turns the buzzer on or off.
+- **LED**: Turns the LED on or off.
+
+### Standing Fan 1X
+
+Supported model ID: `dmaker.fan.p5`.
+
+#### Controls
+
+- Turn the fan on or off.
+- Select a preset mode: Normal or Nature.
+- Turn oscillation on or off.
+
+#### Number entities
+
+- **Delay off countdown**: Sets a timer, in minutes, after which the fan turns off.
+- **Oscillation angle**: Sets the oscillation angle, in degrees.
+
+#### Switch entities
+
+- **Buzzer**: Turns the buzzer on or off.
+- **Child lock**: Turns the child lock on or off.
+- **LED**: Turns the LED on or off.
+
+### Standing Fan
+
+Supported model IDs:
+
+- `zhimi.fan.za1`
+- `zhimi.fan.za3`
+- `zhimi.fan.za4`
+- `zhimi.fan.sa1`
+
+#### Controls
+
+- Turn the fan on or off.
+- Select a preset mode: Normal or Nature.
+- Turn oscillation on or off.
+
+#### Number entities
+
+- **Delay off countdown**: Sets a timer, in minutes, after which the fan turns off.
+- **Oscillation angle**: Sets the oscillation angle, in degrees.
+
+#### Select entities
+
+- **LED brightness**: Sets the brightness of the LEDs: Bright, Dim, or Off.
+
+#### Switch entities
+
+- **Buzzer**: Turns the buzzer on or off.
+- **Child lock**: Turns the child lock on or off.
+
+### DC Pedestal Fan
+
+Supported model IDs:
+
+- `zhimi.fan.v2`
+- `zhimi.fan.v3`
+
+#### Controls
+
+- Turn the fan on or off.
+- Select a preset mode: Normal or Nature.
+- Turn oscillation on or off.
+
+#### Number entities
+
+- **Delay off countdown**: Sets a timer, in minutes, after which the fan turns off.
+- **Oscillation angle**: Sets the oscillation angle, in degrees.
+
+#### Select entities
+
+- **LED brightness**: Sets the brightness of the LEDs: Bright, Dim, or Off.
+
+#### Sensor entities
+
+- **Battery**: Shows the battery level, as a percentage. Enabled by default.
+- **Humidity**: Shows the measured humidity. Enabled by default.
+- **Temperature**: Shows the measured temperature. Enabled by default.
+
+#### Switch entities
+
+- **Buzzer**: Turns the buzzer on or off.
+- **Child lock**: Turns the child lock on or off.
+
+### Standing Fan 1C
+
+Supported model ID: `dmaker.fan.1c`.
+
+#### Controls
+
+- Turn the fan on or off.
+- Select a preset mode: Normal or Nature.
+- Turn oscillation on or off.
+
+#### Number entities
+
+- **Delay off countdown**: Sets a timer, in minutes, after which the fan turns off.
+
+#### Switch entities
+
+- **Buzzer**: Turns the buzzer on or off.
+- **Child lock**: Turns the child lock on or off.
+- **LED**: Turns the LED on or off.
+
+### Tower Fan/Standing Fan 2/Standing Fan 2 Pro/Standing Fan Pro
+
+Supported model IDs:
+
+- `dmaker.fan.p9`
+- `dmaker.fan.p10`
+- `dmaker.fan.p11`
+- `dmaker.fan.p18`
+- `dmaker.fan.p33`
+
+#### Controls
+
+- Turn the fan on or off.
+- Select a preset mode: Normal or Nature.
+- Turn oscillation on or off.
+
+#### Number entities
+
+- **Delay off countdown**: Sets a timer, in minutes, after which the fan turns off.
+- **Oscillation angle**: Sets the oscillation angle, in degrees.
+
+#### Switch entities
+
+- **Buzzer**: Turns the buzzer on or off.
+- **Child lock**: Turns the child lock on or off.
+- **LED**: Turns the LED on or off.
+
+### Standing Fan 3
+
+Supported model ID: `zhimi.fan.za5`.
+
+#### Controls
+
+- Turn the fan on or off.
+- Select a preset mode: Normal or Nature.
+- Turn oscillation on or off.
+
+#### Binary sensor entities
+
+- **Power supply**: Shows whether the power supply is connected.
+
+#### Number entities
+
+- **Delay off countdown**: Sets a timer, in minutes, after which the fan turns off.
+- **LED brightness**: Sets the brightness of the LEDs.
+- **Oscillation angle**: Sets the oscillation angle, in degrees.
+
+#### Sensor entities
+
+- **Humidity**: Shows the measured humidity. Enabled by default.
+- **Temperature**: Shows the measured temperature. Enabled by default.
+
+#### Switch entities
+
+- **Buzzer**: Turns the buzzer on or off.
+- **Child lock**: Turns the child lock on or off.
+- **Ionizer**: Turns the ionizer on or off.
+
+### Actions
+
+These devices support the standard [humidifier](/integrations/humidifier/) and [fan](/integrations/fan/) actions, such as `humidifier.set_humidity`, `humidifier.set_mode`, `fan.set_percentage`, and `fan.set_preset_mode`. To act on a specific device, target its entity.
+
+The integration also adds Xiaomi-specific actions for air purifiers, such as **Fan reset filter** and **Fan set extra features**. For the full list, see [Actions](#list-of-actions).
 
 ## Xiaomi Air Quality Monitor
 
-The `xiaomi_miio` Air Quality Monitor is observing your Xiaomi Mi Air Quality Monitor (PM2.5) and reporting the air quality index and other values.
+Home Assistant shows the air quality measured by your Xiaomi Mi Air Quality Monitor (PM2.5).
 
-Currently, the supported features are:
+- **Air quality**: Shows the air quality index (AQI).
+  Its attributes show the power state, charging state, battery level, display clock, night mode and its schedule, and sensor state.
 
-- Air Quality Index (AQI)
-- Particulate matter 2.5
-- Attributes
-  - power
-  - charging
-  - battery
-  - time_stat
-  - carbon_dioxide_equivalent
-  - total_volatile_organic_compounds
-  - temperature
-  - humidity
+Depending on the model, a separate air quality entity also provides readings for PM2.5, PM10, carbon dioxide, carbon dioxide equivalent, total volatile organic compounds (TVOC), temperature, and humidity.
 
 ## Xiaomi IR Remote
 
-The `xiaomi miio` remote platform allows you to send IR commands from your Xiaomi IR Remote (ChuangmiIr).
+The Xiaomi IR Remote (`ChuangmiIr`) requires manual YAML configuration.
+It lets you send infrared commands to other devices.
 
-### Setup
+### Configure the remote
 
-Please follow the instructions on [Retrieving the Access Token](/integrations/xiaomi_miio/#retrieving-the-access-token) to get the API token to use in the `configuration.yaml` file.
-
-### Configuring the Platform
-
-To add a Xiaomi IR Remote to your installation, add the following to your `configuration.yaml` file:
+To configure the remote, add its IP address and access token to your {% term "`configuration.yaml`" %} file.
+For instructions on finding the access token, refer to [Retrieving the access token](#retrieving-the-access-token).
 
 ```yaml
 remote:
@@ -982,11 +1278,11 @@ remote:
 
 {% configuration %}
 host:
-  description: The IP of your remote.
+  description: The IP address of your remote.
   required: true
   type: string
 token:
-  description: The API token of your remote.
+  description: The access token of your remote.
   required: true
   type: string
 name:
@@ -994,27 +1290,29 @@ name:
   required: false
   type: string
 slot:
-  description: The slot used to save learned command.
+  description: The slot used to store learned commands.
   required: false
   type: integer
   default: 1
 timeout:
-  description: Timeout for learning a new command.
+  description: The time in seconds to wait while learning a command.
   required: false
   type: integer
-  default: 30
+  default: 10
 commands:
   description: A list of commands
   required: false
   type: map
   keys:
     command:
-      description: A list of commands as [raw (learned command)](/integrations/xiaomi_miio/#raw) or [pronto hex code](/integrations/xiaomi_miio/#pronto-hex-code).
+      description: A list of commands in the [raw](#raw-commands) or [Pronto hex](#pronto-hex-codes) format.
       required: true
       type: list
 {% endconfiguration %}
 
-### Full Configuration
+### Create reusable commands
+
+Define named commands when you want to reuse them in scripts or dashboard controls.
 
 ```yaml
 remote:
@@ -1034,123 +1332,113 @@ remote:
           - pronto:pronto_hex:[optional_repeat]
 ```
 
-### Add command as entity button in Lovelace UI
+### Send commands from a dashboard
+
+You can add a named command to a dashboard as an entity button.
 
 ```yaml
 type: entity-button
 tap_action:
-  action: call-service
-  service: remote.send_command
-  service_data:
-    command: activate_towel_heater
+  action: perform-action
+  perform_action: remote.send_command
+  target:
     entity_id: remote.xiaomi_miio_ir
+  data:
+    command: activate_towel_heater
 hold_action:
   action: more-info
 show_icon: true
 show_name: true
 entity: remote.xiaomi_miio_ir
-icon: 'mdi:radiator'
+icon: "mdi:radiator"
 name: Activate Towel Heater
 ```
 
-### Use named commands to create UI buttons
+You can also use named commands in a script.
 
-```yaml
-script:
-  towel_heater:
-    sequence:
-      - service: remote.send_command
-        target:
-          entity_id: "remote.bathroom_remote"
-        data:
-          command:
-            - 'activate_towel_heater'
-  please_cover_your_ears:
-    sequence:
-      - service: remote.send_command
-        target:
-          entity_id: "remote.bathroom_remote"
-        data:
-          command:
-            - 'read_bad_poem'
-```
+{% example %}
+script: |
+  script:
+    towel_heater:
+      sequence:
+        - action: remote.send_command
+          target:
+            entity_id: "remote.bathroom_remote"
+          data:
+            command:
+              - "activate_towel_heater"
+    please_cover_your_ears:
+      sequence:
+        - action: remote.send_command
+          target:
+            entity_id: "remote.bathroom_remote"
+          data:
+            command:
+              - "read_bad_poem"
+{% endexample %}
 
-### Command Types
+### Command formats
 
-The Xiaomi IR Remote Platform currently supports two different formats for IR codes.
+The Xiaomi IR Remote supports raw and Pronto hex command formats.
 
-### Raw
+#### Raw commands
 
-A raw command is a command learned from [`xiaomi_miio.remote_learn_command`](/integrations/xiaomi_miio/#xiaomi_miioremote_learn_command).
+A raw command is learned with the [Remote learn command](/actions/xiaomi_miio.remote_learn_command/) action.
 
-A raw command is defined as in the following example:
+The following is an example raw command:
 
 ```bash
 raw:Z6UFANEAAAAjAQAAAwkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQIAE=
 ```
 
-with an optional last parameter of frequency:
+You can add the frequency as the last parameter:
 
 ```bash
 raw:Z6UFANEAAAAjAQAAAwkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQIAE=:38400
 ```
 
-### Pronto Hex Code
+#### Pronto hex codes
 
-A pronto hex code is a hex code often supplied by the device manufacturer.
+A Pronto hex code is often supplied by the device manufacturer.
 
-A pronto hex code is defined as in the following example:
+The following is an example Pronto hex command:
 
 ```bash
 pronto:0000 006C 0022 0002 015B 00AD 0016 0016 0016 0016 0016 0016 0016 0016 0016 0016 0016 0016 0016 0016 0016 0016 0016 0041 0016 0041 0016 0041 0016 0041 0016 0041 0016 0041 0016 0041 0016 0016 0016 0016 0016 0041 0016 0016 0016 0041 0016 0016 0016 0016 0016 0016 0016 0016 0016 0041 0016 0016 0016 0041 0016 0016 0016 0041 0016 0041 0016 0041 0016 0041 0016 0623 015B 0057 0016 0E6E
 ```
 
-with an optional last parameter of repeats (required by some devices):
+You can add the number of repeats as the last parameter when required by the device:
 
 ```bash
 pronto:0000 006C 0022 0002 015B 00AD 0016 0016 0016 0016 0016 0016 0016 0016 0016 0016 0016 0016 0016 0016 0016 0016 0016 0041 0016 0041 0016 0041 0016 0041 0016 0041 0016 0041 0016 0041 0016 0016 0016 0016 0016 0041 0016 0016 0016 0041 0016 0016 0016 0016 0016 0016 0016 0016 0016 0041 0016 0016 0016 0041 0016 0016 0016 0041 0016 0041 0016 0041 0016 0041 0016 0623 015B 0057 0016 0E6E:2
 ```
 
-Note there are at least 4 versions of the Xiaomi IR Remote (ChuangmiIr) which can be recognized by their default hostname:
+The following Xiaomi IR Remote models are identified by their model IDs:
 
 - `chuangmi.ir.v2`
 - `chuangmi.remote.h102a03`
 - `chuangmi.remote.v2`
 - `chuangmi.remote.h102c01`
 
-For now, pronto hex codes only work on the first version (`chuangmi.ir.v2`).
+Pronto hex codes work only with `chuangmi.ir.v2`.
 
-### Platform Services
+### Available actions
 
-The Xiaomi IR Remote Platform registers four services.
+The Xiaomi IR Remote registers a generic `remote.send_command` action, along with Xiaomi-specific actions for learning commands and controlling the remote's LED.
 
-### `remote.send_command`
+#### `remote.send_command`
 
-Allows sending either named commands using an identifier or sending commands as one of the two types defined in [Command Types](/integrations/xiaomi_miio/#command-types).
+Use this action to send a named command or a command in one of the [supported formats](#command-formats).
 
-### `xiaomi_miio.remote_learn_command`
+To learn a new command, use the **Remote learn command** action. After learning, the base64 string is shown as a notification in Overview, where you can copy it. Commands learned to the same slot can still be sent using [`remote.send_command`](/actions/remote.send_command/) even if they are overwritten.
 
-Used to learn new commands.
-
-Use the entity_id of the Xiaomi IR Remote to start a learning process.
-
-`slot` and `timeout` can be specified, but multiple commands learned to the same slot can still be sent using [`remote.send_command`](/integrations/xiaomi_miio/#remotesend_command) even if they are overwritten.
-
-After learning the command the base64 string can be found as a notification in Overview, the string can be copied by left clicking on the string and choose the copy option.
-
-### `xiaomi_miio.remote_set_led_on`
-
-Used to turn remote's blue LED on.
-
-### `xiaomi_miio.remote_set_led_off`
-
-Used to turn remote's blue LED off.
+For the full list of actions this integration adds, see [Actions](#list-of-actions).
 
 ## Xiaomi Mi Robot Vacuum
 
-The `xiaomi_miio` vacuum platform allows you to control the state of your [Xiaomi Mi Robot Vacuum](https://www.mi.com/roomrobot/).
+The Xiaomi Home integration lets you control your [Xiaomi Mi Robot Vacuum](https://www.mi.com/roomrobot/).
 
-Currently supported services are:
+The vacuum supports these actions:
 
 - `start`
 - `pause`
@@ -1160,704 +1448,530 @@ Currently supported services are:
 - `clean_spot`
 - `set_fan_speed`
   Fan speeds: `Silent`, `Standard`, `Medium`, `Turbo` and `Gentle` (exclusively for mopping).
-- `remote_control_*` (of your robot)
 - `xiaomi_clean_zone`
+- `xiaomi_clean_segment`
+- `xiaomi_goto`
+- `remote_control_*` (of your robot)
 
-### Platform Services
+### Actions
 
-In addition to all of the services provided by the `vacuum` integration (`start`, `pause`, `stop`, `return_to_base`, `locate`, `set_fan_speed` and `send_command`), the `xiaomi_miio` platform introduces specific services to access the remote control mode of the robot. These are:
+In addition to all of the actions provided by the [vacuum](/integrations/vacuum/) integration (`start`, `pause`, `stop`, `return_to_base`, `locate`, `set_fan_speed`, and `send_command`), this integration adds Xiaomi-specific actions to clean zones and segments, send the robot to a coordinate, and remote control the robot. For the full list, see [Actions](#list-of-actions).
 
-- `xiaomi_miio.vacuum_remote_control_start`
-- `xiaomi_miio.vacuum_remote_control_stop`
-- `xiaomi_miio.vacuum_remote_control_move`
-- `xiaomi_miio.vacuum_remote_control_move_step`
-- `xiaomi_miio.vacuum_clean_zone`
+### Button entities
 
-### Service `xiaomi_miio.vacuum_remote_control_start`
+- **Reset main brush**: Resets the remaining life of the main brush.
+- **Reset side brush**: Resets the remaining life of the side brush.
+- **Reset filter**: Resets the remaining life of the filter.
+- **Reset sensor dirty**: Resets the remaining time until the sensors need cleaning.
 
-Start the remote control mode of the robot. You can then move it with `remote_control_move`; when done, call `remote_control_stop`.
+### Sensor entities
 
-| Service data attribute    | Optional | Description                                       |
-|---------------------------|----------|---------------------------------------------------|
-| `entity_id`               |       no | Only act on a specific robot                      |
+- **Battery**: Shows the battery level, in percent. Enabled by default.
+- **Current clean area**: Shows the area cleaned during the current cleaning run, in square meters. When the vacuum is not cleaning, shows the same value as **Last clean area**. Enabled by default.
+- **Current clean duration**: Shows the duration of the current cleaning run. When the vacuum is not cleaning, shows the same value as **Last clean duration**. Enabled by default.
+- **DnD start**: Shows when the next Do Not Disturb period starts. Disabled by default.
+- **DnD end**: Shows when the current or next Do Not Disturb period ends. Disabled by default.
+- **Filter remaining**: Shows the remaining filter life. Enabled by default.
+- **Last clean area**: Shows the area cleaned during the last cleaning run, in square meters. Enabled by default.
+- **Last clean duration**: Shows the duration of the last cleaning run. Enabled by default.
+- **Last clean end**: Shows when the last cleaning run ended. Enabled by default.
+- **Last clean start**: Shows when the last cleaning run started. Enabled by default.
+- **Main brush remaining**: Shows the remaining main brush life. Enabled by default.
+- **Side brush remaining**: Shows the remaining side brush life. Enabled by default.
+- **Sensor dirty remaining**: Shows the remaining time until the sensors need cleaning. Enabled by default.
+- **Total clean area**: Shows the total area cleaned, in square meters. Disabled by default.
+- **Total clean count**: Shows the total number of cleaning runs. Disabled by default.
+- **Total duration**: Shows the total cleaning time. Disabled by default.
+- **Total dust collection count**: Shows the total number of dust collections. Disabled by default.
 
-### Service `xiaomi_miio.vacuum_remote_control_stop`
+### Binary sensor entities
 
-Exit the remote control mode of the robot.
+Binary sensor entities are only available for vacuums with a mop.
 
-| Service data attribute    | Optional | Description                                       |
-|---------------------------|----------|---------------------------------------------------|
-| `entity_id`               |       no | Only act on a specific robot                      |
-
-### Service `xiaomi_miio.vacuum_remote_control_move`
-
-Remote control the robot. Please ensure you first set it in remote control mode with `remote_control_start`.
-
-| Service data attribute    | Optional | Description                                               |
-|---------------------------|----------|-----------------------------------------------------------|
-| `entity_id`               |       no | Only act on a specific robot                              |
-| `velocity`                |       no | Speed: between -0.29 and 0.29                             |
-| `rotation`                |       no | Rotation: between -179 degrees and 179 degrees            |
-| `duration`                |       no | The number of milliseconds that the robot should move for |
-
-### Service `xiaomi_miio.vacuum_remote_control_move_step`
-
-Enter remote control mode, make one move, stop, and exit remote control mode.
-
-| Service data attribute    | Optional | Description                                               |
-|---------------------------|----------|-----------------------------------------------------------|
-| `entity_id`               |       no | Only act on a specific robot                              |
-| `velocity`                |       no | Speed: between -0.29 and 0.29                             |
-| `rotation`                |       no | Rotation: between -179 degrees and 179 degrees            |
-| `duration`                |       no | The number of milliseconds that the robot should move for |
-
-### Service `xiaomi_miio.vacuum_clean_zone`
-
-Start the cleaning operation in the areas selected for the number of repeats indicated.
-
-| Service data attribute    | Optional | Description                                           |
-|---------------------------|----------|-------------------------------------------------------|
-| `entity_id`               |       no | Only act on a specific robot                          |
-| `zone`                    |       no | List of zones. Each zone is an array of four integer values. These values represent two sets of x- and y-axis coordinates that describe the beginning and ending points of a square or rectangle cleaning zone. For example, `[[23510,25311,25110,26361]]` creates a box that starts in one corner at the 23510, 25311 (x- and y-axis) coordinates and then is expanded diagonally to the 25110, 26361 coordinates to create a rectangular cleaning zone. |
-| `repeats`                 |       no | Number of cleaning repeats for each zone between 1 and 3. |
-
-Example of `xiaomi_miio.vacuum_clean_zone` use:
-
-Inline array:
-{% raw %}
-
-```yaml
-automation:
-  - alias: "Test vacuum zone3"
-    trigger:
-    - event: start
-      platform: homeassistant
-    condition: []
-    action:
-    - service: xiaomi_miio.vacuum_clean_zone
-      target:
-        entity_id: vacuum.xiaomi_vacuum
-      data:
-        repeats: "{{states('input_number.vacuum_passes')|int}}"
-        zone: [[30914,26007,35514,28807], [20232,22496,26032,26496]]
-```
-
-{% endraw %}
-
-Array with inline zone:
-{% raw %}
-
-```yaml
-automation:
-  - alias: "Test vacuum zone3"
-    trigger:
-    - event: start
-      platform: homeassistant
-    condition: []
-    action:
-    - service: xiaomi_miio.vacuum_clean_zone
-      target:
-        entity_id: vacuum.xiaomi_vacuum
-      data:
-        repeats: "{{states('input_number.vacuum_passes')|int}}"
-        zone:
-        - [30914,26007,35514,28807]
-        - [20232,22496,26032,26496]
-```
-
-{% endraw %}
-
-Array mode:
-
-```yaml
-automation:
-  - alias: "Test vacuum zone3"
-    trigger:
-    - event: start
-      platform: homeassistant
-    condition: []
-    action:
-    - service: xiaomi_miio.vacuum_clean_zone
-      target:
-        entity_id: vacuum.xiaomi_vacuum
-      data:
-        repeats: 1
-        zone:
-        - - 30914
-          - 26007
-          - 35514
-          - 28807
-        - - 20232
-          - 22496
-          - 26032
-          - 26496
-```
-
-### Service `xiaomi_miio.vacuum_goto`
-
-Go the specified coordinates
-
-| Service data attribute    | Optional | Description                                           |
-|---------------------------|----------|-------------------------------------------------------|
-| `entity_id`               |       no | Only act on a specific robot                          |
-| `x_coord`                 |       no | X-coordinate, integer value. The dock is located at x-coordinate 25500. |
-| `y_coord`                 |       no | Y-coordinate, integer value. The dock is located at y-coordinate 25500. |
-
-### Service `xiaomi_miio.vacuum_clean_segment`
-
-Clean the specified segment/room. A room is identified by a number. Instructions on how to find the valid room numbers and determine what rooms they map to, read the section [Retrieving room numbers](#retrieving-room-numbers).
-
-| Service data attribute    | Optional | Description                                           |
-|---------------------------|----------|-------------------------------------------------------|
-| `entity_id`               |       no | Only act on a specific robot                          |
-| `segments`                |       no | List of segment numbers or one single segment number. |
-
-Example of `xiaomi_miio.vacuum_clean_segment` use:
-
-Multiple segments:
-```yaml
-automation:
-  - alias: "Vacuum kitchen and living room"
-    trigger:
-    - event: start
-      platform: homeassistant
-    condition: []
-    action:
-    - service: xiaomi_miio.vacuum_clean_segment
-      target:
-        entity_id: vacuum.xiaomi_vacuum
-      data:
-        segments: [1,2]
-```
-
-Single segment:
-
-```yaml
-automation:
-  - alias: "Vacuum kitchen"
-    trigger:
-    - event: start
-      platform: homeassistant
-    condition: []
-    action:
-    - service: xiaomi_miio.vacuum_clean_segment
-      target:
-        entity_id: vacuum.xiaomi_vacuum
-      data:
-        segments: 1
-```
-
-The original app for Xiaomi vacuum has a nice feature of room cleaning with repetition, you can achieve the same result with repeating segments:
-
-```yaml
-automation:
-  - alias: "Vacuum kitchen"
-    trigger:
-      - event: start
-        platform: homeassistant
-    action:
-      - service: xiaomi_miio.vacuum_clean_segment
-        target:
-          entity_id: vacuum.xiaomi_vacuum
-        data:
-          segments: [1, 1]
-```
+- **Water box attached**: Shows whether the water box is attached. Enabled by default.
+  On models with a separate mop, an additional **Mop attached** entity shows whether the mop is attached.
+- **Water shortage**: Shows whether the water box is low on water. Enabled by default.
 
 ### Attributes
 
-In addition to [all of the attributes provided by the `vacuum` component](/integrations/vacuum/#attributes),
-(`battery_icon`, `cleaned_area`, `fan_speed`, `fan_speed_list`, and `params`), the `xiaomi` platform introduces specific attributes. These are:
+In addition to the standard [vacuum](/integrations/vacuum/) attributes, the vacuum entity shows these attributes:
 
-- `cleaning_time`
-- `do_not_disturb`
-- `main_brush_left`
-- `side_brush_left`
-- `filter_left`
-- `sensor_dirty_left`
-- `cleaning_count`
-- `total_cleaned_area`
-- `total_cleaning_time`
-- `clean_start`
-- `clean_end`
-- `mop_attached`
+- `status`: The current status reported by the vacuum.
+- `error`: The current error, if the vacuum reports one.
+- `timers`: The cleaning timers set on the vacuum, if any.
 
-The following table shows the units of measurement for each attribute:
+### Cleaning a specific room
 
-| Attribute                 | Unit of measurement | Description                                                    |
-|---------------------------|---------------------|----------------------------------------------------------------|
-| `do_not_disturb`          |                     | DND mode on / off                                              |
-| `cleaning_time`           | minutes             | Last / actual cleaning time in minutes                         |
-| `cleaned_area`            | square meter        | Last / actual cleaned area in square meters                    |
-| `main_brush_left`         | hours               | Hours left until a change of the main brush is needed          |
-| `side_brush_left`         | hours               | Hours left until a change of the side brush is needed          |
-| `filter_left`             | hours               | Hours left until a change of the filter is needed              |
-| `sensor_dirty_left`       | hours               | Hours left until the wall and cliff sensors should be cleaned  |
-| `cleaning_count`          |                     | Number of total cleaning cycles                                |
-| `total_cleaned_area`      | square meter        | Total cleaned area in square meters                            |
-| `total_cleaning_time`     | minutes             | Total cleaning time in minutes                                 |
-| `clean_start`             | datetime            | The last date/time the vacuum started cleaning (offset naive)  |
-| `clean_stop`              | datetime            | The last date/time the vacuum finished cleaning (offset naive) |
-| `mop_attached`            |                     | A mop and water box are attached / not attached                |
+Use [`vacuum.send_command`](/integrations/vacuum/) to clean a specific room:
 
-### Example on how to clean a specific room
+{% example %}
+script: |
+  script:
+    vacuum_kitchen:
+      alias: "Clean the kitchen"
+      sequence:
+        - action: vacuum.send_command
+          target:
+            entity_id: vacuum.xiaomi_vacuum_cleaner
+          data:
+            command: app_segment_clean
+            params:
+              - 18
+{% endexample %}
 
-Example script using [`vacuum.send_command`](/integrations/vacuum/) to clean a specific room:
+The `params` value specifies a room number.
+To clean multiple rooms, provide a list of room numbers, such as 17 and 18.
+For instructions on finding valid room numbers and the rooms they map to, refer to [Retrieving room numbers](#retrieving-room-numbers).
 
-```yaml
-vacuum_kitchen:
-  alias: "Clean the kitchen"
-  sequence:
-    - service: vacuum.send_command
-      target:
-        entity_id: vacuum.xiaomi_vacuum_cleaner
-      data:
-        command: app_segment_clean
-        params: [18]
-```
+### Resetting maintenance hours
 
-Where params specify room numbers, for multiple rooms, params can be specified like `[17,18]`. Instructions on how to find the valid room numbers and determine what rooms they map to, read the section [Retrieving room numbers](#retrieving-room-numbers).
+The vacuum entity stores the remaining time before its brushes, filter, and sensors need maintenance in the `main_brush_left`, `side_brush_left`, `filter_left`, and `sensor_dirty_left` attributes.
+The values are measured in hours.
+After cleaning or replacing a part, use [`vacuum.send_command`](/integrations/vacuum/) to reset its maintenance hours.
+This example resets the main brush:
 
-### Example on how to reset maintenance hours (brushes, filter, sensors)
+{% example %}
+script: |
+  script:
+    reset_main_brush_left:
+      alias: "Reset hours for main brush replacement"
+      sequence:
+        - action: vacuum.send_command
+          target:
+            entity_id: vacuum.xiaomi_vacuum_cleaner
+          data:
+            command: reset_consumable
+            params:
+              - "main_brush_work_time"
+{% endexample %}
 
-The vacuum entity stores attribute values for when brushes, filters and sensors need to be
-cleaned or replaced (`main_brush_left`, `side_brush_left`, `filter_left` and
-`sensor_dirty_left`).  The values are measured in hours. Once the parts are cleaned
-or replaced you can then reset those values on the vacuum.  Here is an example script using
-[`vacuum.send_command`](/integrations/vacuum/) to reset the hours for the main brush:
+The `reset_consumable` command supports these `params` values:
 
-```yaml
-reset_main_brush_left:
-  alias: "Reset hours for main brush replacement"
-  sequence:
-    - service: vacuum.send_Command
-      target:
-        entity_id: vacuum.xiaomi_vacuum_cleaner
-      data:
-        command: reset_consumable
-        params: ['main_brush_work_time']
-```
+- `main_brush_work_time`
+- `side_brush_work_time`
+- `filter_work_time`
+- `sensor_dirty_time`
 
-Allowed `params` for the `reset_consumable` command:
+### Retrieve zone cleaning coordinates
 
-- `['main_brush_work_time']`
-- `['side_brush_work_time']`
-- `['filter_work_time']`
-- `['sensor_dirty_time']`
+#### Using FloleVac (Android)
 
-### Retrieving Zoned Cleaning Coordinates
+1. Download [FloleVac](https://play.google.com/store/apps/details?id=de.flole.xiaomi).
+2. Sign in with your Xiaomi Home account.
+3. Open the map while connected to the same network as your vacuum.
+4. Select **Zone cleanup**, then draw a box around the area you want to clean.
+5. Press and hold **Cleanup** to copy the zone coordinates to your clipboard.
 
-### Using FloleVac (Android)
+#### Using RoboRock Control Center (requires Valetudo firmware)
 
-1. Download [FloleVac](https://play.google.com/store/apps/details?id=de.flole.xiaomi)
-2. Login with your Xiaomi credentials
-3. Open Map (make sure you're on the same network as your vacuum cleaner)
-4. Select "Zone cleanup" and draw a box around the zone you'd like to clean
-5. Long press "Cleanup" and the zone coordinates will be copied to your clipboard
+[RoboRock Control Center](https://github.com/LazyT/rrcc) supports rooted and non-rooted vacuums and can work locally without the cloud.
+If you install [Valetudo](https://github.com/Hypfer/Valetudo) firmware on a rooted vacuum, you can connect to it with SSH and enable MQTT and map functions.
 
-### Using RoboRock Control Center (requires Valetudo firmware)
+Use the map editor to find the coordinates for zone cleaning.
+This example cleans a zone:
 
-[RRCC](https://github.com/LazyT/rrcc) supports both rooted and non-rooted Vacuums and acts as a mostly fully featured replacement for Mi Home that works locally without the cloud. If you have installed the rooted firmware [Valetudo](https://github.com/Hypfer/Valetudo) you are able to SSH into your Vacuum and enable MQTT plus use map functions with no cloud requirement.
+{% example %}
+script: |
+  script:
+    vacuum_kitchen:
+      alias: "Vacuum kitchen"
+      sequence:
+        - action: vacuum.send_command
+          target:
+            entity_id: "vacuum.xiaomi_vacuum_cleaner"
+          data:
+            command: app_zoned_clean
+            params:
+              - - 23084
+                - 26282
+                - 27628
+                - 29727
+                - 1
+{% endexample %}
 
-Using the map editor you are able to acquire the coordinates required for zoned clean up. Here is an example script for zoned clean up:
+### Retrieving room numbers
 
-```yaml
-vacuum_kitchen:
-  alias: "vacuum kitchen"
-  sequence:
-    - service: vacuum.send_command
-      target:
-        entity_id: "vacuum.xiaomi_vacuum_cleaner"
-      data:
-        command: app_zoned_clean
-        params: [[23084,26282,27628,29727,1]]
-```
-
-### Retrieving Room numbers
-
-Valid room numbers can be retrieved using miio command-line tool:
+Use the Miio command-line tool to retrieve room numbers:
 
 ```bash
-miiocli vacuum --ip <ip of the vacuum> --token <your vacuum token> get_room_mapping
+miiocli roborockvacuum --ip <ip of the vacuum> --token <your vacuum token> get_room_mapping
 ```
 
-It will return the full mapping of room numbers to user-defined names as a list of (number,name) tuples.
-Alternatively, one can just test the clean_segment service with a number and see which room it cleans.
+The command returns room numbers and their user-defined names as `(number, name)` pairs.
+You can also test the `clean_segment` action with a number to identify the room it cleans.
 
-It seems to be the case that Numbers 1..15 are used to number the initial segmentation done by the vacuum cleaner itself. Numbers 16 and upwards numbers rooms from the users manual editing.
+The vacuum appears to use numbers 1 through 15 for its initial room segmentation.
+Numbers 16 and above appear to be rooms created by manual edits.
 
 ## Xiaomi Philips Light
 
-The `xiaomi_miio` platform allows you to control the state of your Xiaomi Philips LED Ball Lamp, Xiaomi Philips Zhirui LED Bulb E14 Candle Lamp, Xiaomi Philips Zhirui Downlight, Xiaomi Philips LED Ceiling Lamp, Xiaomi Philips Eyecare Lamp 2, Xiaomi Philips Moonlight Bedside Lamp and Philips Zhirui Desk Lamp.
+The Xiaomi Home light platform allows you to control the state of your Xiaomi Philips LED Ball Lamp, Xiaomi Philips Zhirui LED Bulb E14 Candle Lamp, Xiaomi Philips Zhirui Downlight, Xiaomi Philips LED Ceiling Lamp, Xiaomi Philips Eyecare Lamp 2, Xiaomi Philips Moonlight Bedside Lamp and Philips Zhirui Desk Lamp.
 
 ### Features
 
-### Philips LED Ball Lamp, Philips Zhirui LED Candle Lamp and Philips Zhirui Downlight
+#### Philips LED Ball Lamp, Philips Zhirui LED Candle Lamp and Philips Zhirui Downlight
 
-Supported models: `philips.light.bulb`, `philips.light.candle`, `philips.light.candle2`, `philips.light.downlight`
+Supported model IDs:
 
-- Power (on, off)
-- Brightness
-- Color temperature (175...333 mireds)
-- Scene (1, 2, 3, 4)
-- Delayed turn off (Resolution in seconds)
-- Attributes
-  - model
-  - scene
-  - delayed_turn_off
+- `philips.light.bulb`
+- `philips.light.candle`
+- `philips.light.candle2`
+- `philips.light.downlight`
 
-### Philips LED Ceiling Lamp
+##### Controls
 
-Supported models: `philips.light.ceiling`, `philips.light.zyceiling`
+- Turn the light on or off.
+- Set the brightness.
+- Set the color temperature from about 3000 K to 5700 K.
+- Select a fixed scene: 1, 2, 3, or 4.
+- Turn the light off after a delay, in seconds.
 
-- Power (on, off)
-- Brightness
-- Color temperature (175...370 mireds)
-- Scene (1, 2, 3, 4)
-- Night light mode (on, off)
-- Delayed turn off (Resolution in seconds)
-- Attributes
-  - model
-  - scene
-  - delayed_turn_off
-  - night_light_mode
-  - automatic_color_temperature
+##### Attributes
 
-### Philips Eyecare Smart Lamp 2
+In addition to the standard light attributes, the light entity shows these attributes.
 
-Supported models: `philips.light.sread1`
+- `scene`
+- `delayed_turn_off`
 
-- Eyecare light (on, off)
-- Ambient light (on, off)
-- Brightness (of each light)
-- Scene (1, 2, 3, 4)
-- Night light mode (on, off)
-- Delayed turn off (Resolution in seconds)
-- Eye fatigue reminder / notification (on, off)
-- Eyecare mode (on, off)
-- Attributes
-  - model
-  - scene
-  - delayed_turn_off
-  - night_light_mode
-  - reminder
-  - eyecare_mode
+#### Philips LED Ceiling Lamp
 
-### Philips Zhirui Desk Lamp
+Supported model IDs:
 
-Supported models: `philips.light.mono1`
+- `philips.light.ceiling`
+- `philips.light.zyceiling`
 
-- Power (on, off)
-- Brightness
-- Scene (1, 2, 3, 4)
-- Delayed turn off (Resolution in seconds)
-- Attributes
-  - model
-  - scene
-  - delayed_turn_off
+##### Controls
 
-### Philips Moonlight Bedside Lamp
+- Turn the light on or off.
+- Set the brightness.
+- Set the color temperature from about 2700 K to 5700 K.
+- Select a fixed scene: 1, 2, 3, or 4.
+- Turn the light off after a delay, in seconds.
 
-Supported models: `philips.light.moonlight`
+##### Attributes
 
-- Power (on, off)
-- Brightness
-- Color
-- Color temperature (153...588 mireds)
-- Scene (1, 2, 3, 4, 5, 6)
-- Attributes
-  - model
-  - scene
-  - sleep_assistant
-  - sleep_off_time
-  - total_assistant_sleep_time
-  - brand_sleep
-  - brand
+In addition to the standard light attributes, the light entity shows these attributes.
 
-### Platform Services
+- `scene`
+- `delayed_turn_off`
+- `night_light_mode`
+- `automatic_color_temperature`
 
-### Service `xiaomi_miio.light_set_scene`
+#### Philips Eyecare Smart Lamp 2
 
-Set one of the 4 available fixed scenes.
+Supported model ID: `philips.light.sread1`.
 
-| Service data attribute    | Optional | Description                                           |
-|---------------------------|----------|-------------------------------------------------------|
-| `entity_id`               |       no | Only act on a specific Xiaomi miIO light entity.      |
-| `scene`                   |       no | Scene, between 1 and 4.                               |
+This lamp has two light entities: the eyecare light and the ambient light.
 
-### Service `xiaomi_miio.light_set_delayed_turn_off`
+##### Controls
 
-Delayed turn off.
+- Turn the eyecare light on or off.
+- Turn the ambient light on or off.
+- Set the brightness of each light.
+- Select a fixed scene: 1, 2, 3, or 4.
+- Turn night light mode on or off.
+- Turn the eyecare light off after a delay, in seconds.
+- Turn the eye fatigue reminder on or off.
+- Turn eyecare mode on or off.
 
-| Service data attribute    | Optional | Description                                           |
-|---------------------------|----------|-------------------------------------------------------|
-| `entity_id`               |       no | Only act on a specific Xiaomi miIO light entity.      |
-| `time_period`             |       no | Time period for the delayed turn off.                 |
+##### Attributes
 
-### Service `xiaomi_miio.light_reminder_on` (Eyecare Smart Lamp 2 only)
+In addition to the standard light attributes, the eyecare light entity shows these attributes.
 
-Enable the eye fatigue reminder/notification.
+- `scene`
+- `delayed_turn_off`
+- `night_light_mode`
+- `reminder`
+- `eyecare_mode`
 
-| Service data attribute    | Optional | Description                                           |
-|---------------------------|----------|-------------------------------------------------------|
-| `entity_id`               |       no | Only act on a specific Xiaomi miIO light entity.      |
+#### Philips Zhirui Desk Lamp
 
-### Service `xiaomi_miio.light_reminder_off` (Eyecare Smart Lamp 2 only)
+Supported model IDs:
 
-Disable the eye fatigue reminder/notification.
+- `philips.light.mono1`
+- `philips.light.hbulb`
 
-| Service data attribute    | Optional | Description                                           |
-|---------------------------|----------|-------------------------------------------------------|
-| `entity_id`               |       no | Only act on a specific Xiaomi miIO light entity.      |
+##### Controls
 
-### Service `xiaomi_miio.light_night_light_mode_on`  (Eyecare Smart Lamp 2 only)
+- Turn the light on or off.
+- Set the brightness.
+- Select a fixed scene: 1, 2, 3, or 4.
+- Turn the light off after a delay, in seconds.
 
-Turn the smart night light mode on.
+##### Attributes
 
-| Service data attribute    | Optional | Description                                           |
-|---------------------------|----------|-------------------------------------------------------|
-| `entity_id`               |       no | Only act on a specific Xiaomi miIO light entity.      |
+In addition to the standard light attributes, the light entity shows these attributes.
 
-### Service `xiaomi_miio.light_night_light_mode_off`  (Eyecare Smart Lamp 2 only)
+- `scene`
+- `delayed_turn_off`
 
-Turn the smart night light mode off.
+#### Philips Moonlight Bedside Lamp
 
-| Service data attribute    | Optional | Description                                           |
-|---------------------------|----------|-------------------------------------------------------|
-| `entity_id`               |       no | Only act on a specific Xiaomi miIO light entity.      |
+Supported model ID: `philips.light.moonlight`.
 
-### Service `xiaomi_miio.light_eyecare_mode_on`  (Eyecare Smart Lamp 2 only)
+##### Controls
 
-Turn the eyecare mode on.
+- Turn the light on or off.
+- Set the brightness.
+- Set the color.
+- Set the color temperature from about 1700 K to 6500 K.
+- Select a fixed scene: 1, 2, 3, 4, 5, or 6.
 
-| Service data attribute    | Optional | Description                                           |
-|---------------------------|----------|-------------------------------------------------------|
-| `entity_id`               |       no | Only act on a specific Xiaomi miIO light entity.      |
+##### Attributes
 
-### Service `xiaomi_miio.light_eyecare_mode_off`  (Eyecare Smart Lamp 2 only)
+In addition to the standard light attributes, the light entity shows these attributes.
 
-Turn the eyecare mode off.
+- `scene`
+- `sleep_assistant`
+- `sleep_off_time`
+- `total_assistant_sleep_time`
+- `band_sleep`
+- `band`
 
-| Service data attribute    | Optional | Description                                           |
-|---------------------------|----------|-------------------------------------------------------|
-| `entity_id`               |       no | Only act on a specific Xiaomi miIO light entity.      |
+### Actions
 
-## Xiaomi Smart WiFi Socket and Smart Power Strip
+This integration adds actions to set a fixed scene, schedule a delayed turn off, and, on the Philips Eyecare Smart Lamp 2, toggle the reminder, night light, and eyecare modes. For the full list, see [Actions](#list-of-actions).
 
-The `xiaomi_miio` switch platform allows you to control the state of your Xiaomi Smart WiFi Socket aka Plug, Xiaomi Smart Power Strip and Xiaomi Chuangmi Plug V1.
+## Xiaomi Smart Wi-Fi Socket and Smart Power Strip
+
+The Xiaomi Home switch platform lets you control your Xiaomi Smart Wi-Fi Socket, Xiaomi Smart Power Strip, and Xiaomi Chuangmi Plug V1.
 
 ### Features
 
-### Xiaomi Smart WiFi Socket
+#### Xiaomi Smart Wi-Fi Socket
 
-Supported models: `chuangmi.plug.m1`, `chuangmi.plug.m3`, `chuangmi.plug.v2`, `chuangmi.plug.hmi205`, `chuangmi.plug.hmi206`
+Supported model IDs:
 
-- Power (on, off)
-- Attributes
-  - Temperature
+- `chuangmi.plug.m1`
+- `chuangmi.plug.m3`
+- `chuangmi.plug.v2`
+- `chuangmi.plug.hmi205`
+- `chuangmi.plug.hmi206`
 
-### Xiaomi Chuangmi Plug V1
+##### Controls
 
-Supported models: `chuangmi.plug.v1`, `chuangmi.plug.v3`, `chuangmi.plug.hmi208`
+- Turn the socket on or off.
 
-- Power (on, off)
-- USB (on, off)
-- Attributes
-  - Temperature
+##### Attributes
 
-### Xiaomi Smart Power Strip
+In addition to the standard switch attributes, the switch entity shows these attributes.
 
-Supported models: `qmi.powerstrip.v1`, `zimi.powerstrip.v2`
+- `model`
+- `temperature`
 
-- Power (on, off)
-- Wifi LED (on, off)
-- Power Price (0...999)
-- Power Mode (green, normal) (Power Strip V1 only)
-- Attributes
-  - Temperature
-  - Current
-  - Load power
-  - Wifi LED
-  - Mode (Power Strip V1 only)
+#### Xiaomi Chuangmi Plug V1
 
-### Xiaomi Air Conditioning Companion V3
+Supported model IDs:
 
-Supported models: `lumi.acpartner.v3` (the socket of the `acpartner.v1` and `v2` isn't switchable!)
+- `chuangmi.plug.v1`
+- `chuangmi.plug.v3`
+- `chuangmi.plug.hmi208`
 
-- Power (on, off)
-- Attributes
-  - Load power
+##### Controls
 
-### Platform Services
+- Turn the plug on or off.
+- Turn the USB port on or off.
 
-### Service `xiaomi_miio.switch_set_wifi_led_on` (Power Strip only)
+##### Attributes
 
-Turn the wifi LED on.
+In addition to the standard switch attributes, the switch entities show these attributes.
 
-| Service data attribute    | Optional | Description                                             |
-|---------------------------|----------|---------------------------------------------------------|
-| `entity_id`               |       no | Only act on a specific Xiaomi miIO switch entity.       |
+- `model`
+- `temperature`
 
-### Service `xiaomi_miio.switch_set_wifi_led_off` (Power Strip only)
+#### Xiaomi Smart Power Strip
 
-Turn the wifi LED off.
+Supported model IDs:
 
-| Service data attribute    | Optional | Description                                             |
-|---------------------------|----------|---------------------------------------------------------|
-| `entity_id`               |       no | Only act on a specific Xiaomi miIO switch entity.       |
+- `qmi.powerstrip.v1`
+- `zimi.powerstrip.v2`
 
-### Service `xiaomi_miio.switch_set_power_price` (Power Strip)
+##### Controls
 
-Set the power price.
+- Turn the power strip on or off.
+- Turn the Wi-Fi LED on or off.
+- Set the power price, from 0 to 999.
+- Set the power mode to Green or Normal. Only available on the `qmi.powerstrip.v1`.
 
-| Service data attribute    | Optional | Description                                             |
-|---------------------------|----------|---------------------------------------------------------|
-| `entity_id`               |       no | Only act on a specific Xiaomi miIO switch entity.       |
-| `price`                   |       no | Power price, between 0 and 999.                         |
+##### Attributes
 
-### Service `xiaomi_miio.switch_set_power_mode` (Power Strip V1 only)
+In addition to the standard switch attributes, the switch entity shows these attributes.
 
-Set the power mode.
+- `model`
+- `temperature`
+- `load_power`
 
-| Service data attribute    | Optional | Description                                                   |
-|---------------------------|----------|---------------------------------------------------------------|
-| `entity_id`               |       no | Only act on a specific Xiaomi miIO switch entity.             |
-| `mode`                    |       no | Power mode, valid values are 'normal' and 'green'             |
+On the `qmi.powerstrip.v1`, it also shows the `power_mode` attribute.
 
-## Retrieving the Access Token
-Not recommended, please specify the cloud credentials during the config flow for easier setup.
-However when setting up a device manually the token can be retrieved in one of the following ways.
+#### Xiaomi Air Conditioning Companion V3
+
+Supported model ID: `lumi.acpartner.v3`.
+You cannot control the socket on `lumi.acpartner.v1` and `lumi.acpartner.v2`.
+
+##### Controls
+
+- Turn the socket on or off.
+
+##### Attributes
+
+In addition to the standard switch attributes, the switch entity shows these attributes.
+
+- `model`
+- `load_power`
+
+### Actions
+
+This integration adds actions to toggle the Wi-Fi LED and, on supported power strips, set the power mode and power price. For the full list, see [Actions](#list-of-actions).
+
+{% include integrations/actions.md %}
+
+## Retrieving the access token
+
+Only retrieve an access token if you are setting up a device manually or configuring a Xiaomi Mi Wi-Fi Repeater 2 or Xiaomi IR Remote in {% term "`configuration.yaml`" %}.
+For other devices, sign in to your Xiaomi Home account during setup so Home Assistant can retrieve the token automatically.
 
 ### Xiaomi Cloud Tokens Extractor
 
-One of Home Assistant users wrote a tokens extractor tool, which is currently the easiest way to retrieve tokens for all devices assigned to Xiaomi account.
-[In the repository](https://github.com/PiotrMachowski/Xiaomi-cloud-tokens-extractor) there's executable for convenient use on Windows or Python script to be run on any platform. If you do not wish to run executable, then you can run it using the source code:
+The community-maintained [Xiaomi Cloud Tokens Extractor](https://github.com/PiotrMachowski/Xiaomi-cloud-tokens-extractor) can retrieve tokens for devices connected to your Xiaomi account.
+The project provides a Windows executable and Python source code for other platforms.
+To run the source code:
 
-1. Install requirements:
+1. Install the requirements:
 
-  ```bash
-  pip3 install pycryptodome pybase64 requests
-  ```
+```bash
+pip3 install pycryptodome pybase64 requests
+```
 
-2. Run script
+2. Run the script:
 
-  ```bash
-  python3 token_extractor.py
-  ```
+```bash
+python3 token_extractor.py
+```
 
-3. Provide e-mail address or username for Xiaomi's account, password and country of the account (most used: CN - China Mainland, DE - Germany etc.)
-4. Script will print out all devices connected to the account with their IP address and tokens for use in Home Assistant.
+3. Enter the email address or username, password, and region for your Xiaomi account.
+4. The script lists the devices connected to the account with their IP addresses and access tokens.
 
-### Xiaomi Home app (Xiaomi Aqara Gateway, Android & iOS)
+### Retrieving a gateway access token using Xiaomi Home
 
-1. Install the Xiaomi Home app.
-2. Sign In/make an account.
-3. Make sure you set your region to: Mainland China (Seems to be the longest line with Chinese characters) under settings -> Region (language can later be set on English).
-4. Select your Gateway in Xiaomi Home app.
-5. Then the 3 dots at the top right of the screen.
-6. Then click on about.
-7. Tap the version number (Plug-in version 2.77.1 as of January 2020, iOS has a white space instead of version number) at the bottom of the screen repeatedly.
-8. You should now see 2 extra options listed in English (iOS still in Chinese), this means you enabled developer mode. [if not, try all steps again!].
-9. Android: under "Hub info" there is quite some text in JSON format, this includes the "token" that you need.
-iOS: Most options are still in Chinese, you need the fourth item from the top.
+1. Install the Xiaomi Home app and sign in to your account.
+2. Set the region to **Chinese mainland**.
+3. Select your gateway, then select the three dots menu {% icon "mdi:dots-vertical" %}.
+4. Select **About**.
+5. Repeatedly select the version number at the bottom of the page to enable developer mode.
+6. On Android, select **Hub info**, then find the `token` value in the JSON text.
+   On iOS, select the fourth option from the top.
 
-Note: If you have multiple devices needing a token, e.g., Xiaomi Mi Robot Vacuum and a Xiaomi IR Remote, the above method may not work. The Xiaomi Home app will display a token, though it isn't the correct one. The alternative method using "Mi Home v5.4.49" will provide the correct token.
+{% note %}
+If you need tokens for multiple devices, the Xiaomi Home app might show a token that does not work with a device.
+Use the [Xiaomi Cloud Tokens Extractor](#xiaomi-cloud-tokens-extractor) instead.
+{% endnote %}
 
-### Using Get Mi Home Devices Token App
+### Retrieving an access token with the Get Mi Home Devices Token app
 
-If you are on a Windows or macOS device, you can use the [Get MiHome devices token](https://github.com/Maxmudjon/Get_MiHome_devices_token/releases) App to retrieve the token. Click the link, download the file that corresponds to your OS, enter your login details and it will retrieve the access token.
+On Windows or macOS, you can use [Get MiHome devices token](https://github.com/Maxmudjon/Get_MiHome_devices_token/releases) to retrieve an access token.
+Download the file for your operating system, enter your sign-in details, and follow the app's instructions.
 
-### Alternative methods
+### Other ways to retrieve an access token
 
-<div class='note'>
+{% note %}
 
-If using an Android device to retrieve the Access Token only `v5.4.49` of Mi Home is confirmed working (December 2019). Use `v5.4.49` of Mi Home locate a text file under the `Smarthome/logs` folder where the 32 character token is stored. There will likely be several text files in this directory, search all of them for the word 'token' and you should find it there. Be advised that the latest version of Mi Home does not store the token in clear text.
-<br/> <br/>
-The iPhone app still stores the token in the SQLite db as of `v4.23.4` (Nov 17, 2019).
-<br/> <br/>
-After resetting the Wi-Fi settings of the Xiaomi robot vacuum, a new Access Token will be generated and therefore these instructions need to be followed again.
-<br/> <br/>
-These instructions are written for the Mi Home app - not for the new RoboRock app.
-<br/> <br/>
-This token (32 hexadecimal characters) is required for the Xiaomi Mi Robot Vacuum, Mi Robot 2 (Roborock) Vacuum, Xiaomi Philips Lights and Xiaomi IR Remote.
-</div>
+These methods rely on old Mi Home app versions and have not been verified with current versions.
+Try the [Xiaomi Cloud Tokens Extractor](#xiaomi-cloud-tokens-extractor) first.
 
-### Android (not rooted)
+Use these methods only if the token extractor is not suitable for your device.
 
-> If using an Android device to retrieve the Access Token only `v5.4.49` of Mi Home is confirmed working (December 2019).
+After you reset the Wi-Fi settings of a Xiaomi robot vacuum, it generates a new access token.
 
-1. To begin, set up your Robovac with the latest version of Mi Home on your primary Android device as you normally would.
-2. If your Robovac is already set up, you must reset its WiFi settings for it to get a new token.
-3. Using `v5.4.49` of Mi Home locate a text file under the `Smarthome/logs` folder where the 32 character token is stored.
-4. There will likely be several text files in this directory, search all of them for the word 'token' and you should find it there. Be advised that the latest version of Mi Home does not store the token in clear text.
+These methods require the Xiaomi Home app, not the Roborock app.
 
-### Linux and Rooted Android
+The access token contains 32 hexadecimal characters.
 
-1. To begin, set up your Robovac with the latest version of Mi Home on your primary Android device as you normally would.
-2. Ensure successful operation using the latest Mi Home app and give the Vacuum a static IP in your router or however you do that on your LAN.
-3. Install version `v5.4.54` of Mi Home on your rooted Android device and login (you can't have two version of Mi Home installed at the same time).
-4. Ensure you are using the same server every time
-5. Ensure successful operation using 5.4.54 (locate is a nice simple test)
-6. Using adb we will now extract the token from the rooted phone
-7. Use adb shell to connect to your device and become root (if using Magisck root do `adb shell -> su -> whoami` to ensure root access.
-8. Then run grep -R '"token"' /data/data/com.xiaomi.smarthome and grab the token
+{% endnote %}
 
-### iOS
+#### Android (not rooted)
 
-1. Configure the robot with the Mi Home app. Make sure to select the correct region, as Xiaomi uses different product names for different geographical areas. Note that the new RoboRock app is currently not supported for this method.
-2. Using iTunes, create an unencrypted backup of your iPhone. Since macOS 10.15 there is no iTunes app. Use Finder instead - after connecting your iOS device you should see it in left menu of Finder window.
+{% note %}
+This method uses Mi Home version `5.4.49`, which was last verified in December 2019.
+{% endnote %}
+
+1. Set up your vacuum in the current version of the Xiaomi Home app.
+2. If the vacuum is already set up, reset its Wi-Fi settings to generate a new access token.
+3. Install Mi Home version `5.4.49` and locate a text file in the `Smarthome/logs` folder.
+4. Search the files for `token` to find the 32-character access token.
+
+#### Linux and rooted Android
+
+1. Set up your vacuum in the current version of the Xiaomi Home app.
+2. Assign the vacuum a static IP address in your router.
+3. Install Mi Home version `5.4.54` on your rooted Android device and sign in.
+   You cannot install two Mi Home versions at the same time.
+4. Use the same server region that you used to set up the vacuum.
+5. Connect to the device with `adb shell` and become root.
+6. Run `grep -R '"token"' /data/data/com.xiaomi.smarthome` to find the access token.
+
+#### iOS
+
+1. Set up the vacuum in the Xiaomi Home app.
+   Select the region used to set up the vacuum, as product names vary by region.
+2. Create an unencrypted backup of your iPhone using iTunes.
+   On macOS 10.15 and later, use Finder instead.
 3. Install [iBackup Viewer](https://www.imactools.com/iphonebackupviewer/), open it, and open your backup.
 4. Open the "Raw Data" module.
 5. Navigate to `com.xiaomi.mihome`.
-6. Search for a file that looks like this: `123456789_mihome.sqlite` (Note: `_mihome.sqlite` is *not* the correct file. Most likely, you will find this file in the `Documents` folder.)
-7. Save this file to your filesystem.
-8. Install [DB Browser for SQLite](https://sqlitebrowser.org/).
-9. Open DB Browser and load the `.sqlite` file you saved from your backup.
-10. Click on the `Execute SQL` tab.
-11. Input and run this query (use appropriate SELECT query for your device i.e. Vacuum, Powerstrip or Plug):
+6. Search for a file named like `123456789_mihome.sqlite`.
+   Do not use `_mihome.sqlite`.
+   The file is usually in the `Documents` folder.
+7. Save the file to your computer.
+8. Install [DB Browser for SQLite](https://sqlitebrowser.org/), open it, then open the `.sqlite` file.
+9. Select the **Execute SQL** tab.
+10. Run the query for your device type:
 
     ```sql
-    -- Execute to retrieve token for Vacuum
+    -- Retrieve the token for a vacuum
     SELECT ZTOKEN FROM ZDEVICE WHERE ZMODEL LIKE "%vacuum%"
 
-    -- Execute to retrieve token for Smart Powerstrip
+    -- Retrieve the token for a smart power strip
     SELECT ZTOKEN FROM ZDEVICE WHERE ZMODEL LIKE "%powerstrip%"
 
-    -- Execute to retrieve token for Smart Plug
+    -- Retrieve the token for a smart plug
     SELECT ZTOKEN FROM ZDEVICE WHERE ZMODEL LIKE "%plug%"
     ```
 
-12. Copy the returned 96-digit hexadecimal string to your clipboard.
-13. Open `Terminal` and execute this command:
+11. Copy the returned 96-digit hexadecimal string.
+12. Run this command in a terminal:
 
     ```bash
     echo '0: <YOUR HEXADECIMAL STRING>' | xxd -r -p | openssl enc -d -aes-128-ecb -nopad -nosalt -K 00000000000000000000000000000000
     ```
 
-14. Use the resulting 32-digit string as your token. (On your mac in front of the terminal session)
+13. Use the resulting 32-character string as the access token.
 
-### Bluestacks
+#### Bluestacks
 
-1. Configure the robot with the Mi-Home app. Make sure to select the correct region, as Xiaomi uses different product names for different geographical areas. Note that the new RoboRock app is currently not supported for this method.
+1. Set up the vacuum in the Xiaomi Home app, using the region selected when you set up the vacuum.
 2. Install [BlueStacks](https://www.bluestacks.com).
-3. Set up [Mi Home version 5.4.49](https://www.apkmirror.com/apk/xiaomi-inc/mihome/mihome-5-4-49-release/) in BlueStacks and login to synchronize devices.
-4. Open Filemanager in the `More Apps` menu.
-5. Use `Explore` on the left and navigate to `sdcard/SmartHome/logs/plug_DeviceManager`.
-6. Click on `Export to Windows` in the lower left corner and select any or all files to export to you local disk.
-7. Search for `"token":"<yourTokenHere>"`.
+3. Install [Mi Home version 5.4.49](https://www.apkmirror.com/apk/xiaomi-inc/mihome/mihome-5-4-49-release/) in BlueStacks and sign in to synchronize your devices.
+4. In the **More Apps** menu, open **File Manager**.
+5. Select **Explore**, then navigate to `sdcard/SmartHome/logs/plug_DeviceManager`.
+6. Select **Export to Windows**, then export one or more files to your local disk.
+7. Search the exported files for `"token":"<yourTokenHere>"`.
 
-### Miio command line tool
+#### Miio command line tool
 
-Use of Miio should be done before the Vacuum is connected to Mi Home. If you already connected to the app you will need to delete it and then join the ad-hoc Wi-Fi network the Vacuum creates. If the vacuum is already paired it's likely this method will only return `???` as your token.
+Use Miio before connecting the vacuum to the Xiaomi Home app.
+If the vacuum is already paired, remove it from the app and join the ad hoc Wi-Fi network created by the vacuum.
+Otherwise, the command might return `???` instead of the access token.
 
-Discovering devices on the current network:
+To discover devices on the current network, run:
 
 ```bash
 npx miio discover
 ```
 
-This will list devices that are connected to the same network as your computer. Let it run for a while so it has a chance to reach all devices, as it might take a minute or two for all devices to answer.
+The command lists devices connected to the same network as your computer.
+Allow a few minutes for all devices to respond.
 
-The commands outputs each device on this format:
+The command displays each device in this format:
 
 ```text
 Device ID: 48765421
@@ -1867,13 +1981,9 @@ Token: token-as-hex-here via auto-token
 Support: At least basic
 ```
 
-The information output is:
+The output includes:
 
-- `Device ID` - The unique identifier of the device, does not change if the device is reset.
-- `Model ID`- The model id if it could be determined, this indicates what type of device it is.
-- `Address` - The IP that the device has on the network.
-- `Token` - The token of the device or `???` if it could not be automatically determined.
-
-### Xiaomi Cloud Tokens Extractor
-
-Alternate method to get all yours devices tokens in one run. Please follow this [instruction](https://github.com/PiotrMachowski/Xiaomi-cloud-tokens-extractor).
+- `Device ID`: The unique identifier of the device. It does not change if you reset the device.
+- `Model ID`: The model ID, when it can be identified.
+- `Address`: The device's IP address.
+- `Token`: The access token, or `???` if the command cannot determine it automatically.

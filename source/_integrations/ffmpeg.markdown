@@ -1,26 +1,20 @@
 ---
-title: FFmpeg
 description: Instructions on how to integrate FFmpeg within Home Assistant.
-ha_category:
-  - Image Processing
 ha_release: 0.29
 ha_domain: ffmpeg
-ha_platforms:
-  - camera
 ---
 
-The `ffmpeg` integration allows other Home Assistant integrations to process video and audio streams. This integration supports all FFmpeg versions since 3.0.0; if you have an older version, please update.
+The **FFmpeg** {% term integration %} allows other Home Assistant integrations to process
+video and audio streams.
 
-<div class='note'>
-
-If you are running Home Assistant Core in a Python environment, you'll need have the `ffmpeg` binary in your system path.
-On Debian 8 or Raspbian (Jessie) you can install it from [debian-backports](https://backports.debian.org/Instructions/). If you want [hardware acceleration](https://trac.ffmpeg.org/wiki/HWAccelIntro) support on a Raspberry Pi, you will need to build from source by yourself.
-
-</div>
+This integration supports all FFmpeg versions since 3.0.0. If you run
+the Home Assistant Operating System or use the Home Assistant Container,
+this is already pre-installed for you. In all other cases, make sure
+you have FFmpeg installed on your system.
 
 ## Configuration
 
-To set it up, add the following information to your `configuration.yaml` file:
+To set it up, add the following information to your {% term "`configuration.yaml`" %} file:
 
 ```yaml
 ffmpeg:
@@ -30,31 +24,18 @@ ffmpeg:
 ffmpeg_bin:
   description: The name or path to the `ffmpeg` binary.
   required: false
-  default: ffmpeg
+  default: "`ffmpeg`"
   type: string
 {% endconfiguration %}
 
-### Raspbian Debian Jessie Lite Installations
-To get the binary on Raspbian Debian Jessie Lite on a Raspberry Pi you need to perform the following:
-
-```bash
-sudo echo "deb http://ftp.debian.org/debian jessie-backports main" >> /etc/apt/sources.list
-sudo apt-get update
-sudo apt-get -t jessie-backports install ffmpeg
-```
-
-We can use now following in the configuration:
-
-```yaml
-ffmpeg:
-  ffmpeg_bin: /usr/bin/ffmpeg
-```
-
 ### Troubleshooting
 
-In most cases, `ffmpeg` automatically detects all needed options to read a video or audio stream or file. But it is possible in rare cases that you will need to set options to help `ffmpeg` out.
+In most cases, `ffmpeg` automatically detects all needed options to read
+a video or audio stream or file. But it is possible in rare cases that you
+will need to set options to help `ffmpeg` out.
 
-First, check that your stream is playable by `ffmpeg` outside of Home Assistant with (use option `-an` or `-vn` to disable video or audio stream):
+First, check that your stream is playable by `ffmpeg` outside of Home Assistant
+with (use option `-an` or `-vn` to disable video or audio stream):
 
 ```bash
 ffmpeg -i INPUT -an -f null -
@@ -100,3 +81,69 @@ Stream mapping:
 Press [q] to stop, [?] for help
 frame=  223 fps= 40 q=-1.0 Lsize=   16709kB time=00:00:07.40 bitrate=18497.5kbits/s dup=58 drop=0 speed=1.32x
 ```
+
+{% include integrations/actions.md %}
+
+## FFmpeg automation examples
+
+With the FFmpeg actions, you decide when your FFmpeg motion and noise sensors analyze their streams.
+
+{% include docs/paste_yaml_tip.md %}
+
+### Automation: start motion analysis when you leave
+
+When you leave home, you want to know about motion on the driveway camera. This automation starts the FFmpeg motion sensor when you leave.
+
+- **Trigger**: Zone left
+  - **Target**: You
+  - **Zone**: Home
+- **Action**: FFmpeg: Start
+  - **Entity**: Driveway motion (`binary_sensor.driveway_motion`)
+
+{% details "YAML example for starting motion analysis when you leave" %}
+
+{% example %}
+automation: |
+  alias: "Start driveway motion analysis when I leave"
+  triggers:
+    - trigger: zone.left
+      target:
+        entity_id: person.you
+      options:
+        zone: zone.home
+  actions:
+    - action: ffmpeg.start
+      data:
+        entity_id: binary_sensor.driveway_motion
+{% endexample %}
+
+{% enddetails %}
+
+### Automation: stop motion analysis when you get home
+
+When you're home, you don't need motion alerts from the driveway camera. Stopping the sensor also saves the processing power FFmpeg uses.
+
+- **Trigger**: Zone entered
+  - **Target**: You
+  - **Zone**: Home
+- **Action**: FFmpeg: Stop
+  - **Entity**: Driveway motion (`binary_sensor.driveway_motion`)
+
+{% details "YAML example for stopping motion analysis when you get home" %}
+
+{% example %}
+automation: |
+  alias: "Stop driveway motion analysis when I get home"
+  triggers:
+    - trigger: zone.entered
+      target:
+        entity_id: person.you
+      options:
+        zone: zone.home
+  actions:
+    - action: ffmpeg.stop
+      data:
+        entity_id: binary_sensor.driveway_motion
+{% endexample %}
+
+{% enddetails %}

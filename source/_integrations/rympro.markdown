@@ -1,0 +1,13 @@
+---
+description: Instructions on how to integrate water meters through Read Your Meter Pro.
+ha_release: '2023.2'
+ha_domain: rympro
+---
+
+The **Read Your Meter Pro** {% term integration %} connects with a [Read Your Meter Pro](https://rym-pro.com/) account to get water meter reads into Home Assistant.
+
+{% include integrations/config_flow.md %}
+
+## Supported platforms:
+
+- [Sensor](/integrations/sensor/)

@@ -1,20 +1,18 @@
 ---
-title: No-IP.com
 description: Keep your computer registered with the NO-IP.com dynamic DNS.
-ha_category:
-  - Network
-ha_iot_class: Cloud Polling
 ha_release: 0.57
-ha_codeowners:
-  - '@fabaff'
 ha_domain: no_ip
+related:
+  - docs: /docs/configuration/
+    title: Configuration file
 ---
 
-With the `no_ip` integration you can keep your current IP address in sync with your [NO-IP.com](https://www.noip.com)  hostname or domain.  
+With the **No-IP.com** {% term integration %} you can keep your current IP address in sync with your [NO-IP.com](https://www.noip.com)  hostname or domain.  
 
 Note that it does not confirm your hostname (as is required periodically for free domain names); you will still need to do that manually.
 
-To use the integration in your installation, add the following to your `configuration.yaml` file:
+To use the {% term integration %} in your installation, add the following to your {% term "`configuration.yaml`" %} file.
+{% include integrations/restart_ha_after_config_inclusion.md %}
 
 ```yaml
 # Example configuration.yaml entry

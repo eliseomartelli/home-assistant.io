@@ -1,82 +1,164 @@
 ---
-title: Scrape
 description: Instructions on how to integrate Web scrape sensors into Home Assistant.
-ha_category:
-  - Sensor
 ha_release: 0.31
-ha_iot_class: Cloud Polling
-ha_codeowners:
-  - '@fabaff'
 ha_domain: scrape
-ha_platforms:
-  - sensor
+related:
+  - docs: /docs/configuration/
+    title: Configuration file
 ---
 
-The `scrape` sensor platform is scraping information from websites. The sensor loads an HTML page and gives you the option to search and split out a value. As this is not a full-blown web scraper like [scrapy](https://scrapy.org/), it will most likely only work with simple web pages and it can be time-consuming to get the right section.
+The **Scrape** sensor {% term integration %} scrapes information from websites. The sensor loads an HTML page, and allows you to search and extract specific values. As this is not a fully featured web scraper like [scrapy](https://scrapy.org/), it will work with simple web pages and it can be time-consuming to get the right section.
 
-To enable this sensor, add the following lines to your `configuration.yaml` file:
+Both UI and [YAML setup](#yaml-configuration) is supported while YAML provides additional configuration possibilities.
+
+{% include integrations/config_flow.md %}
+
+{% note %}
+
+Scrape uses configuration subentries for configuring the sensors.
+
+1. Set up the resource configuration once per resource you want to scrape information from.
+2. Create one or multiple configuration subentries per sensor you want to create by scraping the website.
+
+{% endnote %}
+
+## YAML Configuration
+
+To enable this {% term integration %} using YAML, add the following lines to your {% term "`configuration.yaml`" %} file.
+{% include integrations/restart_ha_after_config_inclusion.md %}
 
 ```yaml
 # Example configuration.yaml entry
-sensor:
-  - platform: scrape
-    resource: https://www.home-assistant.io
-    select: ".current-version h1"
+scrape:
+  - resource: https://www.home-assistant.io
+    sensor:
+      - name: "Current version"
+        select: ".release-date"
 ```
 
 {% configuration %}
 resource:
-  description: The URL to the website that contains the value.
+  description: The resource or endpoint that contains the value. One of `resource` and `resource_template` must be used.
   required: true
   type: string
-select:
-  description: "Defines the HTML tag to search for. Check Beautifulsoup's [CSS selectors](https://www.crummy.com/software/BeautifulSoup/bs4/doc/#css-selectors) for details."
+resource_template:
+  description: The resource or endpoint that contains the value with template support. One of `resource` and `resource_template` must be used.
   required: true
-  type: string
-attribute:
-  description: Get value of an attribute on the selected tag.
+  type: template
+method:
+  description: The method of the request. Either `POST` or `GET`.
   required: false
   type: string
-index:
-  description: Defines which of the elements returned by the CSS selector to use.
+  default: GET
+payload:
+  description: The payload to send with a POST request. Depends on the service, but usually formed as JSON.
   required: false
-  default: 0
-  type: integer
-name:
-  description: Name of the sensor.
-  required: false
-  default: Web scrape
   type: string
-value_template:
-  description: Defines a template to get the state of the sensor.
+payload_template:
+  description: The payload to send with a POST request with template support.
   required: false
   type: template
-unit_of_measurement:
-  description: Defines the units of measurement of the sensor, if any.
-  required: false
-  type: string
-authentication:
-  description: Type of the HTTP authentication. Either `basic` or `digest`.
-  required: false
-  type: string
 verify_ssl:
-  description: Enables/disables verification of SSL-certificate, for example if it is self-signed.
+  description: Verify the SSL certificate of the endpoint.
   required: false
   type: boolean
   default: true
+timeout:
+  description: Defines max time to wait data from the endpoint.
+  required: false
+  type: integer
+  default: 10
+authentication:
+  description:  Type of the HTTP authentication. `basic` or `digest`.
+  required: false
+  type: string
 username:
-  description: The username for accessing the website.
+  description: The username for accessing the resource.
   required: false
   type: string
 password:
-  description: The password for accessing the website.
+  description: The password for accessing the resource.
   required: false
   type: string
 headers:
-  description: Headers to use for the web request.
+  description: The headers for the requests.
+  required: false
+  type: [list, template]
+params:
+  description: The query params for the requests.
+  required: false
+  type: [list, template]
+scan_interval:
+  description: Define the frequency to call the resource in seconds.
+  required: false
+  type: integer
+  default: 600
+encoding:
+  description: The character encoding to use if none provided in the header of the shared data.
   required: false
   type: string
+  default: UTF-8
+sensor:
+  description: A list of sensors to create from the shared data.
+  required: true
+  type: map
+  keys:
+    name:
+      description: Defines a template to get the name of the entity.
+      required: false
+      type: template
+    select:
+      description: "Defines the HTML tag to search for. Check Beautifulsoup's [CSS selectors](https://www.crummy.com/software/BeautifulSoup/bs4/doc/#css-selectors) for details."
+      required: true
+      type: string
+    attribute:
+      description: Get value of an attribute on the selected tag.
+      required: false
+      type: string
+    index:
+      description: Defines which of the elements returned by the CSS selector to use.
+      required: false
+      default: 0
+      type: integer
+    value_template:
+      description: Defines a template to get the state of the sensor.
+      required: false
+      type: template
+    unique_id:
+      description: An ID that uniquely identifies this entity. Will be combined with the unique ID of the configuration block if available. This allows changing the `name`, `icon` and `entity_id` from the web interface.
+      required: false
+      type: string
+    icon:
+      description: Defines a template for the icon of the entity.
+      required: false
+      type: template
+    availability:
+      description: Defines a template to get the `available` state of the entity. If the template either fails to render or returns `True`, `"1"`, `"true"`, `"yes"`, `"on"`, `"enable"`, or a non-zero number, the entity will be `available`. If the template returns any other value, the entity will be `unavailable`. If not configured, the entity will always be `available`. Note that the string comparison not case sensitive; `"TrUe"` and `"yEs"` are allowed.
+      required: false
+      type: template
+      default: true
+    unit_of_measurement:
+      description: "Defines the units of measurement of the sensor, if any. When a `device_class` is set, the unit must be one of the [units listed for that device class](/integrations/sensor/#list-of-available-device-classes). This will also display the value based on the user profile Number Format setting and influence the graphical presentation in the history visualization as a continuous value."
+      required: false
+      type: string
+      default: None
+    state_class:
+      description: "The [state_class](/integrations/sensor/#state-class) of the sensor. This will also display the value based on the user profile Number Format setting and influence the graphical presentation in the history visualization as a continuous value."
+      required: false
+      type: string
+      default: None
+    picture:
+      description: Defines a template for the entity picture of the sensor.
+      required: false
+      type: template
+    device_class:
+      description: Sets the [device class](/integrations/sensor/#device-class), changing the device state and icon that is displayed on the UI. It does not set the `unit_of_measurement`.
+      required: false
+      type: device_class
+      default: None
 {% endconfiguration %}
+
+{% include integrations/using_templates.md %}
 
 ## Examples
 
@@ -84,53 +166,44 @@ In this section you find some real-life examples of how to use this sensor. Ther
 
 ### Home Assistant
 
-The current release Home Assistant is published on [https://www.home-assistant.io/](/)
-
-{% raw %}
+The current release Home Assistant is published on [homepage](/)
 
 ```yaml
-sensor:
+scrape:
 # Example configuration.yaml entry
-  - platform: scrape
-    resource: https://www.home-assistant.io
-    name: Release
-    select: ".current-version h1"
-    value_template: '{{ value.split(":")[1] }}'
+  - resource: https://www.home-assistant.io
+    sensor:
+      - name: Release
+        select: ".release-date"
 ```
-
-{% endraw %}
 
 ### Available implementations
 
-Get the counter for all our implementations from the [Component overview](/integrations/) page.
-
-{% raw %}
+Get the counter for all our implementations from the integrations page under {% my integrations title="**Settings** > **Devices & services**" %}.
 
 ```yaml
 # Example configuration.yaml entry
-sensor:
-  - platform: scrape
-    resource: https://www.home-assistant.io/integrations/
-    name: Home Assistant impl.
-    select: 'a[href="#all"]'
-    value_template: '{{ value.split("(")[1].split(")")[0] }}'
+scrape:
+  - resource: https://www.home-assistant.io/integrations/
+    sensor:
+      - name: Home Assistant impl.
+        select: 'a[href="#all"]'
+        value_template: '{{ value.split("(")[1].split(")")[0] }}'
 ```
-
-{% endraw %}
 
 ### Get a value out of a tag
 
-The German [Federal Office for Radiation protection (Bundesamt für Strahlenschutz)](http://www.bfs.de/) is publishing various details about optical radiation including an UV index. This example is getting the index for a region in Germany.
+The German [Federal Office for Radiation protection (Bundesamt für Strahlenschutz)](https://www.bfs.de/) is publishing various details about optical radiation including an UV index. This example is getting the index for a region in Germany.
 
 ```yaml
 # Example configuration.yaml entry
-sensor:
-  - platform: scrape
-    resource: http://www.bfs.de/DE/themen/opt/uv/uv-index/prognose/prognose_node.html
-    name: Coast Ostsee
-    select: "p"
-    index: 19
-    unit_of_measurement: "UV Index"
+scrape:
+  - resource: https://www.bfs.de/DE/themen/opt/uv/uv-index/prognose/prognose_node.html
+    sensor:
+      - name: Coast Ostsee
+        select: "p"
+        index: 19
+        unit_of_measurement: "UV Index"
 ```
 
 ### IFTTT status
@@ -139,11 +212,11 @@ If you make heavy use of the [IFTTT](/integrations/ifttt/) web service for your 
 
 ```yaml
 # Example configuration.yaml entry
-sensor:
-  - platform: scrape
-    resource: https://status.ifttt.com/
-    name: IFTTT status
-    select: ".component-status"
+scrape:
+  - resource: https://status.ifttt.com/
+    sensor:
+      - name: IFTTT status
+        select: ".component-status"
 ```
 
 ### Get the latest podcast episode file URL
@@ -152,30 +225,27 @@ If you want to get the file URL for the latest episode of your [favorite podcast
 
 ```yaml
 # Example configuration.yaml entry
-sensor:
-  - platform: scrape
-    resource: https://hasspodcast.io/feed/podcast
-    name: Home Assistant Podcast
-    select: "enclosure"
-    index: 1
-    attribute: url
+scrape:
+  - resource: https://hasspodcast.io/feed/podcast
+    sensor:
+      - name: Home Assistant Podcast
+        select: "enclosure"
+        index: 1
+        attribute: url
 ```
 
 ### Energy price
 
 This example tries to retrieve the price for electricity.
 
-{% raw %}
-
 ```yaml
 # Example configuration.yaml entry
-sensor:
-  - platform: scrape
-    resource: https://elen.nu/timpriser-pa-el-for-elomrade-se3-stockholm/
-    name: Electricity price
-    select: ".elspot-content"
-    value_template: '{{ ((value.split(" ")[0]) | replace (",", ".")) }}'
-    unit_of_measurement: "öre/kWh"
+scrape:
+  - resource: https://elen.nu/dagens-spotpris/se3-stockholm/
+    sensor:
+      - name: Electricity price
+        select: ".text-lg.font-bold"
+        index: 1
+        value_template: '{{ value | replace (",", ".") | float }}'
+        unit_of_measurement: "öre/kWh"
 ```
-
-{% endraw %}

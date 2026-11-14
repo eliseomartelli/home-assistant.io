@@ -1,45 +1,57 @@
 ---
-title: Last.fm
 description: Instructions on how to integrate Last.fm sensors into Home Assistant.
-ha_category:
-  - Social
-ha_iot_class: Cloud Polling
 ha_release: '0.20'
 ha_domain: lastfm
-ha_platforms:
-  - sensor
 ---
 
-The `lastfm` sensor platform will allow you to see whenever a user starts scrobbling, their play count, last song played, and top song played on [Last.fm](https://www.last.fm/).
+The **Last.fm** {% term integration %} lets you monitor the listening activity of [Last.fm](https://www.last.fm/) users. It creates a sensor for each user you add, showing whether they are currently scrobbling and what they are listening to.
 
-## Setup
+## Prerequisites
 
-To get an API key you need to create an [API account](https://www.last.fm/api/account/create).
+- A [Last.fm](https://www.last.fm/) account.
+- A Last.fm API key. You can create one by registering an [API account](https://www.last.fm/api/account/create) on the Last.fm website.
 
-## Configuration
+{% include integrations/config_flow.md %}
 
-To use Last.fm sensor with your installation, add the following to your `configuration.yaml` file:
+{% configuration_basic %}
+API key:
+  description: "The API key from your Last.fm API account."
+Last.fm username:
+  description: "Your Last.fm username. This is the main user for the integration and is used to look up your friends list in the next step."
+{% endconfiguration_basic %}
 
-```yaml
-# Example configuration.yaml entry
-sensor:
-  - platform: lastfm
-    api_key: YOUR_API_KEY
-    users:
-      - user1
-      - user2
-```
+After entering your API key and Last.fm username, you are asked to select additional Last.fm users to track. Your friends list is shown for convenience, but you can also enter any Last.fm username manually.
 
-{% configuration %}
-api_key:
-  description: Your Last.fm API key.
-  required: true
-  type: string
-users:
-  description: List of users.
-  required: true
-  type: list
-  keys:
-    username:
-      description: Username of the user to monitor.
-{% endconfiguration %}
+## Configuration options
+
+To add or remove tracked users after setup, go to {% my integrations title="**Settings** > **Devices & services**" %}, select the **Last.fm** integration, and select **Configure**.
+
+{% configuration_basic %}
+Last.fm usernames:
+  description: "The Last.fm users to track. You can select from your friends list or enter usernames manually."
+{% endconfiguration_basic %}
+
+## Supported functionality
+
+### Sensors
+
+The integration creates one sensor per tracked Last.fm user.
+
+- **State**: The currently playing track, formatted as "Artist - Title". When the user is not listening, the state is "Not Scrobbling".
+- **Entity picture**: The user's Last.fm avatar.
+
+Each sensor also provides the following attributes:
+
+- **`last_played`**: The last track the user scrobbled, formatted as "Artist - Title".
+- **`play_count`**: The total number of tracks the user has scrobbled on Last.fm.
+- **`top_played`**: The user's most played track, formatted as "Artist - Title".
+
+## Data updates
+
+The integration {% term polling polls %} Last.fm every 30 seconds for updated listening data.
+
+## Removing the integration
+
+This integration follows standard integration removal. No extra steps are required.
+
+{% include integrations/remove_device_service.md %}

@@ -1,15 +1,13 @@
 ---
-title: Alert
-description: Instructions on how to setup automatic alerts within Home Assistant.
-ha_category:
-  - Automation
+description: Instructions on how to set up automatic alerts within Home Assistant.
 ha_release: 0.38
-ha_iot_class: Local Push
-ha_quality_scale: internal
 ha_domain: alert
+related:
+  - docs: /docs/configuration/
+    title: Configuration file
 ---
 
-The `alert` integration is designed to notify you when problematic issues arise.
+The **Alert** {% term integration %} is designed to notify you when problematic issues arise.
 For example, if the garage door is left open, the `alert` integration can be used
 to remind you of this by sending you repeating notifications at customizable
 intervals. This is also used for low battery sensors,
@@ -19,17 +17,18 @@ Alerts will add an entity to the front end.
 This entity allows you to silence an alert until it is resolved and has three
 possible states:
 
-State | Description
--|-
-`idle` | The condition for the alert is false.
-`on` | The condition for the alert is true.
-`off` | The condition for the alert is true but it was acknowledged.
+| State  | Description                                                  |
+| ------ | ------------------------------------------------------------ |
+| `idle` | The condition for the alert is false.                        |
+| `on`   | The condition for the alert is true.                         |
+| `off`  | The condition for the alert is true but it was acknowledged. |
 
-### Basic Example
+### Basic example
 
-The `alert` integration makes use of any of the `notification` integrations. To
-setup the `alert` integration, first, you must setup a `notification` integration.
-Then, add the following to your configuration file:
+The `alert` integration uses any of the `notification` integrations. To
+set up the `alert` integration, first, you must set up a [notification integration](/integrations/notify).
+Then, add the following to your {% term "`configuration.yaml`" %} file.
+{% include integrations/restart_ha_after_config_inclusion.md %}
 
 ```yaml
 # Example configuration.yaml entry
@@ -59,7 +58,7 @@ entity_id:
 title:
   description: >
     A title to be used for the notification if the notifier supports it
-    with [template](/docs/configuration/templating/) support.
+    with [template](/docs/templating/) support.
   required: false
   type: template
 state:
@@ -74,7 +73,7 @@ repeat:
   required: true
   type: [integer, list]
 can_acknowledge:
-  description: Allows the alert to be unacknowledgeable.
+  description: Control whether the notification can be acknowledged; set to `false` if the alert should not be acknowledgeable.
   required: false
   type: boolean
   default: true
@@ -88,19 +87,19 @@ skip_first:
 message:
   description: >
     A message to be sent after an alert transitions from `idle` to `on`
-    with [template](/docs/configuration/templating/) support.
+    with [template](/docs/templating/) support.
   required: false
   type: template
 done_message:
   description: >
     A message sent after an alert transitions from `on` or `off` to `idle` with
-    [template](/docs/configuration/templating/) support. Is only sent if an alert notification
+    [template](/docs/templating/) support. Is only sent if an alert notification
     was sent for transitioning from `idle` to `on`.
   required: false
   type: template
 notifiers:
   description: "List of `notification` integrations to use for alerts."
-  required: true
+  required: false
   type: list
 data:
   description: "Dictionary of extra parameters to send to the notifier."
@@ -121,13 +120,13 @@ you specify a `target` parameter when sending the notification), you can use the
 `group` notification to wrap them for an alert.
 Simply create a `group` notification type with a single notification member
 (such as `twilio_sms`) specifying the required parameters other than `message`
-provided by the `alert` component:
+provided by the `alert` integration:
 
 ```yaml
 - platform: group
   name: john_phone_sms
   services:
-    - service: twilio_sms
+    - action: twilio_sms
       data:
         target: !secret john_phone
 ```
@@ -145,7 +144,7 @@ alert:
       - john_phone_sms
 ```
 
-### Complex Alert Criteria
+### Complex alert criteria
 
 By design, the `alert` integration only handles very simple criteria for firing.
 That is, it only checks if a single entity's state is equal to a value. At some
@@ -155,33 +154,30 @@ disable the alert on certain days. Maybe the alert firing should depend on more
 than one input. For all of these situations, it is best to use the alert in
 conjunction with a `Template Binary Sensor`. The following example does that.
 
-{% raw %}
 
 ```yaml
-binary_sensor:
-  - platform: template
-    sensors:
-      motion_battery_low:
-        value_template: "{{ state_attr('sensor.motion', 'battery') < 15 }}"
-        friendly_name: "Motion battery is low"
+template:
+  - binary_sensor:
+      - name: "Motion Battery is Low"
+        state: "{{ state_attr('sensor.motion', 'battery') | float(default=0) < 15 }}"
+        device_class: battery
 
 alert:
   motion_battery:
     name: Motion Battery is Low
-    entity_id: binary_sensor.motion_battery_low
+    entity_id: binary_sensor.motion_battery_is_low
     repeat: 30
     notifiers:
       - ryans_phone
       - kristens_phone
 ```
 
-{% endraw %}
 
 This example will begin firing as soon as the entity `sensor.motion`'s `battery`
 attribute falls below 15. It will continue to fire until the battery attribute
 raises above 15 or the alert is acknowledged on the frontend.
 
-### Dynamic Notification Delay Times
+### Dynamic notification delay times
 
 It may be desirable to have the delays between alert notifications dynamically
 change as the alert continues to fire. This can be done by setting the `repeat`
@@ -210,9 +206,9 @@ Now the first message will be sent after a 15 minute delay, the second will be
 sent 30 minutes after that, and a 60 minute delay will fall between every
 following notification.
 For example, if the garage door opens at 2:00, a notification will be
-sent at 2:15, 2:45, 3:45, 4:45, etc., continuing every 60 minutes.
+sent at 2:15, 2:45, 3:45, 4:45, and so on, continuing every 60 minutes.
 
-### Message Templates
+### Message templates
 
 It may be desirable to have the alert notifications include information
 about the state of the entity. [Templates][template]
@@ -220,7 +216,6 @@ can be used in the message or name of the alert to make it more relevant.
 The following will show for a plant how to include the problem `attribute`
 of the entity.
 
-{% raw %}
 
 ```yaml
 # Example configuration.yaml entry
@@ -239,11 +234,10 @@ alert:
       - kristens_phone
 ```
 
-{% endraw %}
 
 The resulting message could be `Plant Officeplant needs help (moisture low)`.
 
-### Additional parameters for notifiers 
+### Additional parameters for notifiers
 
 Some notifiers support more parameters (e.g., to set text color or action
   buttons). These can be supplied via the `data` parameter:
@@ -269,6 +263,7 @@ alert:
     notifiers:
       - frank_telegram
 ```
+
 This particular example relies on the `inline_keyboard` functionality of
 Telegram, where the user is presented with buttons to execute certain actions.
 
@@ -277,15 +272,99 @@ but you will still receive the done message.
 
 ```yaml
 - alias: "Telegram callback to stop alerts for garage door"
-  trigger:
-    - platform: event
+  triggers:
+    - trigger: event
       event_type: telegram_callback
       event_data:
         data: "/garage_acknowledge"
-  action:
-    - service: alert.turn_off
+  actions:
+    - action: alert.turn_off
       target:
         entity_id: alert.garage_door
 ```
 
-[template]: /docs/configuration/templating/
+Notifications sent to Home Assistant Companion apps support [replacing](https://companion.home-assistant.io/docs/notifications/notifications-basic/#replacing) and [clearing](https://companion.home-assistant.io/docs/notifications/notifications-basic/#replacing) notifications. To use these functions with alerts, set a `tag` in the message data, send `clear_notification` as the `done_message`, and use `mobile_app_*` as the notifier:
+
+```yaml
+alert:
+  garage_door:
+    name: Garage is open
+    done_message: clear_notification
+    entity_id: input_boolean.garage_door
+    state: "on"
+    repeat: 30
+    can_acknowledge: true
+    skip_first: true
+    notifiers:
+      - mobile_app_ryan
+      - mobile_app_kristen
+    data:
+      tag: garage-door
+```
+
+[template]: /docs/templating/
+
+{% include integrations/actions.md %}
+
+## Alert automation examples
+
+Alerts keep reminding you until a problem is solved. With the alert actions, you decide when those reminders stop and start again.
+
+{% include docs/paste_yaml_tip.md %}
+
+### Automation: acknowledge an alert from a phone notification
+
+Your alert sends a notification with an **Acknowledge** button to your phone. When you select the button, this automation acknowledges the alert, so you don't get more reminders.
+
+- **Trigger**: Manual event received
+  - **Event type**: `mobile_app_notification_action`
+  - **Event data**: `action: ACKNOWLEDGE_GARAGE`
+- **Action**: Alert: Turn off
+  - **Target**: Garage door alert
+
+{% details "YAML example for acknowledging an alert from a phone notification" %}
+
+{% example %}
+automation: |
+  alias: "Acknowledge the garage door alert from my phone"
+  triggers:
+    - trigger: event
+      event_type: mobile_app_notification_action
+      event_data:
+        action: ACKNOWLEDGE_GARAGE
+  actions:
+    - action: alert.turn_off
+      target:
+        entity_id: alert.garage_door
+{% endexample %}
+
+{% enddetails %}
+
+### Automation: turn the alert back on when you leave
+
+You acknowledged the garage door alert while you were home. When you leave, you want reminders again if the door is still open.
+
+- **Trigger**: Zone left
+  - **Target**: You
+  - **Zone**: Home
+- **Action**: Alert: Turn on
+  - **Target**: Garage door alert
+
+{% details "YAML example for turning an alert back on when you leave" %}
+
+{% example %}
+automation: |
+  alias: "Turn the garage door alert back on when I leave"
+  triggers:
+    - trigger: zone.left
+      target:
+        entity_id: person.you
+      options:
+        zone: zone.home
+  actions:
+    - action: alert.turn_on
+      target:
+        entity_id: alert.garage_door
+{% endexample %}
+
+{% enddetails %}

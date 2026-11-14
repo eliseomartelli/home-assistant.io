@@ -1,30 +1,30 @@
 ---
-title: "Packages"
-description: "Describes all there is to know about configuration packages in Home Assistant."
+title: "Configuration packages"
+description: "Configuration packages let you bundle related YAML configuration from multiple integrations into a single file, so you can keep large setups organized."
 ---
 
-Packages in Home Assistant provide a way to bundle different component's configuration together. We already learned about the two configuration styles (specifying platforms entries together or individually) on the [adding devices](/docs/configuration/devices/) page. Both of these configuration methods require you to create the integration key in the main `configuration.yaml` file. With packages we have a way to include different components, or different configuration parts using any of the `!include` directives introduced in [splitting the configuration](/docs/configuration/splitting_configuration).
+Packages in Home Assistant provide a way to bundle configurations from multiple integrations. You can use packages to include multiple integrations, or parts of integrations, using any of the `!include` directives introduced in [splitting the configuration](/docs/configuration/splitting_configuration/).
 
-Packages are configured under the core `homeassistant/packages` in the configuration and take the format of a package name (no spaces, all lower case) followed by a dictionary with the package configuration. For example, package `pack_1` would be created as:
+Packages are configured under the core `homeassistant/packages` in the configuration and take the format of a package name (no spaces, all lowercase) followed by a dictionary with the package configuration. For example, package `pack_1` would be created as:
 
 ```yaml
 homeassistant:
   ...
-  packages: 
+  packages:
     pack_1:
       ...package configuration here...
 ```
 
 The package configuration can include: `switch`, `light`, `automation`, `groups`, or most other Home Assistant integrations including hardware platforms.
 
-It can be specified inline or in a separate YAML file using `!include`.
+It can be specified inline or in a separate {% term YAML %} file using `!include`.
 
-Inline example, main `configuration.yaml`:
+Inline example, main {% term "`configuration.yaml`" %}:
 
 ```yaml
 homeassistant:
   ...
-  packages: 
+  packages:
     pack_1:
       switch:
         - platform: rest
@@ -34,12 +34,12 @@ homeassistant:
           ...
 ```
 
-Include example, main `configuration.yaml`:
+Include example, main {% term "`configuration.yaml`" %}:
 
 ```yaml
 homeassistant:
   ...
-  packages: 
+  packages:
     pack_1: !include my_package.yaml
 ```
 
@@ -57,9 +57,9 @@ light:
 There are some rules for packages that will be merged:
 
 1. Platform based integrations (`light`, `switch`, etc) can always be merged.
-2. Components where entities are identified by a key that will represent the entity_id (`{key: config}`) need to have unique 'keys' between packages and the main configuration file.
+2. Integrations where entities are identified by a key that will represent the entity_id (`{key: config}`) need to have unique 'keys' between packages and the main configuration file.
 
-    For example if we have the following in the main configuration. You are not allowed to re-use "my_input" again for `input_boolean` in a package:
+    For example, if we have the following in the main configuration. You are not allowed to re-use "my_input" again for `input_boolean` in a package:
 
     ```yaml
     input_boolean:
@@ -68,27 +68,26 @@ There are some rules for packages that will be merged:
 
 3. Any integration that is not a platform [1], or dictionaries with Entity ID keys [2] can only be merged if its keys, except those for lists, are solely defined once.
 
-<div class='note tip'>
-Components inside packages can only specify platform entries using configuration style 1, where all the platforms are grouped under the integration name.
-</div>
+{% tip %}
+Integrations inside packages can only specify platform entries using configuration style 1, where all the platforms are grouped under the integration name.
+{% endtip %}
 
 ## Create a packages folder
 
-One way to organize packages is to create a folder named "packages" in your Home Assistant configuration directory. In the packages directory you can store any number of packages in a YAML file. This entry in your `configuration.yaml` will load all packages:
+One way to organize packages is to create a folder named "packages" in your Home Assistant configuration directory. In this packages folder, you can store any number of packages in {% term YAML %} files, and organize those packages into {% term YAML %} files and subfolders as you see fit. With `!include_dir_named`, the filename is used as the package name. This means that file names must be globally unique, even across subfolders. This entry in your {% term "`configuration.yaml`" %} will load all {% term YAML %}-files in this _packages_ folder and its sub folders:
 
 ```yaml
 homeassistant:
   packages: !include_dir_named packages
 ```
 
-This uses the concept splitting the configuration and will include all files in a directory with the keys representing the filenames.
-See the documentation about [splitting the configuration](/docs/configuration/splitting_configuration/) for more information about `!include_dir_named` and other include statements that might be helpful. The benefit of this approach is to pull all configurations required to integrate a system, into one file, rather than across several.
+The benefit of this approach is to pull all configurations required to integrate a system into one file, rather than keeping them spread across several files.
 
-The following example allows to have subfolders in the `packages` folder, which could make managing multiple packages easier by grouping:
+You can also use `!include_dir_merge_named` for packages. The two directives differ in how they handle the file contents. With `!include_dir_named`, each file's content is placed directly under the package name (which is the filename), so the content uses the same indentation as it would inside the `packages:` key in {% term "`configuration.yaml`" %}. This means you can copy and paste elements from the main config file. With `!include_dir_merge_named`, the package name has to be the top-level key inside the file, so the content needs an additional level of indentation and you cannot directly copy and paste from the configuration file.
 
 ```yaml
 homeassistant:
-  packages: !include_dir_merge_named packages/
+  packages: !include_dir_merge_named packages
 ```
 
 and in `packages/subsystem1/functionality1.yaml`:
@@ -102,11 +101,19 @@ subsystem1_functionality1:
   automation:
 ```
 
+
 ## Customizing entities with packages
 
-It is possible to [customize entities](/docs/configuration/customizing-devices/) within packages. Just create your customization entries under:
+It is possible to [customize entities](/docs/configuration/customizing-entities/) within packages. Just create your customization entries under:
 
 ```yaml
 homeassistant:
   customize:
 ```
+
+
+{% important %}
+If you are moving configuration to packages, `auth_providers` must stay within your {% term "`configuration.yaml`" %} file. See the general documentation for [Authentication Providers](/docs/authentication/providers/#configuring-auth-providers).
+
+This is because Home Assistant processes the `auth_providers` configuration early during startup, before packages are processed.
+{% endimportant %}

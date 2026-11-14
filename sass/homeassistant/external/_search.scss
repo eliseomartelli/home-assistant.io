@@ -1,0 +1,6 @@
+@use '../variables' as *;
+@use '../../inuitcss/defaults' as *;
+@use '../../inuitcss/generic/mixins' as *;
+.DocSearch-Container {
+  z-index: 1000;
+}

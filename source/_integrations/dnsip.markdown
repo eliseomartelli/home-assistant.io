@@ -1,75 +1,43 @@
 ---
-title: DNS IP
 description: Instructions on how to integrate a DNS IP sensor into Home Assistant.
-ha_category:
-  - Network
-ha_iot_class: Cloud Polling
 ha_release: '0.40'
 ha_domain: dnsip
-ha_platforms:
-  - sensor
 ---
 
-The `dnsip` sensor will expose an IP address, fetched via DNS resolution, as its value. There are two operational modes:
+The **DNS IP** {% term integration %} will expose an IP address, fetched via DNS resolution (every 2 minutes), as its value. It provides both IPv4 and IPv6 lookup as separate sensors depending on accessibility to resolvers.
 
-1. When you enable the sensor with minimal configuration, it will query the [OpenDNS](https://www.opendns.com/) nameservers with the hostname `myip.opendns.com`, which will resolve to your external/public IP address.
-2. If you specify a `hostname`, a regular DNS lookup will be performed, providing you the IP the hostname resolves to.
+1. When you enable the {% term integration %}  with the default value, it will query the [OpenDNS](https://www.opendns.com/) nameservers with the hostname `myip.opendns.com`, which will resolve to your external/public IP address.
+2. If you specify a `hostname`, a regular DNS lookup will be performed, providing you the IP the hostname resolves to. If your hostname resolves to multiple IP addresses, the lowest IP will be returned as the state. The first 10 IPs will be returned in ascending order in the `ip_addresses` attribute.
 
-You may also override the nameserver that is being used by setting the `resolver` parameter to any nameserver you like.
+{% include integrations/config_flow.md %}
 
-## Configuration
+{% configuration_basic %}
+Host:
+  description: The target hostname to resolve into their IP address(es).
+Resolver:
+  description: "Override the default DNS resolver by specifying an IPv4 (e.g., `1.1.1.1`) or IPv6 address (e.g., `2606:4700:4700::1111`)"
+Port:
+  description: "Override the default DNS port (`53`). Useful to bypass local DNS filtering or redirection."
+{% endconfiguration_basic %}
 
-To enable this sensor, add the following lines to your `configuration.yaml` file:
+Resolver and port may be adjusted after the integration has been setup by adjusting it's options:
 
-```yaml
-# Example configuration.yaml entry
-sensor:
-  - platform: dnsip
-```
+{% include integrations/option_flow.md %}
 
-{% configuration %}
-hostname:
-  description: The hostname for which to perform the DNS query.
-  required: false
-  default: "`myip.opendns.com` (special hostname that resolves to your public IP)"
-  type: string
-name:
-  description: Name of the sensor.
-  required: false
-  default: "`myip` or hostname without dots if specified"
-  type: string
-resolver:
-  description: The DNS server to target the query at.
-  required: false
-  default: "`208.67.222.222` (OpenDNS)"
-  type: string
-ipv6:
-  description: Set this to `true` or `false` if IPv6 should be used. When resolving the public IP, this will be the IP of the machine where Home Assistant is running on.
-  required: false
-  default: false
-  type: boolean
-resolver_ipv6:
-  description: The IPv6 DNS server to target the query at.
-  required: false
-  default: "`2620:0:ccc::2` (OpenDNS)"
-  type: string
-scan_interval:
-  description: Defines number of seconds for polling interval.
-  required: false
-  default: "`120`"
-  type: integer
-{% endconfiguration %}
+## Data fetching and limitations
 
-## Extended example
+Resolving the IP address(es) happens every two minutes.
 
-```yaml
-# Example configuration.yaml entry
-sensor:
-  # Own public IPv4 address
-  - platform: dnsip
-  # Resolve IP address of home-assistant.io via Google DNS
-  - platform: dnsip
-    hostname: home-assistant.io
-    name: hass
-    resolver: 8.8.8.8
-```
+If resolving the IP address(es) is not possible due to connectivity issues or other errors, it retries 3 times before going unavailable.
+
+## Troubleshooting
+
+This service is reliant on an internet connection and that the chosen **resolver(s)** are available.
+
+- Turn on debug logging and check the logs.
+- Manually test to resolve the hostname using any command line tools or websites available.
+- Manually reload the integration.
+
+## Removing the integration
+
+{% include integrations/remove_device_service.md %}

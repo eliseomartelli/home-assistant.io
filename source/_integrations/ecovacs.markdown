@@ -1,121 +1,119 @@
 ---
-title: Ecovacs
-description: Instructions on how to integrate Ecovacs vacuums within Home Assistant.
-ha_category:
-  - Hub
-  - Vacuum
-ha_iot_class: Cloud Push
+description: Instructions on how to integrate Ecovacs vacuums and mowers within Home Assistant.
 ha_release: 0.77
-ha_codeowners:
-  - '@OverloadUT'
 ha_domain: ecovacs
-ha_platforms:
-  - vacuum
 ---
 
-The `ecovacs` integration is the main integration to integrate all [Ecovacs](https://www.ecovacs.com) (Deebot) vacuums. You will need your Ecovacs account information (username, password) to discover and control vacuums in your account.
+The **Ecovacs** {% term integration %} integrates [Ecovacs](https://www.ecovacs.com) robotic vacuum cleaners and lawn mowers.
 
-There is currently support for the following device types within Home Assistant:
+This is for the "Deebot" series of robotic vacuum cleaners and the "GOAT" series of robotic lawn mowers from Ecovacs.
 
-- [Vacuum](#vacuum)
+Note that Ecovacs also has other types of cleaning robots that are not supported by this integration.
 
-## Configuration
+## Prerequisites
 
-To add your Ecovacs devices into your Home Assistant installation, add the following to your `configuration.yaml` file:
+You will need your Ecovacs account information (username and password) to discover and control vacuums and mowers in your account. Your username is the same as your email address.
 
-```yaml
-ecovacs:
-  username: YOUR_ECOVACS_USERNAME
-  password: YOUR_ECOVACS_PASSWORD
-  country: YOUR_TWO_LETTER_COUNTRY_CODE
-  continent: YOUR_TWO_LETTER_CONTINENT_CODE
-```
+Additional note: There are some issues with password encoding. Using some special characters, for example `-` and `?`, in your password may not work.
 
-{% configuration %}
-username:
-  description: Your username to login to your Ecovacs account.
-  required: true
-  type: string
-password:
-  description: Your password to login to your Ecovacs account.
-  required: true
-  type: string
-country:
-  description: Your two-letter country code (us, uk, etc).
-  required: true
-  type: string
-continent:
-  description: Your two-letter continent code (na, eu, etc).
-  required: true
-  type: string
-{% endconfiguration %}
+{% include integrations/config_flow.md %}
 
-Note: For some countries, you will need to set `continent` to `ww` (meaning worldwide.) There is unfortunately no way to know the correct settings other than guessing and checking. See the [sucks library protocol documentation](https://github.com/wpietri/sucks/blob/master/protocol.md) for more information about what has been figured out about the Ecovacs servers.
+During setup, you can choose to use a self-hosted instance over the cloud servers. Self-hosting comes with some requirements and limitations. See [Self-hosted configuration](#self-hosted-configuration) for additional details.
 
-Additional note: There are some issues during the password encoding. Using some special characters (e.g., `-`) in your password does not work.
+## Provided entities
 
-### Stability and Reporting Bugs
+The Ecovacs integration provides a vacuum {% term entity %} for each device that is connected to your Ecovacs account.
 
-The library that talks to the Ecovacs servers is in a very early state and still under development. As such, it is likely that not all regions and devices will work at the current time.
+Using the vacuum entity, you can monitor and control your Ecovacs Deebot vacuum.
 
-Please see the [sucks library documentation](https://github.com/wpietri/sucks) for some more information about what has been tested, and check out the GitHub issues to see if the issue you're having is known or being worked on.
+Additionally, **depending on your model**, the integration provides the following entities:
 
-If you have an issue with the Ecovacs component, please file a [GitHub Issue](https://github.com/home-assistant/home-assistant/issues) and include your Home Assistant logs in the report. To get full debug output from both the Ecovacs integration and the underlying `sucks` library, place this in your `configuration.yaml` file:
+- **Binary sensor**:
+  - `Mop attached`: On if the mop is attached. Note: If you do not see the state change to `Mop attached` in Home Assistant, you may need to wake up the robot to push the state change. Some models report an entity state change only if the overall status of the vacuum has changed. For example, if the overall state changes from `docked` to `cleaning`.
+- **Button**:
+  - `Reset lifespan`: For each supported component, a button entity to reset the lifespan will be created. All [disabled by default](/docs/configuration/customizing-entities/#disabling-or-enabling-an-entity).
+  - `Relocate`: Button entity to trigger manual relocation.
+  - `Station actions`: For each supported station action, a button entity will be created: `Clean base`, `Dry mop`, `Empty dustbin`, and `Wash mop`.
+- **Event**:
+  - `Last job`: Provides the stop reason as event_type
+- **Image**:
+  - `Map`: The floorplan/map as an image in SVG format.
+- **Number**:
+  - `Clean count`: Set the number of times to clean the area. Disabled by default.
+  - `Cut direction`: Set the mower cutting direction (from 0 to 180 degrees). Disabled by default.
+  - `Mop wash interval`: Set after how many minutes of cleaning the station washes the mop. Disabled by default.
+  - `Volume`: Set the volume. Disabled by default.
+  - `Water flow level`: Set a precise water flow level used during cleaning with the mop.
+- **Select**:
+  - `Active map`: Select the active map. The ID will be shown when the map has no name.
+  - `Auto-empty frequency`: Set how often the station empties the dust bin of the bot.
+  - `Efficiency mode`: Choose between `Standard` and `Energy efficient` cleaning. Disabled by default.
+  - `Water flow level`: Choose from predefined water flow levels used during cleaning with the mop.
+  - `Work mode`: Specify the mode, how the bot should clean. Disabled by default.
+- **Sensor**:
+  - `Error`: The error code and a description of the error. `0` means no error. Disabled by default.
+  - `Lifespan`: For each supported component, an entity with the remaining lifespan will be created.
+  - `Network`: The following network related entities will be created. All disabled by default.
+    - `IP address`
+    - `Wi-Fi RSSI`
+    - `Wi-Fi SSID`
+  - `Cleaning cycle`:
+    - `Area cleaned` (`Area mowed` for mowers): The area of the last cycle
+    - `Cleaning duration` (`Mowing duration` for mowers): The time of the last cycle
+  - `Station state`: Station state enum sensor. See options to see all possible states
+  - `Total statistics`: Updated after each cleaning cycle:
+    - `Total area cleaned` (`Total area mowed` for mowers): Total cleaned area
+    - `Total cleanings` (`Total mowings` for mowers): The number of cleanings
+    - `Total cleaning duration` (`Total mowing duration` for mowers): The total cleaning time
+- **Switch**:
+  - `Advanced mode`: Enable advanced mode. Disabled by default.
+  - `Auto-empty`: Enable the station to empty the dust bin of the bot automatically. Set how often with the `Auto-empty frequency` select.
+  - `Border spin`: Enable border spin, which means the bot will tilt to reach corners during mopping. Present on bots without an extendable mop. Disabled by default.
+  - `Border switch`: Enable border switch. Disabled by default.
+  - `Carpet auto-boost suction`: Enable maximum fan speed if a carpet is detected. Disabled by default.
+  - `Child lock`: Enable child lock. Disabled by default.
+  - `Clean preference`: Use the cleaning settings you customized per room in the Ecovacs app. Disabled by default.
+  - `Move up warning`: Enable device move up warning. Disabled by default.
+  - `Cross map border warning`: Enable warning for crossing the map border. Disabled by default.
+  - `Continuous cleaning`: Enable continuous cleaning, which means the bot resumes the cleaning job if he needs to charge in between. Disabled by default.
+  - `Safe protect`: Enable "Safe protect" feature. Disabled by default.
+  - `True detect`: Enable "True detect" feature. Disabled by default.
 
-```yaml
-logger:
-  logs:
-    homeassistant.components.ecovacs: debug
-    homeassistant.components.vacuum.ecovacs: debug
-    sucks: debug
-```
+## Lawn mower
 
-Warning: doing this will cause your authentication token to visible in your log files. Be sure to remove any tokens and other authentication details from your log before posting them in an issue.
-
+The `ecovacs` lawn mower platform allows you to start, pause, and stop mowing with your Ecovacs GOAT mower, and to send it back to its station.
 
 ## Vacuum
 
 The `ecovacs` vacuum platform allows you to monitor and control your Ecovacs Deebot vacuums.
 
-### Component Lifespans
+### Integration lifespan
 
 The remaining lifespan of components on your Deebot vacuum will be reported as attributes on the vacuum entity. The value will be a whole number representing the percentage of life remaining.
 
 Here's an example of how to extract the filter's lifespan to its own sensor using a [template sensor](/integrations/template):
 
-{% raw %}
-
 ```yaml
 # Example configuration.yaml entry
-sensor:
-  - platform: template
-    sensors:
-      vacuum_filter:
-        friendly_name: "Vacuum Filter Remaining Lifespan"
-        unit_of_measurement: "%"
-        value_template: "{{ state_attr('vacuum.my_vacuum_id', 'component_filter') }}"
+template:
+  - sensor:
+    - name: "Vacuum Filter Remaining Lifespan"
+      unit_of_measurement: "%"
+      state: "{{ state_attr('vacuum.my_vacuum_id', 'component_filter') }}"
 ```
-
-{% endraw %}
 
 Or, if you want a simple binary sensor that becomes `On` when the filter needs to be replaced (5% or less):
 
-{% raw %}
-
 ```yaml
 # Example configuration.yaml entry
-binary_sensor:
-  - platform: template
-    sensors:
-      vacuum_filter_replace:
-        friendly_name: "Vacuum Filter"
-        device_class: problem
-        value_template: "{{ state_attr('vacuum.my_vacuum_id', 'component_filter') <= 5 }}"
+template:
+  - binary_sensor:
+    - name: "Vacuum Filter"
+      device_class: problem
+      state: "{{ state_attr('vacuum.my_vacuum_id', 'component_filter') <= 5 }}"
 ```
 
-{% endraw %}
-
-### Handling Errors
+### Handling errors
 
 The vacuum entity has an `error` attribute that will contain the _most recent_ error message that came from the vacuum. There is not a comprehensive list of all error messages, so you may need to do some experimentation to determine the error messages that your vacuum can send.
 
@@ -131,3 +129,34 @@ Alternatively, you can use the `ecovacs_error` event to watch for errors. This e
 ```
 
 Finally, if a vacuum becomes unavailable (usually due to being idle and off its charger long enough for it to completely power off,) the vacuum's `status` attribute will change to `offline` until it is turned back on.
+
+{% include integrations/actions.md %}
+
+## Self-hosted configuration
+
+Depending on your setup of the self-hosted instance, you can connect to the server using the following settings:
+
+- `Username`: Enter the email address configured in your instance. If authentication is disabled, you can enter any valid email address.
+- `Password`: Enter the password configured in your instance. If authentication is disabled, you can enter any string (series of characters).
+- `REST URL`: http://`SELF_HOSTED_INSTANCE`:8007
+- `MQTT URL`: mqtts://`SELF_HOSTED_INSTANCE`:8883
+- `Verify MQTT SSL certificate`: disabled
+
+Replace `SELF_HOSTED_INSTANCE` with either the IP address or the hostname of your instance.
+
+The above configuration is based on the information from [Bumper's documentation](https://bumper.readthedocs.io).
+
+## Troubleshooting
+
+In any case, when reporting an issue, please enable [debug logging](/docs/configuration/troubleshooting/#debug-logs-and-diagnostics), restart the integration, and as soon as the issue re-occurs stop the debug logging again (_download of debug log file will start automatically_). Further _if still possible_, please also download the [diagnostics](/integrations/diagnostics) data. If you have collected the debug log and the diagnostics data, provide them with the issue report.
+
+### Your device is not supported?
+
+Because Ecovacs doesn't provide a public documentation about their APIs, the support of devices is based on reverse engineering of the communication of the device. This reverse engineering can only be done by persons, who are in possession of such a device and the knowledge how to do the reverse engineering. Therefore the support of devices heavily depends on contributions from the community.
+If your device is not supported, please request for help or contribute on your own the support of your device directly to the [`deebot_client`](https://github.com/DeebotUniverse/client.py) library.
+
+## Removing the integration
+
+This integration follows standard integration removal.
+
+{% include integrations/remove_device_service.md %}

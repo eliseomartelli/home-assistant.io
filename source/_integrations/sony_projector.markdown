@@ -1,20 +1,14 @@
 ---
-title: Sony Projector
 description: Instructions on how to integrate Sony Projector switches into Home Assistant.
-ha_category:
-  - Multimedia
-ha_iot_class: Local Polling
 ha_release: 0.89
 ha_domain: sony_projector
-ha_platforms:
-  - switch
 ---
 
-The `sony_projector` switch platform allows you to control the state of SDCP compatible network-connected projectors from [Sony](https://www.sony.com/).
+The **Sony Projector** {% term integration %} allows you to control the state of SDCP compatible network-connected projectors from [Sony](https://www.sony.com/).
 
 ## Configuration
 
-To use your Sony Projector in your installation, add the following to your `configuration.yaml` file:
+To use your Sony Projector in your installation, add the following to your {% term "`configuration.yaml`" %} file:
 
 ```yaml
 # Example configuration.yaml entry
@@ -34,3 +28,7 @@ name:
   required: false
   type: string
 {% endconfiguration %}
+
+Under your projector's web interface **Advanced Menu**, you may need to:
+- Enable/start the **PJ Talk** service.
+- Add the IP of your Home Assistant server to the **Host Address** field.

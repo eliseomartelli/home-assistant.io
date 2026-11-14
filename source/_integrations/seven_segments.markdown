@@ -1,38 +1,19 @@
 ---
-title: Seven Segments OCR
 description: Instructions on how to use OCR for seven segments displays into Home Assistant.
-ha_category:
-  - Image Processing
 ha_release: 0.45
 og_image: /images/screenshots/ssocr.png
-ha_iot_class: Local Polling
 ha_domain: seven_segments
-ha_codeowners:
-  - '@fabaff'
+related:
+  - docs: /docs/configuration/
+    title: Configuration file
 ---
 
-The `seven_segments` image processing platform allows you to read physical seven segments displays through Home Assistant. [`ssocr`](https://www.unix-ag.uni-kl.de/~auerswal/ssocr/) is used to extract the value shown on the display which is observed by a [camera](/integrations/camera/).
-
-{% details "Notes for Home Assistant Core Installations" %}
-
-`ssocr` needs to be available on your system. Check the installation instruction below:
-
-```bash
-sudo dnf -y install imlib2-devel # Fedora
-sudo apt install libimlib2-dev # Ubuntu
-brew install imlib2 # macOS
-git clone https://github.com/auerswal/ssocr.git
-cd ssocr
-make
-sudo make PREFIX=/usr install # On most systems
-make deb # (Optional) This allows you to make a deb so that you apt is aware of ssocr
-```
-
-{% enddetails %}
+The **Seven Segments OCR** {% term integration %} allows you to read physical seven segments displays through Home Assistant. [`ssocr`](https://www.unix-ag.uni-kl.de/~auerswal/ssocr/) is used to extract the value shown on the display which is observed by a [camera](/integrations/camera/).
 
 ## Configuration
 
-To enable the OCR of a seven segment display in your installation, add the following to your `configuration.yaml` file:
+To enable the OCR of a seven segment display in your installation, add the following to your {% term "`configuration.yaml`" %} file.
+{% include integrations/restart_ha_after_config_inclusion.md %}
 
 ```yaml
 # Example configuration.yaml entry
@@ -84,7 +65,7 @@ digits:
   default: -1
   type: integer
 extra_arguments:
-  description: Other arguments to use. Like `-D`, `dilation`, `erosion`, `greyscale`, `make_mono`, etc.
+  description: Other arguments to use. Like `-D`, `dilation`, `erosion`, `greyscale`, or `make_mono`.
   required: false
   type: string
 source:
@@ -110,7 +91,7 @@ It's suggested that the first attempt to determine the needed parameters is usin
 ssocr -D erosion crop 390 250 490 280 -t 20 -d 4 seven-seg.png
 ```
 
-This would lead to the following entry for the `configuration.yaml` file:
+This would lead to the following entry for the {% term "`configuration.yaml`" %} file:
 
 ```yaml
 camera:
@@ -135,8 +116,6 @@ image_processing:
 
 With the help of a [template sensor](/integrations/template), the value can be shown as badge.
 
-{% raw %}
-
 ```yaml
 sensor:
   - platform: template
@@ -146,5 +125,3 @@ sensor:
         friendly_name: "Ampere"
         unit_of_measurement: "A"
 ```
-
-{% endraw %}

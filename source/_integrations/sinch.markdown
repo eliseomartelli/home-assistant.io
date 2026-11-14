@@ -1,18 +1,13 @@
 ---
-title: Sinch SMS
 description: Instructions on how to add Sinch notifications to Home Assistant.
-ha_category:
-  - Notifications
 ha_release: 0.101
-ha_codeowners:
-  - '@bendikrb'
 ha_domain: sinch
-ha_iot_class: Cloud Push
-ha_platforms:
-  - notify
+related:
+  - docs: /docs/configuration/
+    title: Configuration file
 ---
 
-The `sinch` platform uses [Sinch](https://www.sinch.com/products/messaging/sms/) to deliver notifications from Home Assistant.
+The **Sinch SMS** {% term integration %} uses [Sinch](https://www.sinch.com/products/apis/messaging/sms/) to deliver notifications from Home Assistant.
 
 ## Prerequisites
 
@@ -20,7 +15,8 @@ Go to your [Sinch Dashboard](https://dashboard.sinch.com/sms/api/rest) and click
 
 ## Configuration
 
-To add Sinch to your installation, add the following to your Home Assistant `configuration.yaml` file:
+To add Sinch to your installation, add the following to your Home Assistant {% term "`configuration.yaml`" %} file.
+{% include integrations/restart_ha_after_config_inclusion.md %}
 
 ```yaml
 # Example configuration.yaml entry
@@ -32,7 +28,7 @@ notify:
 
 {% configuration %}
 name:
-  description: "Setting the optional parameter name allows multiple notifiers to be created. The default value is `Sinch`. The notifier will bind to the service `notify.NOTIFIER_NAME`."
+  description: "Setting the optional parameter name allows multiple notifiers to be created. The default value is `Sinch`. The notifier will bind to the `notify.NOTIFIER_NAME` action."
   required: false
   type: string
 service_plan_id:
@@ -44,7 +40,7 @@ api_key:
   required: true
   type: string
 default_recipient:
-  description: "A single or multiple phone numbers. This is where you want to send your SMS notification messages by default (when not specifying `target` in the service call), e.g., `09171234567` or `[09171234567, 09177654321]`."
+  description: "A single or multiple phone numbers. This is where you want to send your SMS notification messages by default (when not specifying `target` in the action), e.g., `09171234567` or `[09171234567, 09177654321]`."
   required: false
   type: [string, list]
 sender:

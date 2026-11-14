@@ -1,19 +1,18 @@
 ---
-title: HDMI-CEC
 description: Instructions on how to interact with HDMI-CEC via Home Assistant.
-ha_category:
-  - Automation
 ha_release: 0.23
-ha_iot_class: Local Push
 ha_domain: hdmi_cec
-ha_platforms:
-  - media_player
-  - switch
 ---
 
-The `hdmi_cec` integration provides services that allow selecting the active device, powering on all devices, setting all devices to standby and creates switch entities for HDMI devices. Devices are defined in the configuration file by associating HDMI port number and a device name. Connected devices that provide further HDMI ports, such as sound-bars and AVRs are also supported. Devices are listed from the perspective of the CEC-enabled Home Assistant device. Any connected device can be listed, regardless of whether it supports CEC. Ideally the HDMI port number on your device will map correctly the CEC physical address. If it does not, use `cec-client` (part of the `libcec` package) to listen to traffic on the CEC bus and discover the correct numbers.
+The **HDMI-CEC** {% term integration %} provides actions that allow selecting the active device, powering on all devices, setting all devices to standby and creates switch entities for HDMI devices. Devices are defined in the configuration file by associating HDMI port number and a device name. Connected devices that provide further HDMI ports, such as sound-bars and AVRs are also supported. Devices are listed from the perspective of the CEC-enabled Home Assistant device. Any connected device can be listed, regardless of whether it supports CEC. Ideally the HDMI port number on your device will map correctly the CEC physical address. If it does not, use `cec-client` (part of the `libcec` package) to listen to traffic on the CEC bus and discover the correct numbers.
 
 ## CEC Setup
+
+### Home Assistant OS
+
+To test if HDMI-CEC will work on your Home Assistant OS installation, you can use the official CEC Scanner app for Home Assistant (formerly known as CEC Scanner add-on). Run this app to see if your hardware has HDMI-CEC capabilities and which devices are connected. Do not have this app **Start on boot**, as it will interfere with the integration. To turn off **Start on boot**, refer to [Changing the options of an app](/common-tasks/os/apps/#changing-the-options-of-an-app).
+
+Once you've run the CEC Scanner app, you can use the resulting scan information to configure the integration.
 
 ### Adapter
 
@@ -35,38 +34,37 @@ ln -s /path/to/your/installation/of/_cec.so /path/to/your/venv/lib/python*/site-
 
 ```
 
-##### Symlinking examples:
+##### Symlinking examples
 
-For the default virtual environment of a [Manual install for Raspberry Pi](/docs/installation/raspberry-pi/) the command would be as follows.
+For the default virtual environment of a [Manual install for Raspberry Pi](/installation/raspberrypi) the command would be as follows.
 
 ```bash
 ln -s /usr/local/lib/python*/dist-packages/cec.py /srv/homeassistant/lib/python*/site-packages
 ln -s /usr/local/lib/python*/dist-packages/_cec.so /srv/homeassistant/lib/python*/site-packages
 ```
 
-<div class='note'>
-
+{% note %}
 If after symlinking and adding `hdmi_cec:` to your configuration you are getting the following error in your logs,
 `* failed to open vchiq instance` you will also need to add the user account Home Assistant runs under, to the `video` group. To add the Home Assistant user account to the `video` group, run the following command. `$ usermod -a -G video <hass_user_account>`
-
-</div>
+{% endnote %}
 
 ## Testing your installation
 
-*  Login to Raspberry Pi
+- Log in to Raspberry Pi
 
 ```bash
 ssh pi@your_raspberry_pi_ip
 ```
 
-*  at the command line type:
+- at the command line type:
 
 ```bash
 echo scan | cec-client -s -d 1
 ```
+
 Note: to use this command you have to install cec-utils package. In Debian based should be: ```sudo apt install cec-utils```
 
-*  This will give you the list of devices that are on the bus
+- This will give you the list of devices that are on the bus
 
 ```bash
 opening a connection to the CEC adapter...
@@ -83,11 +81,9 @@ power status:  on
 language:      ???
 ```
 
-<div class='note'>
-
+{% note %}
 `address:` entry above this will be used to configure Home Assistant, this address is represented below as 3: BlueRay player.
-
-</div>
+{% endnote %}
 
 ## Configuration Example
 
@@ -143,109 +139,9 @@ hdmi_cec:
   host: 192.168.1.3
 ```
 
-
-## Services
-
-### Select Device
-
-Call the `hdmi_cec.select_device` service with the name of the device from configuration or entity_id or physical address"to select it, for example:
-
-```json
-{"device": "Chromecast"}
-```
-
-```json
-{"device": "switch.hdmi_3"}
-```
-
-```json
-{"device": "1.1.0.0"}
-```
-
-So an Automation action using the example above would look something like this.
-
-```yaml
-action:
-  service: hdmi_cec.select_device
-    data:
-      device: Chromecast
-```
-
-### Power On
-
-Call the `hdmi_cec.power_on` service (no arguments) to power on any devices that support this function.
-
-An Automation action using the example above would look something like this.
-
-```yaml
-action:
-  service: hdmi_cec.power_on
-```
-
-### Standby
-
-Call the `hdmi_cec.standby` service (no arguments) to place in standby any devices that support this function.
-
-An Automation action using the example above would look something like this.
-
-```yaml
-action:
-  service: hdmi_cec.standby
-```
-
-### Change volume level
-
-Call the `hdmi_cec.volume` service with one of following commands:
-
-#### Volume up
-Increase volume three times:
-
-```json
-{"up": 3}
-```
-
-Keep increasing volume until release is called:
-
-```json
-{"up": "press"}
-```
-
-Stop increasing volume:
-
-```json
-{"up": "release"}
-```
-
-#### Volume down
-Decrease volume three times:
-
-```json
-{"down": 3}
-```
-
-Keep decreasing volume until release is called:
-
-```json
-{"down": "press"}
-```
-
-Stop decreasing volume:
-
-```json
-{"down": "release"}
-```
-
-#### Volume mute
-Toggle mute:
-
-```json
-{"mute": ""}
-```
-
-value is ignored.
-
+{% include integrations/actions.md %}
 
 ## Useful References
 
-* [CEC overview](https://kwikwai.com/knowledge-base/the-hdmi-cec-bus/)
-* [CEC-o-matic](http://www.cec-o-matic.com/)
+- [CEC overview](https://kwikwai.com/knowledge-base/the-hdmi-cec-bus/)
+- [CEC-o-matic](https://www.cec-o-matic.com/)

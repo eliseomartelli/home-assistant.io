@@ -32,15 +32,11 @@ As soon as the [Hacktoberfest] started there were a lot of incoming Pull Request
 
 With the [statistics sensor][stats-sensor] we would like to introduce a new sensor that is similar to the [template sensor][template-sensor] or the [trend sensor][trend-sensor]. This sensor is consuming values from another sensor and is doing some statistical analysis of the data. Over a group of samples is the average/mean, the min/max, the total, the standard deviation, and the variance calculated which can be used in your automation rules. If the source is a binary sensor then the state changes are counted.
 
-<p class='img'>
-  <img src='/images/screenshots/stats-sensor.png' />
-</p>
-
 As the results are processed on-the-fly you still need to use the data from your database for an in-depth analysis of your stored information. Check the latest [notebook] for doing statistics with your Home Assistant database.
 
 ### REST! We don't...
 
-There was a lot of work done on our implementation which are working with RESTful APIs. [@w1ll1am23] extended the [aREST] platforms to display if an aREST unit is available or not. The aREST implementations are now covered by the configuration check as well. Please check the Breaking changes section for more details.
+There was a lot of work done on our implementation which are working with RESTful APIs. [@w1ll1am23] extended the [aREST] platforms to display if an aREST unit is available or not. The aREST implementations are now covered by the configuration check as well. Please check the Backward-incompatible changes section for more details.
 
 The [REST sensor][rest-sensor] supports now HTTP authentication (basic and digest) and custom headers. This will allow you to access resources which are protected. This sample sensor will access GitHub and retrieve the latest release number while by-passing the rate limit for non-authenticated requests.
 
@@ -117,7 +113,7 @@ sensor
 - Fix for Slack targets ([@fabaff])
 - Fix for Pushover targets ([@Nixon506E])
 
-### Breaking changes
+### Backward-incompatible changes
 
 - All deprecated condition options from `automation` have been removed (deprecated since May and have printed warnings to your console):
   - `use_trigger_values` is gone. You have to copy your triggers to conditions and adjust for the correct config.
@@ -127,7 +123,7 @@ sensor
 - The [aREST][arest] configuration between the [sensor][arest-sensor] and the [switch][arest-switch] platform was aligned.
 
 ### If you need help...
-...don't hesitate to use our [Forum](https://community.home-assistant.io/) or join us for a little [chat](https://discord.gg/c5DvZ4e). The release notes have comments enabled but it's preferred if you the former communication channels. Thanks.
+...don't hesitate to use our [Forum](https://community.home-assistant.io/) or join us for a little [chat](https://discord.gg/home-assistant). The release notes have comments enabled but it's preferred if you the former communication channels. Thanks.
 
 [@balloob]: https://github.com/balloob
 [@bbangert]: https://github.com/bbangert

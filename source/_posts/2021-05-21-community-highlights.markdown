@@ -24,7 +24,7 @@ Information on [how to share](#got-a-tip-for-the-next-edition).
 Are you one of those who always leave the doors open?
 
 Then this week we have a nice blueprint for you! [BasTijs](https://community.home-assistant.io/u/bastijs )
-has made a blueprint that announces through text to speech in the house,
+has made a blueprint that announces through text-to-speech in the house,
 that a door is open and only stops when the door is closed again.
 
 {% my blueprint_import badge blueprint_url="https://community.home-assistant.io/t/door-open-tts-announcer/266252" %}
@@ -64,8 +64,6 @@ which makes it possible to collapse entire cards and reappear as a dropdown.
 ## Hyperion - HA bridge
 ------
 
-<iframe src="https://drive.google.com/file/d/1nQzYOKjLEz-CBqsog2uumT8Dyv8r0y-A/preview" width="100%" height="400" style="margin-bottom:15px;"></iframe>
-
 You have those TVs where LEDs are mounted on the back so that the colors of
 the TV continue over the wall behind it, this is also called ambilight. If
 your TV is not equipped with this, you can also make this yourself through
@@ -87,7 +85,7 @@ Also, don't forget to share your creations with us via Social Media:
 - Tweet it! Be sure to mention [@home_assistant][twitter]
 - Share it on our [Facebook group][facebook-group]
 - Post it to our [subreddit][reddit]
-- Tag [@homeasssistant][instagram] on Instagram
+- Tag [@homeassistant][instagram] on Instagram
 - Or via chat, drop us a line in the [#lounge at Discord][chat]
 
 See you next edition!

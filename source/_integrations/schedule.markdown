@@ -1,0 +1,279 @@
+---
+description: Instructions on how to make a weekly schedule in Home Assistant.
+ha_release: 2022.9
+ha_domain: schedule
+---
+
+The **Schedule** {% term integration %} lets you create a weekly schedule {% term entity %} in Home Assistant from time blocks with defined start and end times. The schedule is active when a time block starts and becomes inactive when it ends, so you can use it as a trigger or condition in automations and scripts.
+
+{% include integrations/config_flow.md %}
+
+{% configuration_basic %}
+Name:
+  description: Friendly name of the schedule.
+Icon:
+  description: Icon to display in the frontend for this schedule.
+Schedule blocks:
+  description: >
+    Press and drag to select time blocks for each day of the week.
+    It is not possible to create overlapping time blocks on the same day.
+{% endconfiguration_basic %}
+
+After creating schedule blocks, you can press a block to edit the details.
+
+{% configuration_basic %}
+Start:
+  required: true
+  type: time
+  description: The start time to mark the schedule as active/on.
+End:
+  required: true
+  type: time
+  description: The end time to mark as inactive/off again.
+Additional data:
+  required: false
+  type: map
+  description: A mapping of attribute names to values, which will be added to the entity's attributes when the block is active.
+{% endconfiguration_basic %}
+
+### Adding additional data
+
+Adding the following as `Additional data` will show `brightness` and `color_temp` as {% term entity %} attributes when the block is active:
+
+```yaml
+brightness: 100
+color_temp: 4000
+```
+
+## YAML configuration
+
+Alternatively, you can configure and set up this integration manually via YAML. To enable the **Schedule** integration in your installation, add the following to your {% term "`configuration.yaml`" %} file.
+
+{% note %}
+
+The `data` field follows the same logic as described above in *Adding additional data*.
+
+{% endnote %}
+
+```yaml
+schedule:
+  light_schedule:
+    name: "Light schedule"
+    wednesday:
+      - from: "17:00:00"
+        to: "21:00:00"
+        data:
+          brightness: 100
+          color_temp: 4000
+    thursday:
+      - from: "17:00:00"
+        to: "23:00:00"
+        data:
+          brightness: 90
+          color_temp: 3500
+    friday:
+      - from: "07:00:00"
+        to: "10:00:00"
+        data:
+          brightness: 80
+          color_temp: 3000
+      - from: "16:00:00"
+        to: "23:00:00"
+        data:
+          brightness: 60
+          color_temp: 2500
+```
+
+{% configuration %}
+schedule:
+  description: Alias for the schedule. Multiple entries are allowed.
+  required: true
+  type: map
+  keys:
+    name:
+      description: Friendly name of the schedule.
+      required: true
+      type: string
+    icon:
+      description: Icon to display in the frontend for this schedule.
+      required: false
+      type: icon
+    "monday|tuesday|wednesday|thursday|friday|saturday|sunday":
+      description: A schedule for each day of the week.
+      required: false
+      type: list
+      default: []
+      keys:
+        from:
+          description: The start time to mark the schedule as active/on.
+          required: true
+          type: time
+        to:
+          description: The end time to mark as inactive/off again.
+          required: true
+          type: time
+        data:
+          description: A mapping of attribute names to values, which will be added to the entity's attributes when the block is active.
+          required: false
+          type: map
+          default: {}
+{% endconfiguration %}
+
+## Attributes
+
+A schedule entity exports state attributes that can be useful in automations and templates.
+
+- `next_event`: A datetime object containing the next time the schedule is going to change state.
+- `key_1`, `key_2`, ...: The mapping values from **Additional data** or `data` settings of a time block when that block is active.
+
+## Behavior at block boundaries
+
+Time blocks use an inclusive start and an exclusive end. A block from `09:00` to `12:00` is active from `09:00:00.000` up to but not including `12:00:00.000`.
+
+When two time blocks on the same day touch (for example, one block from `07:00` to `10:00` and another from `10:00` to `12:00`), the schedule transitions cleanly from one to the other:
+
+- The schedule's state stays `on` across the boundary. It does not briefly flip to `off` between two touching blocks.
+- The `data` attributes are replaced with the new block's data at the moment of the transition.
+- An automation triggering on the state changing to `off` does not fire at a boundary between two touching blocks.
+- A **Schedule block started** trigger fires when each new block starts, including at a boundary between two touching blocks.
+- A **Schedule block ended** trigger does not fire at a boundary between two touching blocks because the schedule does not become inactive (`off`).
+- An automation triggering on an attribute change (for example, a new setpoint) fires once, with the new block's data.
+
+Overlapping time blocks on the same day are not allowed and are rejected during configuration validation.
+
+A time block cannot cross midnight. To keep a schedule active across midnight, create two touching blocks on consecutive days. For example, for a schedule from `22:00` to `05:00`:
+
+1. Create a block from `22:00` to `24:00` on the first day.
+2. Create a block from `00:00` to `05:00` on the following day.
+
+The schedule stays `on` across midnight when these blocks touch.
+
+## Copying a schedule
+
+To create a new schedule based on one you set up in the UI, duplicate it:
+
+1. Go to {% my helpers title="**Settings** > **Devices & services** > **Helpers**" %}.
+2. Next to the schedule, select the three dots {% icon "mdi:dots-vertical" %} menu, then select **Duplicate**.
+3. Change the name and the time blocks as needed.
+4. Select **Create**.
+
+Schedules set up in YAML can't be duplicated. To copy one, read its time blocks with the [**Get schedule**](/actions/schedule.get_schedule/) action:
+
+1. Go to {% my tools_actions title="**Settings** > **Tools** > **Actions**" %}.
+2. Search for and select **Get schedule**, then select **Add target** and select the schedule.
+3. Select **Perform action**.
+4. Copy the time blocks under **Response** into a `schedule:` section in your {% term "`configuration.yaml`" %} file, then run the [**Reload schedules**](/actions/schedule.reload) action.
+
+{% note %}
+Schedules created in YAML can't be edited in the UI. To edit them, change the YAML and reload the schedules.
+{% endnote %}
+
+### YAML example
+
+This example shows the response of `schedule.vacuum_robot` and the new schedule using that response. You can then change the time blocks of the new schedule as needed.
+
+```yaml
+schedule.vacuum_robot:
+  monday:
+    - from: "09:00:00"
+      to: "15:00:00"
+  tuesday: []
+  wednesday: []
+  thursday:
+    - from: "09:00:00"
+      to: "15:00:00"
+  friday: []
+  saturday: []
+  sunday: []
+```
+
+```yaml
+schedule:
+  vacuum_robot_weekend:
+    name: "Vacuum robot weekend"
+    monday:
+      - from: "09:00:00"
+        to: "15:00:00"
+    tuesday: []
+    wednesday: []
+    thursday:
+      - from: "09:00:00"
+        to: "15:00:00"
+    friday: []
+    saturday: []
+    sunday: []
+```
+
+{% include integrations/triggers.md %}
+
+{% include integrations/conditions.md %}
+
+{% include integrations/actions.md %}
+
+## Schedule automation examples
+
+You can use a schedule to decide when an automation should start, or to check whether a routine is currently active.
+Here are two examples you can adapt to your own schedules.
+
+{% include docs/paste_yaml_tip.md %}
+
+### Automation: turn on the porch light when the evening schedule starts
+
+If you use a schedule to define when your porch light should be active, you can start the light automatically when that schedule block begins.
+
+- **Trigger**: Schedule block started
+  - **Target**: Evening porch light schedule
+- **Action**: Turn on light
+  - **Target**: Porch light
+
+{% details "YAML example for turning on the porch light when the evening schedule starts" %}
+
+{% example %}
+automation: |
+  alias: "Turn on the porch light when the evening schedule starts"
+  triggers:
+    - trigger: schedule.block_started
+      target:
+        entity_id: schedule.evening_porch_light
+  actions:
+    - action: light.turn_on
+      target:
+        entity_id: light.porch
+{% endexample %}
+
+{% enddetails %}
+
+### Automation: start the robot vacuum only when both quiet-time schedules are off
+
+If you use schedules to keep certain times interruption-free, you can start your robot vacuum only when both of those schedules are no longer active.
+
+- **Trigger**: Time: 14:00
+- **Condition**: Schedule is off
+  - **Target**: Quiet time schedule, Meeting schedule
+  - **Condition passes if**: All
+- **Action**: Start vacuum cleaner
+  - **Target**: Living room vacuum
+
+{% details "YAML example for starting the robot vacuum when both quiet-time schedules are off" %}
+
+{% example %}
+automation: |
+  alias: "Start the robot vacuum when both quiet-time schedules are off"
+  triggers:
+    - trigger: time
+      at: "14:00:00"
+  conditions:
+    - condition: schedule.is_off
+      target:
+        entity_id:
+          - schedule.quiet_time
+          - schedule.meeting_time
+      options:
+        behavior: all
+  actions:
+    - action: vacuum.start
+      target:
+        entity_id: vacuum.living_room
+{% endexample %}
+
+{% enddetails %}

@@ -1,16 +1,13 @@
 ---
-title: World Tides
 description: Instructions on how to add Tides information to Home Assistant.
-ha_category:
-  - Environment
 ha_release: 0.52
-ha_iot_class: Cloud Polling
 ha_domain: worldtidesinfo
-ha_platforms:
-  - sensor
+related:
+  - docs: /docs/configuration/
+    title: Configuration file
 ---
 
-The `worldtidesinfo` sensor platform uses details from [World Tides](https://www.worldtides.info/) to provide information about the prediction for the tides for any location in the world.
+The **World Tides** {% term integration %} uses details from [World Tides](https://www.worldtides.info/) to provide information about the prediction for the tides for any location in the world.
 
 ## Setup
 
@@ -18,7 +15,8 @@ Get your API key from your account at [https://www.worldtides.info/](https://www
 
 ## Configuration
 
-To use this sensor, add the following to your `configuration.yaml` file:
+To use this {% term integration %}, add the following to your {% term "`configuration.yaml`" %} file.
+{% include integrations/restart_ha_after_config_inclusion.md %}
 
 ```yaml
 # Example configuration.yaml entry

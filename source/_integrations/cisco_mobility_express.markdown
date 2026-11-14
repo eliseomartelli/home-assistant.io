@@ -1,20 +1,16 @@
 ---
-title: Cisco Mobility Express
 description: Instructions on how to integrate Cisco Mobility Express wireless controllers into Home Assistant.
-ha_category:
-  - Presence Detection
 ha_release: '0.90'
-ha_iot_class: Local Polling
-ha_codeowners:
-  - '@fbradyirl'
 ha_domain: cisco_mobility_express
-ha_platforms:
-  - device_tracker
+related:
+  - docs: /docs/configuration/
+    title: Configuration file
 ---
 
 This is a presence detection scanner for [Cisco](https://www.cisco.com) Mobility Express wireless controllers.
 
-To use this device tracker in your installation, add the following to your `configuration.yaml` file:
+To use this device tracker in your installation, add the following to your {% term "`configuration.yaml`" %} file.
+{% include integrations/restart_ha_after_config_inclusion.md %}
 
 ```yaml
 # Example configuration.yaml entry
@@ -27,7 +23,7 @@ device_tracker:
 
 {% configuration %}
 host:
-  description: The IP address of your controller, e.g., 192.168.10.150.
+  description: The IP address of your controller, for example, `192.168.10.150`.
   required: true
   type: string
 username:

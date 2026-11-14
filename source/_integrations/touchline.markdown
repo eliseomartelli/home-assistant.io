@@ -1,29 +1,28 @@
 ---
-title: Roth Touchline
 description: Instructions on how to integrate Roth Touchline within Home Assistant.
-ha_category:
-  - Climate
 ha_release: 0.61
-ha_iot_class: Local Polling
 ha_domain: touchline
-ha_platforms:
-  - climate
 ---
 
-The `touchline` climate platform let you control [ROTH Touchline](http://www.roth-nordic.dk/dk/roth-touchline-tradloes-gulvvarmeregulering-1475.htm) floor heating thermostats from Roth.
+The **Roth Touchline** {% term integration %} lets you control [ROTH Touchline](https://www.roth-uk.com/en/roth-touchline.htm) floor heating thermostats from Roth.
 
+{% include integrations/config_flow.md %}
 
-To set it up, add the following information to your `configuration.yaml` file:
-
-```yaml
-climate:
-  - platform: touchline
-    host: YOUR_IPADDRESS
-```
-
-{% configuration %}
+{% configuration_basic %}
 host:
-  description: The IP address of your controller, e.g., `http://192.168.1.1`.
-  required: false
-  type: string
-{% endconfiguration %}
+  description: The IP address of your controller. For example, `http://192.168.1.1`.
+{% endconfiguration_basic %}
+
+## Entities
+
+The integration will present each Roth Touchline thermostat as a climate entity, which can:
+
+- Display the current temperature
+- Set a target temperature
+- Assign to a configured **Global Schedule** using Home Assistant climate entity presets.
+
+## Removing the integration
+
+This integration follows standard integration removal. No extra steps are required.
+
+{% include integrations/remove_device_service.md %}

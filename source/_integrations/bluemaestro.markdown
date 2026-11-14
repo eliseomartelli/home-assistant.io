@@ -1,0 +1,16 @@
+---
+description: Instructions on how to integrate BlueMaestro devices into Home Assistant.
+ha_release: 2022.9
+ha_domain: bluemaestro
+---
+
+Integrates [BlueMaestro](https://www.sigmawit.com/) devices into Home Assistant.
+
+## Supported devices
+
+- Tempo Disc THD
+- Tempo Disc THPD
+
+The **BlueMaestro** {% term integration %}  will automatically discover devices once the [Bluetooth](/integrations/bluetooth) integration is enabled and functional.
+
+{% include integrations/config_flow.md %}

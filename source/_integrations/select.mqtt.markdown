@@ -1,28 +1,26 @@
 ---
 title: "MQTT Select"
 description: "Instructions on how to interact with a device exposing a Select through MQTT from within Home Assistant."
-ha_category:
-  - Select
 ha_release: 2021.7
 ha_iot_class: Configurable
 ha_domain: mqtt
 ---
 
-The `mqtt` Select platform allows you to integrate devices that might expose configuration options through MQTT into Home Assistant as a Select. Every time a message under the `topic` in the configuration is received, the select entity will be updated in Home Assistant and vice-versa, keeping the device and Home Assistant in sync.
+The **MQTT Select** {% term integration %} allows you to integrate devices that might expose configuration options through MQTT into Home Assistant as a Select. Every time a message under the `topic` in the configuration is received, the select entity will be updated in Home Assistant and vice-versa, keeping the device and Home Assistant in sync.
 
 ## Configuration
 
-To enable MQTT Select in your installation, add the following to your `configuration.yaml` file:
+{% include integrations/mqtt_config_methods.md item="select entity" platform="select" subentry=true %}
 
 ```yaml
 # Example configuration.yaml entry
-select:
-    - platform: mqtt
+mqtt:
+  - select:
       command_topic: topic
       name: "Test Select"
       options:
-      	- "Option 1"
-      	- "Option 2"
+        - "Option 1"
+        - "Option 2"
 ```
 
 {% configuration %}
@@ -45,6 +43,10 @@ availability:
       description: An MQTT topic subscribed to receive availability (online/offline) updates.
       required: true
       type: string
+    value_template:
+      description: "Defines a [template](/docs/templating/where-to-use/#mqtt) to extract device's availability from the `topic`. To determine the devices's availability result of this template will be compared to `payload_available` and `payload_not_available`."
+      required: false
+      type: template
 availability_topic:
   description: The MQTT topic subscribed to receive availability (online/offline) updates. Must not be used together with `availability`.
   required: false
@@ -54,66 +56,76 @@ availability_mode:
    required: false
    type: string
    default: latest
+availability_template:
+  description: "Defines a [template](/docs/templating/where-to-use/#mqtt) to extract device's availability from the `availability_topic`. To determine the devices's availability result of this template will be compared to `payload_available` and `payload_not_available`."
+  required: false
+  type: template
+command_template:
+  description: Defines a [template](/docs/templating/where-to-use/#mqtt) to generate the payload to send to `command_topic`.
+  required: false
+  type: template
 command_topic:
   description: The MQTT topic to publish commands to change the selected option.
   required: true
   type: string
-device:
-  description: "Information about the device this Select is a part of to tie it into the [device registry](https://developers.home-assistant.io/docs/en/device_registry_index.html). Only works through [MQTT discovery](/docs/mqtt/discovery/) and when [`unique_id`](#unique_id) is set. At least one of identifiers or connections must be present to identify the device."
+default_entity_id:
+  description: Use `default_entity_id` instead of name for automatic generation of the entity ID. For example, `select.foobar`. When used without a `unique_id`, the entity ID will update during restart or reload if the entity ID is available. If the entity ID already exists, the entity ID will be created with a number at the end. When used with a `unique_id`, the `default_entity_id` is only used when the entity is added for the first time. When set, this overrides a user-customized entity ID if the entity was deleted and added again.
   required: false
-  type: map
-  keys:
-    connections:
-      description: 'A list of connections of the device to the outside world as a list of tuples `[connection_type, connection_identifier]`. For example the MAC address of a network interface: `"connections": ["mac", "02:5b:26:a8:dc:12"]`.'
-      required: false
-      type: list
-    identifiers:
-      description: 'A list of IDs that uniquely identify the device. For example a serial number.'
-      required: false
-      type: [list, string]
-    manufacturer:
-      description: The manufacturer of the device.
-      required: false
-      type: string
-    model:
-      description: The model of the device.
-      required: false
-      type: string
-    name:
-      description: The name of the device.
-      required: false
-      type: string
-    suggested_area:
-      description: 'Suggest an area if the device isn’t in one yet.'
-      required: false
-      type: string
-    sw_version:
-      description: The firmware version of the device.
-      required: false
-      type: string
-    via_device:
-      description: 'Identifier of a device that routes messages between this device and Home Assistant. Examples of such devices are hubs, or parent devices of a sub-device. This is used to show device topology in Home Assistant.'
-      required: false
-      type: string
+  type: string
+{% include integrations/mqtt_device.md %}
 enabled_by_default:
-  description: Flag which defines if the entity should be enabled when first added.
+  description: Controls whether this entity is enabled by default. When set to `true`, the entity is enabled and usable immediately. When set to `false`, Home Assistant adds the entity as disabled. A disabled entity has no state, and you can't use it in automations or dashboards until you [enable it](/docs/configuration/customizing-entities/#disabling-or-enabling-an-entity).
   required: false
   type: boolean
   default: true
+encoding:
+  description: The encoding of the payloads received and published messages. Set to `""` to disable decoding of incoming payload.
+  required: false
+  type: string
+  default: "utf-8"
+entity_category:
+  description: The [category](https://contributors.home-assistant.io/core/entities/entity-class/#generic-properties) of the entity.
+  required: false
+  type: string
+entity_picture:
+  description: "Picture URL for the entity."
+  required: false
+  type: string
 icon:
-  description: "[Icon](/docs/configuration/customizing-devices/#icon) for the entity."
+  description: "[Icon](/integrations/homeassistant/#icon) for the entity."
   required: false
   type: icon
 json_attributes_template:
-  description: "Defines a [template](/docs/configuration/templating/#processing-incoming-data) to extract the JSON dictionary from messages received on the `json_attributes_topic`."
+  description: "Defines a [template](/docs/templating/where-to-use/#mqtt) to extract the JSON dictionary from messages received on the `json_attributes_topic`."
   required: false
   type: template
 json_attributes_topic:
   description: The MQTT topic subscribed to receive a JSON dictionary payload and then set as entity attributes. Implies `force_update` of the current select state when a message is received on this topic.
   required: false
   type: string
+message_expiry_interval:
+  description: "Controls how long queued or retained messages sent from Home Assistant persist at the broker for offline subscribers. This option prevents the broker from retaining stale messages. The expected value for this option is a JSON mapping, for example, `{\"days\": 1, \"hours\": 2, \"minutes\": 20, \"seconds\": 30}` or `{\"seconds\": 3600}`."
+  required: false
+  type: map
+  keys:
+    days:
+      description: "Number of days published messages are queued or retained for offline subscribers."
+      required: false
+      type: integer
+    hours:
+      description: "Number of hours published messages are queued or retained for offline subscribers."
+      required: false
+      type: integer
+    minutes:
+      description: "Number of minutes published messages are queued or retained for offline subscribers."
+      required: false
+      type: integer
+    seconds:
+      description: "Number of seconds published messages are queued or retained for offline subscribers."
+      required: false
+      type: integer
 name:
-  description: The name of the Select.
+  description: The name of the Select. Can be set to `null` if only the device name is relevant.
   required: false
   type: string
 optimistic:
@@ -122,11 +134,15 @@ optimistic:
   type: boolean
   default: "`true` if no `state_topic` defined, else `false`."
 options:
-  description: List of options that can be selected.
+  description: List of options that can be selected. An empty list or a list with a single item is allowed.
   required: true
   type: list
+platform:
+  description: Must be `select`. Only allowed and required in [MQTT auto discovery device messages](/integrations/mqtt/#device-discovery-payload).
+  required: true
+  type: string
 qos:
-  description: The maximum QoS level of the state topic. Default is 0 and will also be used to publishing messages.
+  description: The maximum QoS level to be used when receiving and publishing messages.
   required: false
   type: integer
   default: 0
@@ -136,21 +152,24 @@ retain:
   type: boolean
   default: false
 state_topic:
-  description: The MQTT topic subscribed to receive update of the selected option.
+  description: The MQTT topic subscribed to receive update of the selected option. A "None" payload resets to an `unknown` state. An empty payload is ignored.
   required: false
   type: string
 unique_id:
-  description: An ID that uniquely identifies this Select. If two Selects have the same unique ID Home Assistant will raise an exception.
+  description: An ID that uniquely identifies this Select. If two Selects have the same unique ID Home Assistant will raise an exception. Required when used with device-based discovery.
   required: false
   type: string
 value_template:
-  description: "Defines a [template](/docs/configuration/templating/#processing-incoming-data) to extract the value."
+  description: "Defines a [template](/docs/templating/where-to-use/#mqtt) to extract the value."
   required: false
   type: template
+visible_by_default:
+  description: Control whether this entity is visible by default. When set to false, the entity is hidden and does not appear on dashboards until you manually make it visible in its settings.
+  required: false
+  type: boolean
+  default: true
 {% endconfiguration %}
 
-<div class='note warning'>
-
+{% important %}
 Make sure that your topic matches exactly. `some-topic/` and `some-topic` are different topics.
-
-</div>
+{% endimportant %}

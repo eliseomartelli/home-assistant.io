@@ -1,170 +1,122 @@
 ---
-title: Workday
-description: Steps to configure the binary workday sensor.
-ha_category:
-  - Utility
-  - Binary Sensor
-ha_iot_class: Local Polling
+description: Check whether today, or a day you choose, is a workday, based on your workdays and the public holidays of your country.
 ha_release: 0.41
-ha_quality_scale: internal
-ha_codeowners:
-  - '@fabaff'
 ha_domain: workday
-ha_platforms:
-  - binary_sensor
 ---
 
-The `workday` binary sensor indicates, whether the current day is a workday or not. It allows specifying, which days of the week will count as workdays and also
-uses the Python module [holidays](https://pypi.python.org/pypi/holidays) to incorporate information about region-specific public holidays. 
+The **Workday** {% term integration %} indicates whether a day is a workday or not. By default, it checks today. With the **Offset** option, it can check a later or earlier day instead, such as tomorrow.
+
+It allows specifying which days of the week will count as workdays and also uses the Python module [holidays library](https://pypi.org/project/holidays/) to incorporate information about region-specific public holidays.
+
+This can be used to make daily automations that act differently on workdays than non-workdays. For example, you could make your bedroom lights turn on (gently) at 7 in the morning if it is a workday but wait until 11 if it is a non-working day.
+
+The `workday` {% term integration %} also provides a {% term calendar %} entity that may be used to see upcoming workdays.
 
 ## Setup
 
-Check the [country list](https://github.com/dr-prodigy/python-holidays#available-countries) for available province.
+Check the [country list](https://github.com/vacanza/holidays#available-countries) for available subdivisions (such as provinces, states and territories) for each country.
 
-## Configuration
-To enable the `workday` sensor in your installation, add the following to your `configuration.yaml` file:
+{% include integrations/config_flow.md %}
 
-```yaml
-# Example configuration.yaml entry
-binary_sensor:
-  - platform: workday
-    country: DE
-```
-
-{% configuration %}
-name:
-  description: A name for this sensor.
+{% configuration_basic %}
+Country:
+  description: The country whose public holidays you want to use. Leave it empty to start with an empty set of holidays.
+Days to include:
+  description: The weekdays that are workdays. By default, Monday to Friday.
+Days to exclude:
+  description: The days that are not workdays. By default, Saturday, Sunday, and **Holidays**. Note below the important information regarding the **Holidays** keyword.
+Offset:
+  description: The number of days to shift the day that is checked. The default `0` checks today. Enter `1` to check whether tomorrow is a workday, for example, for an evening automation that prepares for the next day. You can enter a value from -10 to 10.
+Add holidays:
+  description: Provide dates formatted with `YYYY-MM-DD` or a date range formatted with `YYYY-MM-DD,YYYY-MM-DD` to add them as holidays.
+Remove holidays:
+  description: Provide dates formatted with `YYYY-MM-DD`, a date range formatted with `YYYY-MM-DD,YYYY-MM-DD` or partial of name, (for example, `christmas` will find `Christmas Day`) to remove them from the list of holidays.
+Language for named holidays:
+  description: The language of the holiday names. It's used when you remove holidays by name in **Remove holidays**.
+Subdivision of country:
+  description: The subdivision of the chosen country, if any or wanted.
   required: false
-  type: string
-  default: Workday Sensor
-country:
-  description: >
-    Country code according to [holidays](https://pypi.org/project/holidays/) notation.
-  required: true
-  type: string
-province:
-  description: Province/State code according to [holidays](https://pypi.org/project/holidays/) notation.
-  required: false
-  type: string
-workdays:
-  description: List of workdays.
-  required: false
-  type: list
-  default: "[mon, tue, wed, thu, fri]"
-excludes:
-  description: List of workday excludes.
-  required: false
-  type: list
-  default: "[sat, sun, holiday]"
-days_offset:
-  description: Set days offset (e.g., -1 for yesterday, 1 for tomorrow).
-  required: false
-  type: integer
-  default: 0
-add_holidays:
-  description: "Add custom holidays (such as company, personal holidays or vacations). Needs to formatted as `YYYY-MM-DD`."
-  required: false
-  type: list
-remove_holidays:
-  description: "Remove holidays (treat holiday as workday). Can be formatted as `YYYY-MM-DD` or by name for a partial string match (e.g. Thanksgiving)."
-  required: false
-  type: list
-{% endconfiguration %}
+Additional category as holiday:
+  description: Additional holiday categories to include. Check the supported categories for each country in the [holidays library webpage](https://pypi.org/project/holidays/).
+{% endconfiguration_basic %}
 
-Days are specified as follows: `mon`, `tue`, `wed`, `thu`, `fri`, `sat`, `sun`.
-The keyword `holiday` is used for public holidays identified by the holidays module.
+{% important %}
+The **Holidays** keyword represents the list of holidays imported from the holidays library and the holidays added in the **Add holidays** configuration option. When you select **Holidays** in the configuration option **Days to exclude**, the days that are in the holidays list are excluded from the workdays list. This means that if a holiday falls on a weekday defined as workday, that day does not count as workday (the workday sensor will have the **Off** state).
+{% endimportant %}
 
-<div class='note warning'>
+{% include integrations/option_flow.md %}
 
-If you use the sensor for Norway (`NO`) you need to wrap `NO` in quotes or write the name in full.
-Otherwise, the value is evaluated as `false`.
-If you use the sensor for Canada (`CA`) with Ontario (`ON`) as `province:` then you need to wrap `ON` in quotes.
-Otherwise, the value is evaluated as `true` (check the YAML documentation for further details) and the sensor will not work.
+The options are the same as the ones you set during setup, except **Country**, which you can't change. To use a different country, add another Workday entry. After you change the options, the integration reloads.
 
-One other thing to watch is how the `holiday` keyword is used. Your first instinct might be to add it to the `exclude` configuration, thinking that it means to skip the holidays. Actually it means to exclude the days in the holidays’ list from the workdays. So when you exclude `holiday` and a workday falls on that day, then that workday is excluded. Meaning the sensor will be off. If you want the workday flagged without regarding holidays, make sure that there is something in your `Excludes` configuration other than `holiday`.
+## Entities
 
-</div>
+The Workday integration provides the following entities.
 
-## Full examples
+### Binary sensor
 
-This example excludes Saturdays and Sundays but not holidays. Two custom holidays are added.
+The binary sensor is **On** when the checked day is a workday, and **Off** when it's not. The checked day is today, shifted by the number of days you set in **Offset**. The sensor updates at midnight.
 
-```yaml
-# Example 1 configuration.yaml entry
-binary_sensor:
-  - platform: workday
-    country: US
-    workdays: [mon, tue, wed, thu, fri]
-    excludes: [sat, sun]
-    add_holidays:
-      - "2020-02-24"
-      - "2020-04-25"
-```
+The binary sensor has the following attributes:
 
-This example excludes Saturdays, Sundays and holidays. One custom holiday is added.
-The date February 24th, 2020 is a Monday but will be excluded because it was added to the `add_holidays` configuration.
+- `workdays`: The weekdays you set in **Days to include**.
+- `excludes`: The days you set in **Days to exclude**.
+- `days_offset`: The number of days you set in **Offset**.
 
-```yaml
-# Example 2 configuration.yaml entry
-binary_sensor:
-  - platform: workday
-    country: DE
-    workdays: [mon, tue, wed, thu, fri]
-    excludes: [sat, sun, holiday]
-    add_holidays:
-      - '2020-02-24'
-```
+### Calendar
 
-This example excludes Saturdays, Sundays and holidays. Two holidays are removed: November 26, 2020 and December 25, 2020.
+The calendar shows each workday of this year and next year as an all-day event. Like the binary sensor, it takes **Offset** into account: with an **Offset** of `1`, an event on a day means that the next day is a workday.
 
-```yaml
-# Example 3 configuration.yaml entry
-binary_sensor:
-  - platform: workday
-    country: US
-    workdays: [mon, tue, wed, thu, fri]
-    excludes: [sat, sun, holiday]
-    remove_holidays:
-      - '2020-11-26'
-      - '2020-12-25'
-```
+{% include integrations/actions.md %}
 
-This example excludes Saturdays, Sundays and holidays. Two holidays are removed by name: Thanksgiving and Christmas Day.
+## Workday automation examples
 
-```yaml
-# Example 4 configuration.yaml entry
-binary_sensor:
-  - platform: workday
-    country: US
-    workdays: [mon, tue, wed, thu, fri]
-    excludes: [sat, sun, holiday]
-    remove_holidays:
-      - 'Thanksgiving'
-      - 'Christmas Day'
-```
+### Automation: turn on the heater on workdays
 
-## Automation example
+This automation turns on the heater at 08:00, but only on workdays.
 
-Example usage for automation:
+- **Trigger**: Time: 08:00
+- **Condition**: State
+  - **Entity**: Workday sensor
+  - **State**: On
+- **Action**: Turn on switch
+  - **Target**: Heater
 
-```yaml
-automation:
+{% details "YAML example for turning on the heater on workdays" %}
+
+In this example, the binary sensor is `binary_sensor.workday_sensor_us`. The entity ID of your sensor depends on the name of your Workday entry.
+
+{% example %}
+automation: |
   alias: "Turn on heater on workdays"
-  trigger:
-    platform: time
-    at: "08:00:00"
-  condition:
-    condition: state
-    entity_id: binary_sensor.workday_sensor
-    state: "on"
-  action:
-    service: switch.turn_on
-    target:
-      entity_id: switch.heater
-```
+  triggers:
+    - trigger: time
+      at: "08:00:00"
+  conditions:
+    - condition: state
+      entity_id: binary_sensor.workday_sensor_us
+      state: "on"
+  actions:
+    - action: switch.turn_on
+      target:
+        entity_id: switch.heater
+{% endexample %}
 
-<div class='note'>
+{% enddetails %}
 
-Please remember that [as explained here](/docs/configuration/devices/) you can only have a single `automation:` entry. Add the automation to your existing automations.
+## Data fetching and limitations
 
-</div>
+Data is loaded completely offline from the [holidays library](https://pypi.org/project/holidays/) and there is no data fetching.
+
+Newly created holidays or other configuration options are completely based on the releases of the [holidays library](https://pypi.org/project/holidays/).
+
+## Troubleshooting
+
+The integration completely relies on the information provided by the [holidays library](https://pypi.org/project/holidays/).
+
+Check the [holidays repository](https://github.com/vacanza/python-holidays) if you are missing a certain holiday.
+Some holidays in your country may not be actual official holidays and are therefore set in a special category that needs to be selected.
+Missing holidays or incorrect days need to be raised directly in the [holidays repository](https://github.com/vacanza/python-holidays).
+
+## Removing the integration
+
+{% include integrations/remove_device_service.md %}

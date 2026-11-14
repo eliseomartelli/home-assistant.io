@@ -1,0 +1,409 @@
+---
+type: card
+title: Conditional card
+sidebar_label: Conditional
+description: The Conditional card displays another card based on conditions.
+related:
+  - docs: /dashboards/cards/
+    title: Dashboard cards
+  - docs: /dashboards/cards/#showing-or-hiding-a-card-or-badge-conditionally
+    title: Conditional settings on the card's visibility tab
+---
+
+The conditional card displays another card based on conditions.
+
+![Screenshot of the conditional card](/images/dashboards/conditional_card.gif)
+
+Most options for this card can be configured via the user interface.
+
+{% include dashboard/edit_dashboard.md %}
+Note that while editing the dashboard, the card will always be shown, so be sure to exit editing mode to test the conditions.
+
+The conditional card can still be used. However, it is now possible to define a setting to show or hide a card conditionally directly on each card type, on its [Visibility](/dashboards/cards/#showing-or-hiding-a-card-or-badge-conditionally) tab.
+
+## YAML configuration
+
+The following YAML options are available when you use YAML mode or just prefer to use YAML in the code editor in the UI.
+
+{% configuration %}
+type:
+  required: true
+  description: conditional
+  type: string
+conditions:
+  required: true
+  description: List of conditions to check. See [available conditions](#conditions-options).
+  type: list
+card:
+  required: true
+  description: Card to display if all conditions match.
+  type: map
+{% endconfiguration %}
+
+## Examples
+
+Only show when all the conditions are met:
+
+```yaml
+type: conditional
+conditions:
+  - condition: state
+    entity: light.bed_light
+    state: "on"
+  - condition: state
+    entity: light.bed_light
+    state_not: "off"
+  - condition: user
+    users:
+      - 581fca7fdc014b8b894519cc531f9a04
+card:
+  type: entities
+  entities:
+    - device_tracker.demo_paulus
+    - cover.kitchen_window
+    - light.kitchen_lights
+    - lock.kitchen_door
+    - light.bed_light
+```
+
+Example condition where only one of the conditions needs to be met:
+
+```yaml
+type: conditional
+conditions:
+  - condition: or
+    conditions:
+      - condition: state
+        entity: binary_sensor.co_alert
+        state: 'on'
+      - condition: state
+        entity: binary_sensor.rookmelder
+        state: 'on'
+card:
+  type: entities
+  entities:
+    - binary_sensor.co_alert
+    - binary_sensor.rookmelder
+```
+
+## Conditions options
+
+You can use conditions about the person viewing the dashboard and their device, such as **User**, **Screen**, **Location**, and **Time**. You can also use the same conditions as in automations, such as **Entity state**, **Entity numeric state**, **Template**, **Sun**, **Zone**, and **Device**.
+
+When you add or change an **Entity state** or **Entity numeric state** condition in the UI, it is saved in the same format as in automations, with `entity_id` instead of `entity`. The format described in this section keeps working.
+
+### State
+
+Tests if an entity has a specified state.
+
+```yaml
+condition: state
+entity: climate.thermostat
+state: heat
+```
+
+```yaml
+condition: state
+entity: climate.thermostat
+state_not: "off"
+```
+
+{% configuration %}
+condition:
+  required: true
+  description: "`state`"
+  type: string
+entity:
+  required: true
+  description: Entity ID.
+  type: string
+state:
+  required: false
+  description: Entity state or ID to be equal to this value. Can contain an array of states.*
+  type: [list, string]
+state_not:
+  required: false
+  description: Entity state or ID to not be equal to this value. Can contain an array of states.*
+  type: [list, string]
+{% endconfiguration %}
+
+*one is required (`state` or `state_not`)
+
+### Numeric state
+
+Tests if an entity state matches the thresholds.
+
+```yaml
+condition: numeric_state
+entity: sensor.outside_temperature
+above: 10
+below: 20
+```
+
+{% configuration %}
+condition:
+  required: true
+  description: "`numeric_state`"
+  type: string
+entity:
+  required: true
+  description: Entity ID.
+  type: string
+above:
+  required: false
+  description: Entity state or ID to be above this value.*
+  type: string
+below:
+  required: false
+  description: Entity state or ID to be below this value.*
+  type: string
+{% endconfiguration %}
+
+*at least one is required (`above` or `below`), both are also possible for values between.
+
+### Screen
+
+Specify the visibility of the card per screen size. Some screen size presets are available in the UI but you can use any CSS media query you want in YAML.
+
+```yaml
+condition: screen
+media_query: "(min-width: 1280px)"
+```
+
+{% configuration %}
+condition:
+  required: true
+  description: "`screen`"
+  type: string
+media_query:
+  required: true
+  description: Media query to check which screen size are allowed to display the card.
+  type: string
+{% endconfiguration %}
+
+### User
+
+Specify the visibility of the card per user.
+
+```yaml
+condition: user
+users:
+  - 581fca7fdc014b8b894519cc531f9a04
+```
+
+{% configuration %}
+condition:
+  required: true
+  description: "`user`"
+  type: string
+users:
+  required: true
+  description: User ID that can see the card (unique hex value found on the Users configuration page).
+  type: list
+{% endconfiguration %}
+
+### Location
+
+Specify the visibility of the card based on the current user's location. The location is based on the `person` entity associated with the current user. If the current user does not have a `person` entity, this condition will always resolve to false.
+
+Select zones directly, or by label, area, or floor. By default, the card is visible when the person is in any of the selected zones. This matches against the `in_zones` attribute of the `person` entity, which lists every zone the person is in, including passive zones and zones that contain a smaller zone. Set `match_mode: active_zone` to only match the zone shown as the person's state instead. Some older device trackers don't report the zones a person is in, other than Home. For those, both match modes compare the person's state with the names of the selected zones. Set `away: true` to also show the card when the person is away (state `not_home`). Passive zones don't change the person's state, so a person who is only in passive zones is away.
+
+In the dashboard editor, the **Location** condition has the following options.
+
+{% options_ui %}
+Zones:
+  description: The zones to match. You can select zones directly, or by label, area, or floor.
+  required: false
+Match:
+  description: "How the zones are matched. **Any zone they are in** is true when the person is in any of the selected zones, including passive zones. **Zone shown as their state** is true only when one of the selected zones is shown as the person's state, so passive zones never match. Default: **Any zone they are in**."
+  required: false
+Away:
+  description: "Also show the card when the person is away, including when they are only in passive zones. Default: off."
+  required: false
+{% endoptions_ui %}
+
+In YAML, these options are `target`, `match_mode`, and `away`.
+
+```yaml
+condition: location
+target:
+  label_id: grocery_stores
+away: true
+```
+
+In this example, the card is shown when you're in any zone with the `grocery_stores` label, or when you're away.
+{% configuration %}
+condition:
+  required: true
+  description: "`location`"
+  type: string
+target:
+  required: false
+  description: The zones to match. You can select zones directly, or by label, area, or floor.
+  type: map
+  keys:
+    entity_id:
+      required: false
+      description: One or more zone entity IDs, such as `zone.home`.
+      type: [string, list]
+    label_id:
+      required: false
+      description: One or more label IDs. Every zone with one of these labels is matched.
+      type: [string, list]
+    area_id:
+      required: false
+      description: One or more area IDs. Every zone in one of these areas is matched.
+      type: [string, list]
+    floor_id:
+      required: false
+      description: One or more floor IDs. Every zone in an area on one of these floors is matched.
+      type: [string, list]
+match_mode:
+  required: false
+  description: "How the zones are matched. `any_zone` is true when the person is in any of the zones, including passive zones. `active_zone` is true only when one of the zones is shown as the person's state, which is the smallest non-passive zone they are in, so passive zones never match."
+  type: string
+  default: any_zone
+away:
+  required: false
+  description: Also show the card when the person is away (state `not_home`), including when they are only in passive zones.
+  type: boolean
+  default: false
+locations:
+  required: false
+  description: "Older format: a list of zone names, which if any match the current state of the `person`, will cause this condition to be true. Use `home` for the Home zone and `not_home` for away."
+  type: list
+{% endconfiguration %}
+
+At least one of `target`, `away: true`, or `locations` must be used for this condition to be valid. `target` and `away` can be combined; the condition is true if either matches. `locations` can be combined with `away`, but not with `target` or `match_mode`.
+
+Conditions using `locations` keep working. When you open one in the dashboard editor, the editor shows it as zones with **Zone shown as their state** selected, so it matches the same way as before. Each zone name is shown as every zone with that name, `home` as the Home zone, and `not_home` as **Away**. Names that match no zone are kept and shown as not found, so you can remove them.
+
+Opening the condition does not change your configuration. It keeps using `locations` until you change something in it. When you do, it is saved as `target` with `match_mode: active_zone`.
+
+### Time
+
+Specify the visibility of the card based on the current time and day of the week.
+
+```yaml
+condition: time
+after: "08:00"
+before: "17:00"
+weekdays:
+  - mon
+  - tue
+  - wed
+  - thu
+  - fri
+```
+
+{% configuration %}
+condition:
+  required: true
+  description: "`time`"
+  type: string
+after:
+  required: false
+  description: Time in 24-hour format (HH:MM) after which the card should be visible.*
+  type: string
+before:
+  required: false
+  description: Time in 24-hour format (HH:MM) before which the card should be visible.*
+  type: string
+weekdays:
+  required: false
+  description: List of weekdays on which the card should be visible. Valid values are `mon`, `tue`, `wed`, `thu`, `fri`, `sat`, `sun`.
+  type: list
+{% endconfiguration %}
+
+At least one of `after` or `before` must be used for this condition to be valid. Both can be used together to define a time range as in the example above.
+
+### Template
+
+Tests if a template renders `true`. This condition works the same way as the [Template condition](/conditions/template/) in automations and uses the same options.
+
+### Sun
+
+Tests the position of the sun, for example, whether it is after sunset. This condition works the same way as the [Sun condition](/conditions/sun/) in automations and uses the same options.
+
+### Zone
+
+Tests if a person or device tracker is in a zone. This condition works the same way as the [Zone condition](/conditions/zone/) in automations and uses the same options.
+
+### Device
+
+Tests a condition that a device provides, for example, whether a light is on. This condition works the same way as the [Device condition](/conditions/device/) in automations. Set it up in the UI, because the options depend on the device.
+
+### And
+
+Specify that all conditions must be met.
+
+```yaml
+condition: and
+conditions:
+  - condition: numeric_state
+    above: 0
+  - condition: user
+    users:
+      - 581fca7fdc014b8b894519cc531f9a04
+```
+
+{% configuration %}
+condition:
+  required: true
+  description: "`and`"
+  type: string
+conditions:
+  required: false
+  description: List of conditions to check. See [available conditions](#conditions-options).
+  type: list
+{% endconfiguration %}
+
+### Or
+
+Specify that at least one of the conditions must be met.
+
+```yaml
+condition: or
+conditions:
+  - condition: numeric_state
+    above: 0
+  - condition: user
+    users:
+      - 581fca7fdc014b8b894519cc531f9a04
+```
+
+{% configuration %}
+condition:
+  required: true
+  description: "`or`"
+  type: string
+conditions:
+  required: false
+  description: List of conditions to check. See [available conditions](#conditions-options).
+  type: list
+{% endconfiguration %}
+
+### Not
+
+Specify that at least one of the conditions must not be met.
+
+```yaml
+condition: not
+conditions:
+  - condition: numeric_state
+    above: 0
+  - condition: user
+    users:
+      - 581fca7fdc014b8b894519cc531f9a04
+```
+
+{% configuration %}
+condition:
+  required: true
+  description: "`not`"
+  type: string
+conditions:
+  required: false
+  description: List of conditions to check. See [available conditions](#conditions-options).
+  type: list
+{% endconfiguration %}

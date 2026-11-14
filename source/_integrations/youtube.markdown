@@ -1,0 +1,39 @@
+---
+description: Instructions on how to integrate YouTube within Home Assistant.
+ha_release: '2023.6'
+ha_domain: youtube
+api: YouTube Data API v3
+api_link: https://console.cloud.google.com/apis/library/youtube.googleapis.com
+---
+
+The **YouTube** {% term integration %} allows you to connect YouTube channels to Home Assistant.
+
+For every channel you add, it will create sensors for:
+
+- Views count
+- Subscriber count
+- Video count
+- The latest upload (videos and Shorts)
+- The latest uploaded Short
+- The latest uploaded video (excludes Shorts)
+
+## Prerequisites
+
+To be able to configure the {% term integration %}, you need to have a YouTube channel.
+To learn how to create one, refer to the [YouTube documentation](https://support.google.com/youtube/answer/1646861).
+
+You need to configure developer credentials to allow Home Assistant to access your Google Account.
+These credentials are the same as the ones for [Nest](/integrations/nest), [Google Mail](/integrations/google_mail) and [Google Sheets](/integrations/google_sheets).
+These are not the same as the one for [Google Calendar](/integrations/google).
+
+{% include integrations/google_client_secret.md %}
+
+{% include integrations/config_flow.md %}
+
+{% include integrations/google_oauth.md %}
+
+## Removing the integration
+
+This integration follows standard integration removal, no extra steps are required.
+
+{% include integrations/remove_device_service.md %}

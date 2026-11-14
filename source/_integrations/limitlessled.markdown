@@ -1,56 +1,53 @@
 ---
-title: LimitlessLED
-description: Instructions on how to setup LimitlessLED within Home Assistant.
-logo: limitlessled_logo.png
-ha_category:
-  - Light
-ha_iot_class: Assumed State
+description: Instructions on how to set up LimitlessLED within Home Assistant.
 ha_release: pre 0.7
 ha_domain: limitlessled
-ha_platforms:
-  - light
+related:
+  - docs: /docs/configuration/
+    title: Configuration file
 ---
 
-`limitlessled` can control your LimitlessLED lights from within Home Assistant. The lights are also known as EasyBulb, AppLight, AppLamp, MiLight, LEDme, dekolight, or iLight.
+The **LimitlessLED** {% term integration %} can control your LimitlessLED lights from within Home Assistant. The lights are also known as EasyBulb, AppLight, AppLamp, MiLight, LEDme, dekolight, or iLight.
 
 LimitlessLED bulbs are controlled via groups, so you can only control an individual bulb via the bridge if it is in a group by itself.
 
 Note: you can assign an `rgbw`, `rgbww`, `white` and `dimmer` group to the same group number, effectively allowing up to 16 groups (4 `rgbww`, 4 `rgbw`, 4 `white` and 4 `dimmer`) per bridge.
 
-An archive of the extensive API can be found [here](https://github.com/Fantasmos/LimitlessLED-DevAPI).
+An archive of the extensive API can be found [here](https://github.com/Supernova4422/LimitlessLED-DevAPI).
 
 ## Setup
 
-Before configuring Home Assistant, make sure you can control your bulbs or LEDs with the MiLight mobile application. Next, discover your bridge(s) IP address. You can do this via your router or a mobile application like Fing ([Android](https://play.google.com/store/apps/details?id=com.overlook.android.fing&hl=en) or [iTunes](https://itunes.apple.com/us/app/fing-network-scanner/id430921107?mt=8)).
+Before configuring Home Assistant, make sure you can control your bulbs or LEDs with the MiLight mobile application. Next, discover your bridge(s) IP address. You can do this via your router or a mobile application like Fing ([Android](https://play.google.com/store/apps/details?id=com.overlook.android.fing) or [iTunes](https://apps.apple.com/app/id430921107)).
 
-To add `limitlessled` to your installation, add the following to your `configuration.yaml` file:
+To add `limitlessled` to your installation, add the following to your {% term "`configuration.yaml`" %} file.
+{% include integrations/restart_ha_after_config_inclusion.md %}
 
 ```yaml
 # Example configuration.yaml entry
 light:
-  platform: limitlessled
-  bridges:
-    - host: 192.168.1.10
-      groups:
-      - number: 1
-        name: Bedroom
-      - number: 2
-        type: rgbw
-        name: Bathroom
-      - number: 3
-        type: rgbw
-        name: Kitchen
-        fade: true
-      - number: 4
-        type: dimmer
-        name: Livingroom
-    - host: 192.168.1.11
-      groups:
-      - number: 1
-        name: Living Room & Hall
-      - number: 1
-        type: bridge-led
-        name: Bridge Light
+  - platform: limitlessled
+    bridges:
+      - host: 192.168.1.10
+        groups:
+        - number: 1
+          name: Bedroom
+        - number: 2
+          type: rgbw
+          name: Bathroom
+        - number: 3
+          type: rgbw
+          name: Kitchen
+          fade: true
+        - number: 4
+          type: dimmer
+          name: Livingroom
+      - host: 192.168.1.11
+        groups:
+        - number: 1
+          name: Living Room & Hall
+        - number: 1
+          type: bridge-led
+          name: Bridge Light
 ```
 
 {% configuration %}
@@ -98,19 +95,19 @@ bridges:
           type: boolean
 {% endconfiguration %}
 
-### Night Effect
+### Night effect
 
 LimitlessLED has a `night` effect that can be used to dim the lights below `brightness: 1`. This night mode is meant to temporarily turn the lights into a nightlight. This mode can be especially helpful when wall switches are also being used. For example, when a light is using the `night` effect one way to return it to its previous brightness level (other than using Home Assistant) is to switch the lights off and then back on from the wall switch.
 
-Note that the `brightness`, `color` and `temperature` attributes cannot be used when using the `night` effect. You can turn on `night` effect by using the `effect` attribute of the normal `light.turn_on` service. Here is an example:
+Note that the `brightness`, `color` and `temperature` attributes cannot be used when using the `night` effect. You can turn on `night` effect by using the `effect` attribute of the normal `light.turn_on` action. Here is an example:
 
 ```yaml
 automation:
   - alias: "..."
-    trigger:
+    triggers:
       # ...
-    action:
-      - service: light.turn_on
+    actions:
+      - action: light.turn_on
         target:
           entity_id:
             - light.office
@@ -131,7 +128,7 @@ Refer to the [light](/integrations/light/) documentation for general property us
   - *Color*: There are 256 color possibilities along the LimitlessLED color spectrum. Color properties like saturation and lightness cannot be used - only Hue can. The only exception is white (which may be warm or cold depending on the type of RGBW bulb). If you select a color with saturation or lightness, Home Assistant will calculate the nearest valid LimitlessLED color.
   - *Brightness*: Wi-Fi bridge v6 supports 101 brightness steps; older versions only 25.
 - **White**
-  - When using a legacy Wi-Fi bridge (before v6), you can observe on the MiLight mobile application, you can not select a specific brightness or temperature - you can only step each property up or down. There is no indication of which step you are on. This restriction, combined with the unreliable nature of LimitlessLED transmissions, means that setting white bulb properties is done on a best-effort basis. The only very reliable settings are the minimum and maximum of each property.
+  - When using a legacy Wi-Fi bridge (before v6), you can observe on the MiLight mobile application, you cannot select a specific brightness or temperature - you can only step each property up or down. There is no indication of which step you are on. This restriction, combined with the unreliable nature of LimitlessLED transmissions, means that setting white bulb properties is done on a best-effort basis. The only very reliable settings are the minimum and maximum of each property.
   - *Temperature*: Wi-Fi bridge v6 supports 101 temperature steps; older versions only 10.
   - *Brightness*: Wi-Fi bridge v6 supports 101 brightness steps; older versions only 10.
 - **Dimmer** (Only supported on v6 bridges)
@@ -152,7 +149,7 @@ This lack of synchronization is due to a LimitlessLED limitation.
 <img src='/images/screenshots/limitlessled_assumed_state.png' />
 </p>
 
-Because LimitlessLED lights may have an obsolete state, Home Assistant shows the power switch as two buttons rather than a toggle. This ensures that the power can be set with a single click even if the assumed state is wrong. You can change to use the power toggle with [Customize](/docs/configuration/customizing-devices/):
+Because LimitlessLED lights may have an obsolete state, Home Assistant shows the power switch as two buttons rather than a toggle. This ensures that the power can be set with a single click even if the assumed state is wrong. You can change to use the power toggle with [Customize](/docs/configuration/customizing-entities/):
 
 ```yaml
 homeassistant:

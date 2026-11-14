@@ -1,27 +1,20 @@
 ---
-title: Image
-description: The image integration handle image assets in Home Assistant.
-ha_category:
-  - Other
-ha_release: 0.115
-ha_codeowners:
-  - '@home-assistant/core'
+description: Instructions on how to integrate images within Home Assistant.
+ha_release: 2023.7
 ha_domain: image
-ha_quality_scale: internal
 ---
 
-The Image integration allows Home Assistant to handle image assets in Home Assistant, for example,
-the profile photos of your systems account.
+The **Image** {% term integration %} allows other integrations to display a static image.
 
-## Configuration
+{% include integrations/building_block_integration.md %}
 
-This integration is by default enabled, unless you've disabled or removed the
-[`default_config:`](/integrations/default_config/) line from your configuration.
+## Image states
 
-If that is the case, the following example shows you how to enable this
-integration manually:
+The {% term state %} of an image entity is a timestamp showing the date and time when the image was last changed, for example, `2026-01-01T12:00:00.123456+00:00`. The Home Assistant interface shows it in your local date and time format.
 
-```yaml
-# Example configuration.yaml entry
-image:
-```
+In addition, the entity can have the following states. Each item shows the interface label, followed by the stored state:
+
+- **Unavailable** (`unavailable`): The entity is currently unavailable.
+- **Unknown** (`unknown`): The state is not yet known.
+
+{% include integrations/actions.md %}

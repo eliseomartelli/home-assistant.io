@@ -1,16 +1,13 @@
 ---
-title: GitLab-CI
 description: How to integrate GitLab-CI Job status within Home Assistant.
-ha_category:
-  - Sensor
 ha_release: 0.8
-ha_iot_class: Cloud Polling
 ha_domain: gitlab_ci
-ha_platforms:
-  - sensor
+related:
+  - docs: /docs/configuration/
+    title: Configuration file
 ---
 
-The `gitlab_ci` sensor platform integrates results reported by CI/CD Pipeline Jobs in [GitLab](https://gitlab.com/).
+The **GitLab-CI** {% term integration %} integrates results reported by CI/CD Pipeline Jobs in [GitLab](https://gitlab.com/).
 
 ## Setup
 
@@ -22,7 +19,8 @@ A GitLab token with at least the API permission scope is needed, which can be cr
 
 ## Configuration
 
-To enable this platform, please add the following to your `configuration.yaml` file:
+To enable this {% term integration %}, please add the following to your {% term "`configuration.yaml`" %} file.
+{% include integrations/restart_ha_after_config_inclusion.md %}
 
 ```yaml
 # Example configuration.yaml entry

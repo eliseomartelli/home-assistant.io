@@ -1,78 +1,58 @@
 ---
-title: OpenUV
 description: Instructions on how to integrate OpenUV within Home Assistant.
-ha_category:
-  - Health
-  - Binary Sensor
-  - Sensor
 ha_release: 0.76
-ha_iot_class: Cloud Polling
-ha_config_flow: true
-ha_codeowners:
-  - '@bachya'
 ha_domain: openuv
-ha_platforms:
-  - binary_sensor
-  - sensor
 ---
 
-The `openuv` integration displays UV and Ozone data from [openuv.io](https://www.openuv.io/).
+The **OpenUV** {% term integration %} displays UV and Ozone data from [openuv.io](https://www.openuv.io/).
 
-<div class='note warning'>
-The guidelines within this documentation constitute estimates and are intended to help
-informed decision making. They should not replace analysis, advice or diagnosis from a
+{% warning %}
+The guidelines within this documentation constitute estimates which are intended to help
+informed decision making. They should not replace analysis, advice, or diagnosis from a
 trained medical professional.
-</div>
+{% endwarning %}
 
 ## Generating an API Key
 
-To generate an API key,
-[simply log in to the OpenUV website](https://www.openuv.io/auth/google).
-
-<div class='note warning'>
-Beginning February 1, 2019, the "Limited" plan (which is what new users are
-given by default) is limited to 50 API requests per day. Because different
-API plans and locations will have different requirements, the `openuv`
-component does not automatically query the API for new data after it initially
-loads. To request new data, the `update_data` service may be used.
-</div>
-
-<div class='note warning'>
-Each use of the `update_data` service will consume 2 API calls from the daily quota
-(since it performs the same tasks as back-to-back calls of the `update_uv_index_data` and
-the `update_protection_data` services).
-</div>
+To generate an API key, log in at [the OpenUV website](https://www.openuv.io/).
 
 {% include integrations/config_flow.md %}
 
 ## Sensors
 
-| Name | Type | Value |
-|------|------|-------|
-| Current Ozone Level | Sensor | ozone level in du (Dobson Units) |
-| Current UV Index | Sensor | UV Index (numerical value) |
-| Current UV Level | Sensor | UV Level (as literal) |
-| Max UV Index | Sensor | max UV Index for the day (at solar noon) |
-| Protection Window | Binary Sensor | whether sunblock protection should be used |
+| Name                           | Type          | Value                                                                                                                       |
+| ------------------------------ | ------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Current Ozone Level            | Sensor        | ozone level in du (Dobson Units)                                                                                            |
+| Current UV Index               | Sensor        | UV Index (numerical value)                                                                                                  |
+| Current UV Level               | Sensor        | UV Level (as literal)                                                                                                       |
+| Max UV Index                   | Sensor        | max UV Index for the day (at solar noon)                                                                                    |
+| Protection window              | Binary sensor | whether sunblock protection should be used                                                                                  |
+| Skin Type 1 Safe Exposure Time | Sensor        | the amount of time [Fitzpatrick skin type 1](https://en.wikipedia.org/wiki/Fitzpatrick_scale) can be in the sun unprotected |
+| Skin Type 2 Safe Exposure Time | Sensor        | the amount of time [Fitzpatrick skin type 2](https://en.wikipedia.org/wiki/Fitzpatrick_scale) can be in the sun unprotected |
+| Skin Type 3 Safe Exposure Time | Sensor        | the amount of time [Fitzpatrick skin type 3](https://en.wikipedia.org/wiki/Fitzpatrick_scale) can be in the sun unprotected |
+| Skin Type 4 Safe Exposure Time | Sensor        | the amount of time [Fitzpatrick skin type 4](https://en.wikipedia.org/wiki/Fitzpatrick_scale) can be in the sun unprotected |
+| Skin Type 5 Safe Exposure Time | Sensor        | the amount of time [Fitzpatrick skin type 5](https://en.wikipedia.org/wiki/Fitzpatrick_scale) can be in the sun unprotected |
+| Skin Type 6 Safe Exposure Time | Sensor        | the amount of time [Fitzpatrick skin type 6](https://en.wikipedia.org/wiki/Fitzpatrick_scale) can be in the sun unprotected |
 
-### Protection Window
+## Updating data
 
-The Protection Window binary sensor will be `on` when sunblock protection should be used.
+{% important %}
+OpenUV does _not_ automatically update data for its entities! Users must manually
+update data via the `homeassistant.update_entity` action.
+{% endimportant %}
 
-By default, this occurs anytime the UV index is above 3.5. This behavior can be
-configured via the config entry options within the UI. Two parameters are given:
+Beginning February 1, 2019, the "Limited" plan (which is what new users are given by
+default) is limited to 50 API requests per day. Because different API plans and
+locations will have different requirements, the OpenUV integration does not automatically
+query the API for new data after it initially loads. To request new data, the
+`homeassistant.update_entity` action should be used.
 
-* `Starting UV index for the protection window`: the UV index that, when passed, indicates protection should be utilized
-* `Ending UV index for the protection window`: the UV index that, when passed, indicates protection is no longer required
+Note that in the case of UV and ozone data, selecting any one of:
 
-### The Fitzpatrick Scale
-
-The approximate number of minutes of a particular skin type can be exposed to
-the sun before burning/tanning starts is based on the
-[Fitzpatrick scale](https://en.wikipedia.org/wiki/Fitzpatrick_scale).
-
-OpenUV integration provide sensors for safe exposure time (in minutes) based on skin type:
-
+- Current Ozone Level
+- Current UV Index
+- Current UV Level
+- Max UV Index
 - Skin Type 1 Safe Exposure Time
 - Skin Type 2 Safe Exposure Time
 - Skin Type 3 Safe Exposure Time
@@ -80,85 +60,79 @@ OpenUV integration provide sensors for safe exposure time (in minutes) based on 
 - Skin Type 5 Safe Exposure Time
 - Skin Type 6 Safe Exposure Time
 
-## Services
+...as the target for the `homeassistant.update_entity` action will update the data for
+_all_ of these entities.
 
-### `openuv.update_data`
+To protect against possible API call waste, all calls to `homeassistant.update_entity`
+that reference an OpenUV entity are throttled to a minimum of 15 minutes between calls.
 
-Perform an on-demand update of OpenUV data.
+### Protection window
 
-### `openuv.update_uv_index_data`
+The Protection Window binary sensor will be `on` when sunblock protection should be used.
 
-Perform an on-demand update of OpenUV sensor data including current UV index, but not the `uv_protection_window`, saving an API call over `update_data`.
+By default, this occurs anytime the UV index is above 3.5. This behavior can be
+configured via the config entry options within the UI. Two parameters are given:
 
-### `openuv.update_protection_data`
-
-Perform an on-demand update of OpenUV `uv_protection_window` data, but not the sensors, saving an API call.
+- `Starting UV index for the protection window`: the UV index that, when passed, indicates
+  protection should be utilized
+- `Ending UV index for the protection window`: the UV index that, when passed, indicates
+  protection is no longer required
 
 ## Examples of Updating Data
 
-One method to retrieve data every 30 minutes and still leave plenty of API key
-usage is to only retrieve data during the daytime:
+Update the UV index data every 20 minutes while the sun is at least 10 degrees above the
+horizon:
 
 ```yaml
 automation:
-  - alias: "Update OpenUV every 30 minutes during the daytime"
-    trigger:
-      platform: time_pattern
-      minutes: "/30"
-    condition:
-      condition: and
-      conditions:
-        - condition: sun
-          after: sunrise
-        - condition: sun
-          before: sunset
-    action:
-      service: openuv.update_data
+  - alias: "Update OpenUV"
+    triggers:
+      - trigger: time_pattern
+        minutes: "/20"
+    conditions:
+      - condition: numeric_state
+        entity_id: sun.sun
+        value_template: "{{ state.attributes.elevation }}"
+        above: 10
+    actions:
+      - action: homeassistant.update_entity
+        target:
+          entity_id: sensor.LATITUDE_LONGITUDE_current_uv_index
 ```
 
-Update the UV index data every 20 minutes while the sun is at least 10 degrees above the horizon:
-
-{% raw %}
+Update the protection window once a day at 12:00pm:
 
 ```yaml
 automation:
-  - alias: "Update OpenUV every 20 minutes while the sun is at least 10 degrees above the horizon"
-    trigger:
-      platform: time_pattern
-      minutes: "/20"
-    condition:
-      condition: numeric_state
-      entity_id: sun.sun
-      value_template: "{{ state.attributes.elevation }}"
-      above: 10
-    action:
-      service: openuv.update_uv_index_data
+  - alias: "Update OpenUV"
+    triggers:
+      - trigger: time
+        at: "12:00:00"
+    actions:
+      - action: homeassistant.update_entity
+        target:
+          entity_id: binary_sensor.LATITUDE_LONGITUDE_protection_window
 ```
 
-{% endraw %}
+For a reusable schedule that limits updates to daylight hours, use the following blueprint. It supports refresh intervals of 15, 30, 45, or 60 minutes and allows one final refresh shortly after sunset.
 
-Update the protection window once a day:
+{% blueprint_example blueprint="openuv/daylight_refresh.yaml" %}
 
-```yaml
-automation:
-  - alias: "Update OpenUV protection window once a day"
-    trigger:
-      platform: time
-      at: "02:12:00"
-    action:
-      service: openuv.update_protection_data
-```
+## Expired API Keys and Re-authentication
 
-Another method (useful when monitoring locations other than the Home Assistant latitude
-and longitude, in locations where there is a large amount of sunlight per day,
-etc.) might be to simply query the API less often:
+In OpenUV, an `HTTP 403` response indicates one of two conditions:
 
-```yaml
-automation:
-  - alias: "Update OpenUV every hour (24 of 50 calls per day)"
-    trigger:
-      platform: time_pattern
-      hours: "*"
-    action:
-      service: openuv.update_data
-```
+1. An invalid API key
+2. An API key whose daily/monthly limit is reached
+
+Unfortunately, the integration is unable to determine which is which from the API data
+provided by OpenUV. So, this strategy is followed:
+
+1. Any `HTTP 403` response will create a persistent notification asking you to
+   re-authenticate the OpenUV integration.
+2. In the case of an overrun API call limit, once the `homeassistant.update_entity`
+   action is again successful, existing re-authentication notifications will
+   automatically be removed.
+
+If you receive a re-authentication notification and are certain that your key has merely
+reached its daily call limit, you can safely ignore it.

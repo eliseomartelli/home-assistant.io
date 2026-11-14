@@ -1,20 +1,18 @@
 ---
-title: Xeoma
 description: Instructions on how to integrate camera video feeds from a Xeoma server in Home Assistant
-ha_category:
-  - Camera
-ha_iot_class: Local Polling
 ha_release: 0.62
 ha_domain: xeoma
-ha_platforms:
-  - camera
+related:
+  - docs: /docs/configuration/
+    title: Configuration file
 ---
 
-The `Xeoma` camera platform allows you to view the video feeds from a [Xeoma](https://felenasoft.com/xeoma) video surveillance server.
+The **Xeoma** {% term integration %} allows you to view the video feeds from a [Xeoma](https://felenasoft.com/xeoma) video surveillance server.
 
 ## Configuration
 
-To enable Xeoma camera feeds, add the following lines to your `configuration.yaml`:
+To enable Xeoma camera feeds, add the following lines to your {% term "`configuration.yaml`" %} file.
+{% include integrations/restart_ha_after_config_inclusion.md %}
 
 ```yaml
 # Example configuration.yaml entry

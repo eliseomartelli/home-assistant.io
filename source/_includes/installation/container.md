@@ -1,33 +1,33 @@
 ## Install Home Assistant Container
 
 {% if page.installation_type != 'alternative' %}
-These below instructions are for an installation of Home Assistant Container running in your own container environment, which you manage yourself. Any [OCI](https://opencontainers.org/) compatible runtime can be used, however this guide will focus on installing it with Docker.
+These below instructions are for an installation of {% term "Home Assistant Container" %} running in your own container environment, which you manage yourself. Any [OCI](https://opencontainers.org/) compatible runtime can be used, however this guide will focus on installing it with Docker.
 
-<div class='note'>
+{% note %}
+This installation type **does not have access to apps**. If you want to use apps, you need to use another installation type. The recommended type is {% term "Home Assistant Operating System" %}. Checkout the [overview table of installation types](/installation/#about-installation-types) to see the differences.
+{% endnote %}
+
+{% important %}
+
 <b>Prerequisites</b>
-
 This guide assumes that you already have an operating system setup and a container runtime installed (like Docker).
-  
-If you are using Docker then you need to be on at least version 19.03.9, ideally an even higher version, and `libseccomp` 2.42 or newer.
-</div>
 
-### Platform Installation
+If you are using Docker, you need Docker Engine 23.0.0 or later. Docker _Desktop_ will not work; you must use Docker _Engine_.
 
-Installation with Docker is straightforward. Adjust the following command so that `/PATH_TO_YOUR_CONFIG` points at the folder where you want to store your configuration and run it.
+{% endimportant %}
+
+### Platform installation
+
+Installation with Docker is straightforward. Adjust the following command so that:
+
+- `/PATH_TO_YOUR_CONFIG` points at the folder where you want to store your configuration and run it. Make sure that you keep the `:/config` part.
+- `MY_TIME_ZONE` is a [tz database name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones), like `TZ=America/Los_Angeles`.
+- D-Bus is optional but required if you plan to use the [Bluetooth integration](/integrations/bluetooth).
+
 {% endif %}
 
-{% if page.installation_type == 'raspberrypi' %}
-#### Raspberry pi 3
-
-  {% include installation/container/cli.md image=site.installation.container.raspberrypi3 %}
-
-#### Raspberry pi 4
-
-  {% include installation/container/cli.md image=site.installation.container.raspberrypi4 %}
-
-{% elsif page.installation_type == 'alternative' %}
+{% if page.installation_type == 'alternative' %}
   {% include installation/container/alternative.md %}
-
 {% else %}
   {% include installation/container/cli.md %}
 {% endif %}
@@ -38,10 +38,10 @@ Once the Home Assistant Container is running Home Assistant should be accessible
 
 ### Restart Home Assistant
 
-If you change the configuration you have to restart the server. To do that you have 3 options.
+If you change the configuration, you have to restart the server. To do that you have 3 options.
 
-1. In your Home Assistant UI go to the **Configuration** panel -> **Server management** and click the "Restart" button.
-2. You can go to the **Developer Tools** -> **Services**, select the service `homeassistant.restart` and click "Call Service".
+1. Go to {% my system_dashboard title="**Settings** > **System**" %}. In the top-right corner, select the power {% icon "mdi:power" %} icon, select **Restart Home Assistant**, and then select **Restart**.
+2. Go to {% my tools_actions title="**Settings** > **Tools** > **Actions**" %}, select the **Restart Home Assistant** action (`homeassistant.restart`), and then select **Perform action**.
 3. Restart it from a terminal.
 
 {% tabbed_block %}
@@ -57,42 +57,74 @@ If you change the configuration you have to restart the server. To do that you h
   content: |
 
     ```bash
-    docker-compose restart
+    docker compose restart
     ```
 
 {% endtabbed_block %}
 
-### Docker Compose
+For other ways to apply changes, such as a quick reload without a restart, refer to [Reloading, restarting, rebooting, and shutting down](/common-tasks/general/restarting/#which-option-to-use).
 
-<div class="note tip">
+### Allow time for a clean shutdown
 
-  In order to use `docker-compose` you first need to [install `docker-compose`](https://docs.docker.com/compose/install/) on your system.
+When the container is stopped or restarted, Docker sends `SIGTERM` and then forcibly stops the container after a timeout, which is 10 seconds by default. Home Assistant can need longer than that to close its database. If it is stopped before it has finished, the next start logs warnings such as:
 
-</div>
+```txt
+Ended unfinished session
+The system could not validate that the sqlite3 database at //config/home-assistant_v2.db was shutdown cleanly
+```
 
-As the Docker command becomes more complex, switching to `docker-compose` can be preferable and support automatically restarting on failure or system restart. Create a `docker-compose.yml` file:
+To give the shutdown more time, increase the timeout:
 
-{% if page.installation_type == 'raspberrypi' %}
-#### Raspberry pi 3
+{% tabbed_block %}
 
-  {% include installation/container/compose.md image=site.installation.container.raspberrypi3 %}
+- title: Docker CLI
+  content: |
 
-#### Raspberry pi 4
+    ```bash
+    docker run ... --stop-timeout 60 ...
+    ```
 
-  {% include installation/container/compose.md image=site.installation.container.raspberrypi4 %}
-{% else %}
-  {% include installation/container/compose.md %}
-{% endif %}
+- title: Docker Compose
+  content: |
+
+    ```yaml
+    services:
+      homeassistant:
+        ...
+        stop_grace_period: 60s
+    ```
+
+{% endtabbed_block %}
+
+The timeout is an upper limit, not a delay: Docker continues as soon as Home Assistant has exited.
+
+{% note %}
+This setting is applied when the container is created, so restarting an existing container keeps the timeout it was created with. After changing the value in `compose.yaml`, `docker compose up -d` recreates the container, because its configuration has changed. If the container is not recreated, use `docker compose up -d --force-recreate`. With the Docker CLI, remove the container and run it again with the new option.
+{% endnote %}
+
+### Docker compose
+
+{% tip %}
+`docker compose` should [already be installed](https://www.docker.com/blog/announcing-compose-v2-general-availability/) on your system. If not, you can [manually](https://docs.docker.com/compose/install/linux/) install it.
+{% endtip %}
+
+As the Docker command becomes more complex, switching to `docker compose` can be preferable and support automatically restarting on failure or system restart. Create a `compose.yaml` file:
+
+{% include installation/container/compose.md %}
 
 Start it by running:
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
-### Exposing Devices
+Once the Home Assistant Container is running, Home Assistant should be accessible using `http://<host>:8123` (replace <host> with the hostname or IP of the system). You can continue with onboarding.
 
-In order to use Z-Wave, Zigbee or other integrations that require access to devices, you need to map the appropriate device into the container. Ensure the user that is running the container has the correct privileges to access the `/dev/tty*` file, then add the device mapping to your container instructions:
+{% include getting-started/next_step.html step="Onboarding" link="/getting-started/onboarding/" %}
+
+### Exposing devices
+
+In order to use Zigbee or other integrations that require access to devices, you need to map the appropriate device into the container. Ensure the user that is running the container has the correct privileges to access the `/dev/tty*` file, then add the device mapping to your container instructions:
 
 {% tabbed_block %}
 
@@ -107,7 +139,6 @@ In order to use Z-Wave, Zigbee or other integrations that require access to devi
   content: |
 
     ```yaml
-    version: '3'
     services:
       homeassistant:
         ...
@@ -121,7 +152,7 @@ In order to use Z-Wave, Zigbee or other integrations that require access to devi
 
 The Home Assistant Container is using an alternative memory allocation library [jemalloc](http://jemalloc.net/) for better memory management and Python runtime speedup.
 
-As jemalloc can cause issues on certain hardware, it can be disabled by passing the environment variable `DISABLE_JEMALLOC` with any value, for example:
+As the jemalloc configuration used can cause issues on certain hardware featuring a page size larger than 4K (like some specific ARM64-based SoCs), it can be disabled by passing the environment variable `DISABLE_JEMALLOC` with any value, for example:
 
 {% tabbed_block %}
 
@@ -136,12 +167,11 @@ As jemalloc can cause issues on certain hardware, it can be disabled by passing 
   content: |
 
     ```yaml
-    version: '3'
     services:
       homeassistant:
       ...
-      environment:
-        DISABLE_JEMALLOC: true
+        environment:
+          DISABLE_JEMALLOC: true
     ```
 
 {% endtabbed_block %}

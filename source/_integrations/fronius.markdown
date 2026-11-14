@@ -1,123 +1,373 @@
 ---
-title: Fronius
-description: Instructions on how to connect your Fronius Inverter to Home Assistant.
-ha_category:
-  - Energy
-  - Sensor
-ha_iot_class: Local Polling
+description: Instructions on how to connect your Fronius SolarAPI devices to Home Assistant.
 ha_release: 0.96
-ha_codeowners:
-  - '@nielstron'
 ha_domain: fronius
-ha_platforms:
-  - sensor
+related:
+  - docs: /integrations/modbus/
+    title: Modbus
 ---
 
-The `fronius` sensor polls a [Fronius](https://www.fronius.com/) solar inverter, battery system or smart meter and present the values as sensors in Home Assistant.
+The **Fronius** {% term integration %} polls a [Fronius](https://www.fronius.com/) solar inverter or datalogger for details of a Fronius SolarNet setup and integrate it in your Home Assistant installation.
 
-## Configuration
+## Supported devices
 
-To enable this sensor, add the following lines to your `configuration.yaml` file:
+The integration supports all inverters with integrated Datamanager or external "Datalogger Web" providing the Fronius SolarAPI (JSON) interface of version `v0` or `v1`. This includes among others:
 
-```yaml
-sensor:
-  - platform: fronius
-    resource: FRONIUS_URL
-    monitored_conditions:
-    - sensor_type: logger_info
-    - sensor_type: inverter
-      scope: system
-    - sensor_type: meter
-      device: 1
-```
+- Agilo
+- Eco
+- Galvo
+- Gen24
+- IG Plus
+- Primo
+- Symo
+- Symo Hybrid
+- Tauro
+- Verto (Plus) 
 
-{% configuration %}
-resource:
-  description: "The URL of the Fronius device (e.g., `http://192.0.2.0` or `http://fronius.local`)"
-  required: true
-  type: string
-monitored_conditions:
-  description: "Conditions to display in the frontend"
-  required: true
-  type: list
-  keys:
-    sensor_type:
-      description: "The kind of device, can be one of \"inverter\", \"storage\", \"meter\", or \"power_flow\""
-      required: true
-      type: string
-    scope:
-      description: "The device type for storage and inverter, can be either \"device\" or \"system\""
-      required: false
-      type: string
-      default: "device"
-    device:
-      description: "The id of the device to poll"
-      required: false
-      default: "\"1\" for inverters and \"0\" for other devices such as storages in compliance with Fronius Specs"
-{% endconfiguration %}
+Devices connected to those inverters or dataloggers are supported as well.
+
+- Energy meter (Fronius Smart Meter or S0 meter connected to the inverter)
+- Ohmpilot
+- Storage
+
+## Prerequisites
+
+You should either set a static IP or assign a static DHCP lease for the Fronius device, or alternatively access it through the local DNS name if your network is configured accordingly.
+
+{% note %}
+For Gen24 devices (delivered with Firmware >= 1.14.1) make sure to activate "Solar API" in the inverters web interface. For older devices, Solar API should be enabled by default.
+{% endnote %}
+
+{% include integrations/config_flow.md %}
+
+{% configuration_basic %}
+Host:
+    description: "The host name or the IP address of the device."
+    required: true
+    type: string
+Modbus port:
+    description: "The port of the device's Modbus TCP interface. Only used when Modbus is enabled on the device, see [Modbus TCP](#modbus-tcp). The default is `502`."
+    required: false
+    type: integer
+Revert the power and battery limits if Home Assistant stops:
+    description: "Whether the inverter should give up the power and battery limits set by Home Assistant when it stops hearing them, see [Falling back to the inverter's own settings](#falling-back-to-the-inverters-own-settings). Off by default."
+    required: false
+    type: boolean
+{% endconfiguration_basic %}
 
 ## Monitored data
 
-Each sensor type chosen as monitored condition adds a set of sensors to Home Assistant.
+Each device adds a set of sensors to Home Assistant.
 
-- `logger_info`
+- SolarNet device
+  
+  - Logger information
 
     General information about the Fronius Datalogger. Not available on "Gen24" devices.
+    Updated every hour.
 
-    - The serial number and software and hardware platforms
-    - The current price of energy consumed from the grid ("cash factor")
-    - The current price of energy returned to the grid ("delivery factor")
+    - Serial number, software and hardware platforms
+    - Current price of energy consumed and returned to grid and the CO₂ factor as set in the Dataloggers settings
 
-- `power_flow`
+  - Power flow
 
-    Cumulative data such as the energy produced in the current day or year and overall produced energy.
-    Also, live values such as:
-    
-    - Power fed to the grid (if positive) or taken from the grid (if negative).
-    - Power load as a generator (if positive) or consumer (if negative).
-    - Battery charging power (if positive) or discharging power (if negative) and information about backup or standby mode.
-    - Photovoltaic production.
-    - Current relative self-consumption of produced energy.
-    - Current relative autonomy.
+    Cumulative data of the SolarNet system.
+    Updated every 10 seconds.
 
-- `inverter`
+    - Energy produced on the current day, year and total produced energy
+    - Power fed to the grid (if positive) or consumed from the grid (if negative)
+    - Power load as a generator (if positive) or consumer (if negative)
+    - Battery charging power (if positive) or discharging power (if negative)
+    - Whether the battery is in standby, on Gen24 devices with a battery
+    - Whether the system is currently supplying backup power during a grid outage, on Gen24, Tauro, and Verto devices with backup power configured
+    - Photovoltaic production
+    - Current relative self-consumption of produced energy
+    - Current relative autonomy
 
-    Cumulative data such as the energy produced in the current day or year and overall produced energy.
-    Also, live values about AC/DC power, current, voltage and frequency.
-    The data is only shown when choosing device scope.
+- Inverter
 
-- `meter`
+  The energy produced on the current day, year (not for Gen24 devices), and total produced energy, power, current, voltage, frequency, and status for an individual inverter.
+  Updated every minute.
 
-    Detailed information about power, current and voltage, if supported split among the phases.
-    The data is only shown when choosing device scope.
-    
-- `storage`
+- Meter
 
-    Detailed information about current, voltage, state, cycle count, capacity and more about installed batteries.
+  Detailed information about power, current, and voltage, if supported, split among the phases.
+  Updated every minute.
 
-Note that some data (like photovoltaic production) is only provided by the Fronius device when non-zero.
-The corresponding sensors are added to Home Assistant as entities as soon as they are available.
-This means for example that when Home Assistant is started at night,
-there might be no sensor providing photovoltaic related data.
-This does not need to be problematic as the values will be added on sunrise,
-when the Fronius devices begins providing the needed data.
+- Ohmpilot
 
-## Examples
+  Detailed information about energy, power, and temperature of your Ohmpilots.
+  Updated every minute.
 
-When including more of the components that one Fronius device offers, 
-a list of sensors that are to be integrated can be given like below.
+- Storage
+
+  Detailed information about current, voltage, state, cycle count, capacity and more about installed batteries.
+  Updated every minute.
+
+When an endpoint is not responding correctly the update interval will increase to 10 minutes (3 minutes for power flow) until valid data is received again. This reduces the number of requests to Fronius devices using night mode (shutdown when no PV power is produced).
+
+## Modbus TCP
+
+Most Fronius devices also provide a Modbus TCP interface using the [SunSpec](https://sunspec.org/) information models. It exposes per-string (MPP tracker) data that the Solar API does not, so the integration reads it in addition when it is available.
+
+Modbus is optional. If it isn't enabled, or the inverter is powered down, no Modbus entities are created and the rest of the integration is unaffected. The integration checks again every hour, so entities appear on their own once the device answers.
+
+To enable it on the device's web interface:
+
+- Gen24, Tauro, and Verto: go to **Communication** > **Modbus** and turn on the Modbus TCP server.
+- Devices with a Datamanager: go to **Settings** > **Modbus** and set **Data output via Modbus** to **TCP**. One Datamanager serves every inverter in its SolarNet ring.
+
+{% note %}
+Leave the data format setting (**float** or **int + SF**) as it is. The integration detects it automatically.
+{% endnote %}
+
+These entities are added per inverter and updated every minute:
+
+- `MPPT <n> DC power` and `MPPT <n> energy` for each MPP tracker.
+- `MPPT <n> DC current` and `MPPT <n> DC voltage` for each MPP tracker. [Disabled by default](/docs/configuration/customizing-entities/#disabling-or-enabling-an-entity).
+- `PV energy total`: lifetime energy from the photovoltaic strings only. Whether this is a DC measurement depends on the device, see below.
+- `Battery charging energy total` and `Battery discharging energy total`: on hybrid inverters that expose their battery as dedicated MPP trackers, such as Gen24 with a battery.
+
+`MPPT <n> DC power` is a DC measurement on every device tested, and matches `MPPT <n> DC current` times `MPPT <n> DC voltage`.
+
+`MPPT <n> energy` is not consistent between devices, which is why its name does not claim a side. A Gen24 reports the lifetime energy of each string, which is a DC value and therefore a few percent above `Total energy`, the AC counter. A SnapINverter reports the same value as `Total energy` instead, so `PV energy total` matches it exactly rather than adding anything. Comparing the two entities on your own system shows which the inverter provides.
+
+### Controlling the inverter over Modbus
+
+Modbus is the only interface that lets Home Assistant change settings on the inverter; the Solar API is read-only. These setpoints are added as `number` entities, and appear under **Configuration** on the inverter's device page:
+
+- `AC power limit`: caps the power the inverter puts out on AC, as a percentage of its nominal power output. This is _not_ a feed-in limit. Everything the inverter delivers counts against it, whether it is used in the house or exported to the grid.
+- `Battery charge power limit` and `Battery discharge power limit`: cap how fast the battery may charge or discharge, as a percentage of its maximum rate. A negative value reverses the direction and forces the battery, see [Forcing the battery to charge or discharge](#forcing-the-battery-to-charge-or-discharge).
+- `Battery minimum reserve`: the state of charge the battery is not discharged below.
+
+The `AC power limit`, `Battery charge power limit`, and `Battery discharge power limit` setpoints each have a `switch` that turns the limit on and off: `AC power limiting`, `Battery charge power limiting`, and `Battery discharge power limiting`. `Battery grid charging` is a separate switch that allows or prevents charging the battery from the grid.
+
+{% warning %}
+**Dynamic power reduction** is what implements an export cap agreed with your grid operator, because it measures at the grid connection point. The `AC power limit` cannot do that, as it only knows the inverter's own output. If Modbus outranks **Dynamic power reduction**, holding the `AC power limit` on at `100 %` overrides that cap, which may put the installation outside what the grid operator allows.
+{% endwarning %}
+
+{% important %}
+Writing has to be allowed on the device first. Go to **Communication** > **Modbus** (Gen24, Tauro, and Verto) or **Settings** > **Modbus** (Datamanager), and turn on **Inverter control via Modbus**.
+
+Until it is, the inverter rejects every write, and the integration creates no control entities at all rather than ones that fail when used. Turn it on, then reload the integration.
+{% endimportant %}
+
+A setpoint is only applied while its switch is on. Setting one while the switch is off stores the value on the inverter without applying it, and turning the switch on then applies what is stored, which is the order Fronius documents.
+
+Turning a limit **off** does not lift it. The inverter hands control back to the next source in its priority list, which may impose a limit of its own, such as **Dynamic power reduction**. To override such a source instead, leave the limit **on** and set it to `100 %`. That is an active instruction to run unrestricted, where off is "someone else decides".
+
+The inverter decides which control source wins. If **IO control** or **Dynamic power reduction** has a higher priority than Modbus in the DNO Editor, the inverter may refuse or ignore what Home Assistant sends.
+
+Depending on the inverter's firmware, an `AC power limit` below `10 %` may force the inverter into standby, stopping feed-in altogether rather than throttling it.
+
+On a hybrid inverter, the `AC power limit` does not restrict **charging** the battery. Charging is not AC output. Surplus photovoltaic power goes into the battery instead of being wasted, which makes the limit useful for peak shaving. **Discharging** does count against it, because that power leaves the inverter on AC.
+
+#### Falling back to the inverter's own settings
+
+A setpoint stays on the inverter until it is changed, including while Home Assistant is shut down or unreachable. Removing the integration leaves it behind as well, with nothing left to take it back. To have the inverter recover on its own instead, turn on **Revert the power and battery limits if Home Assistant stops**. It is offered when the integration is set up, and can be changed later: go to **Settings** > **Devices & services** > **Fronius**, select the three dots menu {% icon "mdi:dots-vertical" %} next to the entry, and choose **Reconfigure**.
+
+The inverter then drops the `AC power limit`, the `Battery charge power limit`, and the `Battery discharge power limit` an hour after it last received them, and hands control back to its own priority list. Home Assistant sends active limits again every 15 minutes, so the hour only ever runs out once Home Assistant has really stopped - a restart or a short outage has plenty of room. An inverter held at `30 %` runs unrestricted an hour after Home Assistant stops sending updates.
+
+This applies to these three limits only. The `Battery minimum reserve` and `Battery grid charging` keep their value whatever happens to Home Assistant.
+
+#### The battery limits are power, not a charge level
+
+`Battery charge power limit` limits charging _power_. It is not a "charge to 80 %" setting. The inverter exposes no maximum state of charge over Modbus at all; only the minimum reserve.
+
+A charge ceiling can be built as an automation instead, using the battery's state of charge sensor and the charge power limit:
 
 ```yaml
-sensor:
-  - platform: fronius
-    resource: FRONIUS_URL
-    monitored_conditions:
-    - sensor_type: logger_info
-    - sensor_type: inverter
-      scope: system
-    - sensor_type: meter
-      device: 1
-    - sensor_type: storage
-      device: 0
-    - sensor_type: power_flow
+automation:
+  - alias: "Stop charging the battery at 80%"
+    triggers:
+      - trigger: numeric_state
+        entity_id: sensor.byd_battery_box_premium_hv_state_of_charge
+        above: 80
+    actions:
+      - action: number.set_value
+        target:
+          entity_id: number.gen24_battery_charge_power_limit
+        data:
+          value: 0
+  - alias: "Allow charging the battery again below 75%"
+    triggers:
+      - trigger: numeric_state
+        entity_id: sensor.byd_battery_box_premium_hv_state_of_charge
+        below: 75
+    actions:
+      - action: number.set_value
+        target:
+          entity_id: number.gen24_battery_charge_power_limit
+        data:
+          value: 100
 ```
+
+`Battery charge power limiting` has to be on for this to take effect. Discharging is limited by its own setpoint, so the battery still supplies the house while charging is held at `0 %`. If Home Assistant stops running, the inverter keeps the last setpoint and switch state until you change them again, unless **Revert the power and battery limits if Home Assistant stops** is on. See [Falling back to the inverter's own settings](#falling-back-to-the-inverters-own-settings).
+
+#### Forcing the battery to charge or discharge
+
+The battery limits range from `-100 %` to `100 %`, and a negative value reverses the direction: it sets a _minimum_ rate in the opposite direction instead of a maximum. A `Battery discharge power limit` of `-100 %` makes the battery **charge** at its full rate, and a `Battery charge power limit` of `-50 %` makes it **discharge** at least at half its rate, more if the house needs it and the discharge limit allows. This is how Fronius documents forcing the battery, and what other tools writing these registers set.
+
+- The limit only takes effect while its switch is on: `Battery discharge power limiting` for forced charging, `Battery charge power limiting` for forced discharging.
+- With `Battery grid charging` on, a negative discharge limit charges at least at that rate, from the grid or photovoltaic power if available. With it off, forced charging can only use photovoltaic power. The inverter also has to allow grid charging in its own settings, on a GEN24 under **Device configuration** > **Components** > **Battery**: it only charges from the grid when both are on. Depending on your model and firmware version, this setting may require the technician login, so your installer might have to enable it.
+- With both limits on, the charge limit plus the discharge limit must not be below `0 %`. The inverter refuses anything else, including both limits negative at once, and Home Assistant rejects such a change with an error before sending it. With a `Battery charge power limit` of `40 %` on, for example, a discharge limit of `-100 %` is refused, while `-40 %` will force a charge at `40 %`.
+- Forcing replaces the value of the limit it uses. If that limit was set to something else before, set it back yourself afterwards.
+
+To charge the battery from the grid during a cheap night tariff, with grid charging allowed on the inverter (see above) and `Battery charge power limiting` off or at `100 %`:
+
+```yaml
+automation:
+  - alias: "Charge the battery from the grid at night"
+    triggers:
+      - trigger: time
+        at: "02:00:00"
+    actions:
+      - action: number.set_value
+        target:
+          entity_id: number.gen24_battery_discharge_power_limit
+        data:
+          value: -100
+      - action: switch.turn_on
+        target:
+          entity_id:
+            - switch.gen24_battery_discharge_power_limiting
+            - switch.gen24_battery_grid_charging
+  - alias: "Stop charging the battery from the grid in the morning"
+    triggers:
+      - trigger: time
+        at: "06:00:00"
+    actions:
+      - action: number.set_value
+        target:
+          entity_id: number.gen24_battery_discharge_power_limit
+        data:
+          value: 100
+      - action: switch.turn_off
+        target:
+          entity_id:
+            - switch.gen24_battery_discharge_power_limiting
+            - switch.gen24_battery_grid_charging
+```
+
+With a lower charge limit on, the `-100 %` is refused, as the two limits would add up to less than `0 %`. That includes the charge ceiling example above, which holds the charge limit at `0 %`, so the two examples can't be combined unchanged: either turn `Battery charge power limiting` off for the night, or force with no more than the charge limit, for example `-40 %` at a charge limit of `40 %`.
+
+Unless **Revert the power and battery limits if Home Assistant stops** is on, a forced charge stays on the inverter if Home Assistant stops running, so the battery keeps charging from the grid until the limit is changed again. See [Falling back to the inverter's own settings](#falling-back-to-the-inverters-own-settings).
+
+## Energy dashboard
+
+Recommended [energy dashboard](/docs/energy/) configuration:
+
+- For _"Solar production"_:
+  - If no battery is connected to an inverter: Add each inverters `Energy total` entity.
+  - If a battery is connected to an inverter: Use [Riemann sum](/integrations/integration/) over `SolarNet Power photovoltaics` entity.
+- _"Battery systems"_ energy values aren't supported directly by the Solar API. Use [Riemann sum](/integrations/integration/) to integrate `SolarNet Power battery charge` and `SolarNet Power battery discharge` into energy values (kWh).
+- For _"Devices"_ use the Ohmpilots `Energy consumed` entity.
+
+{% important %}
+For _"Solar production"_, prefer the inverter's `Energy total`. That is the AC energy you can use or sell.
+
+Where the device reports per-string energy, `PV energy total` is what the panels delivered before inverter conversion losses, so it reads a few percent higher. Where it does not, it is the same value as `Energy total` and adds nothing. Either way, the AC value is the one to use.
+
+`Battery charging energy total` and `Battery discharging energy total` are DC values measured at the battery. They are counters read from the device rather than values integrated over time, so they don't drift and are unaffected by Home Assistant restarts. For the same reason, they don't exactly match a Riemann sum of `SolarNet Power battery charge` and `SolarNet Power battery discharge`.
+{% endimportant %}
+
+The energy meter integrated with Fronius devices can be installed (and configured) in two different installation positions: _"feed in path"_ (grid interconnection point) or _"consumption path"_.
+
+### Feed in path meter
+
+Recommended energy dashboard configuration for meter location in feed in path:
+
+- For _"Grid consumption"_ use the meters `Energy real consumed` entity.
+- For _"Return to grid"_ use the meters `Energy real produced` entity.
+
+### Consumption path meter
+
+Recommended energy dashboard configuration for meter location in consumption path:
+
+1. Use [Riemann sum](/integrations/integration/) to integrate `SolarNet Power grid import` and `SolarNet Power grid export` entities into energy values (Wh or kWh).
+2. Use these energy entities for `Grid consumption` and `Return to grid` in the energy dashboard configuration.
+
+## Example automation
+
+The following {% term automation %} toggles a switch when the solar production crosses certain thresholds:
+
+```yaml
+description: "Turn on switch when PV power is above 1000 W and turn it off below 50 W."
+mode: single
+triggers:
+  - trigger: state
+    entity_id:
+      - sensor.solarnet_power_photovoltaics
+conditions: []
+actions:
+  - choose:
+      - conditions:
+          - condition: numeric_state
+            entity_id: sensor.solarnet_power_photovoltaics
+            above: 1000
+        sequence:
+          - action: switch.turn_on
+            metadata: {}
+            data: {}
+            target:
+              entity_id: switch.swtest
+      - conditions:
+          - condition: numeric_state
+            entity_id: sensor.solarnet_power_photovoltaics
+            below: 50
+        sequence:
+          - action: switch.turn_off
+            metadata: {}
+            data: {}
+            target:
+              entity_id: switch.swtest
+
+```
+
+## Note
+
+Fronius often provides firmware updates for the datamanager interfaces and the devices in their system, it's recommended to check and apply them regularly. This integration relies on functionality present in rather recent firmware.
+
+## Known limitations
+
+The Solar API is read-only, so everything this integration changes on a device goes over [Modbus TCP](#modbus-tcp), and only what the SunSpec models expose: the output power limit and the battery charge, discharge, and reserve setpoints. Every setpoint is a percentage. Fronius exposes no absolute watt setting, and no maximum state of charge.
+
+Details about Modbus registers can be found in the device documentation or at the [Fronius website](https://www.fronius.com/).
+
+## Troubleshooting
+
+### Can’t set up the device
+
+- Make sure the device is not in a power-saving mode when currently not producing energy.
+- Make sure the device is connected to the network and is reachable from the Home Assistant instance.
+- Check the device's settings to ensure that the **Solar API** is enabled.
+
+### Some devices are missing after setup or restart of Home Assistant
+
+- Make sure inverters are not in a power-saving mode when currently not producing energy - or wait until they start producing energy.
+
+### Some entities are missing after setup
+
+Some data, like photovoltaic production, is only provided by the Fronius device when non-zero.
+When the integration is added at night, there might be no entities added providing photovoltaic related data. Entities will be added on sunrise, when the Fronius devices begin to provide more data.
+
+### No power limit or battery setpoints
+
+These are the `number` entities described under [Modbus TCP](#modbus-tcp).
+
+- Check that **Inverter control via Modbus** is enabled on the device's web interface, under the same **Modbus** settings where Modbus TCP is turned on. Without it the inverter rejects every write, so the integration doesn't offer the entities.
+- Reload the integration after changing the setting.
+
+### No MPPT, PV energy, or battery energy entities
+
+These come from the device's [Modbus TCP](#modbus-tcp) interface.
+
+- Check that Modbus TCP is enabled on the device's web interface.
+- Check that the Modbus port configured in Home Assistant matches the device. Reconfigure the integration to change it.
+- Make sure the inverter is not in a power-saving mode. An inverter that is powered down doesn't answer, and the entities are added once it wakes up.
+
+## Removing the integration
+
+This integration can be removed by following these steps:
+
+{% include integrations/remove_device_service.md %}

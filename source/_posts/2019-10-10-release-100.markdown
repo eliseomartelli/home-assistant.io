@@ -10,7 +10,7 @@ comments: true
 categories:
 - Release-Notes
 - Core
-og_image: /images/blog/2019-09-0.100/components.png
+og_image: /images/blog/2019-10-0.100/components.png
 ---
 
 <a href='/integrations/#version/0.100'><img src='/images/blog/2019-10-0.100/components.png' style='border: 0;box-shadow: none;'></a>
@@ -188,7 +188,7 @@ As always, this release of Home Assistant is accompanied with a new release of t
 
 ## If you need help...
 
-...don't hesitate to use our very active [forums](https://community.home-assistant.io/) or join us for a little [chat](https://discord.gg/c5DvZ4e).
+...don't hesitate to use our very active [forums](https://community.home-assistant.io/) or join us for a little [chat](https://discord.gg/home-assistant).
 
 ## Reporting Issues
 
@@ -196,7 +196,7 @@ Experiencing issues introduced by this release? Please report them in our [issue
 
 <!--more-->
 
-## Breaking Changes
+## Backward-incompatible changes
 
 - **Removed** - The following integrations which were marked in .98 for pending removal have now been removed (ADR-0004):
   - **UPS** - ([@frenck] - [#26824])

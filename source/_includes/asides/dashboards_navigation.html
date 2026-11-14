@@ -1,0 +1,51 @@
+<section class="vertical-nav aside-module grid__item one-whole lap-one-half">
+  {% assign elements = site.dashboards | sort_natural: 'title' %}
+
+  <div class="section">
+    <h2 class="h1 title epsilon"><iconify-icon icon="mdi:view-dashboard"></iconify-icon> Dashboards</h2>
+    <ul class="divided sidebar-menu">
+      <li>{% active_link /dashboards/ Introduction %}</li>
+      <li>{% active_link /dashboards/dashboards/ Dashboard types %}</li>
+      <li>{% active_link /dashboards/views/ Views %}</li>
+      <li>{% active_link /dashboards/cards/ Cards %}</li>
+      <li>{% active_link /dashboards/badges/ Badges %}</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2 class="h1 title epsilon"><iconify-icon icon="mdi:about-circle-outline"></iconify-icon> View types</h2>
+    <ul class="divided sidebar-menu">
+      {% for element in elements %}
+        {% if element.type == "view" %}
+          <li>{% active_link {{element.url}} {{element.sidebar_label}} %}</li>
+        {% endif %}
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2 class="h1 title epsilon">{% icon "mdi:card-multiple-outline" %} Card types</h2>
+    <ul class="divided sidebar-menu">
+      {% for element in elements %}
+        {% if element.type == "card" %}
+          <li>{% active_link {{element.url}} {{element.sidebar_label}} %}</li>
+        {% endif %}
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2 class="h1 title epsilon">{% icon "mdi:cog" %} Dashboard configuration</h2>
+    <ul class="divided sidebar-menu">
+      <li>{% active_link /dashboards/features/ Card features %}</li>
+      <li>{% active_link /dashboards/header-footer/ Card headers & footers %}</li>
+      <li>{% active_link /dashboards/actions/ Dashboard actions %}</li>
+      <li>{% active_link /dashboards/naming/ Card naming %}</li>
+      <li><a
+          class="external-link"
+          href="https://contributors.home-assistant.io/frontend/custom-ui/card/"
+          >Developing custom cards
+        </a></li>
+    </ul>
+  </div>
+</section>

@@ -1,129 +1,46 @@
 ---
-title: RainMachine
 description: Instructions on how to integrate RainMachine units within Home Assistant.
-ha_category:
-  - Irrigation
-  - Binary Sensor
-  - Sensor
-  - Switch
 ha_release: 0.69
-ha_iot_class: Local Polling
-ha_config_flow: true
-ha_codeowners:
-  - '@bachya'
 ha_domain: rainmachine
-ha_platforms:
-  - binary_sensor
-  - sensor
-  - switch
-ha_zeroconf: true
-ha_homekit: true
 ---
 
-The RainMachine integration is the main integration to integrate all platforms related to [RainMachine smart Wi-Fi sprinkler controllers](https://www.rainmachine.com/).
+The **RainMachine** {% term integration %} is the main integration to integrate all platforms related to [RainMachine smart Wi-Fi sprinkler controllers](https://www.rainmachine.com/).
 
 There is currently support for the following device types within Home Assistant:
 
-- Binary Sensor
+- Binary sensor
+- Button
 - Sensor
-- [Switch](#switch)
+- Switch
+
+Note that some entities are [disabled by default](/docs/configuration/customizing-entities/#disabling-or-enabling-an-entity). If you are missing a sensor or binary sensor, check the configured integration!
 
 {% include integrations/config_flow.md %}
 
-## Services
+## Configuration Options
 
-### `rainmachine.disable_program`
+The integration has two configuration options: 
 
-Disable a RainMachine program. This will mark the program switch as
-`Unavailable` in the UI.
+1. "Default Zone Run Time": sets a default duration when turning on a zone switch (default: 600 seconds). This can be overridden with an action (see below).
+2. "Use Run Times from App": if enabled, will use the zone-specific run times from the last time the zone was turned on manually in the RainMachine App – this allows you to set per-zone default times using the RainMachine app instead of the same default time for all zones.
 
-| Service Data Attribute    | Optional | Description                                                 |
-|---------------------------|----------|-------------------------------------------------------------|
-| `program_id  `              |      no  | The program to disable                                      |
+{% include integrations/actions.md %}
 
-### `rainmachine.disable_zone`
-
-Disable a RainMachine zone. This will mark the zone switch as
-`Unavailable` in the UI.
-
-| Service Data Attribute    | Optional | Description                                                 |
-|---------------------------|----------|-------------------------------------------------------------|
-| `zone_id  `                 |      no  | The program to disable                                      |
-
-### `rainmachine.enable_program`
-
-Enable a RainMachine program.
-
-| Service Data Attribute    | Optional | Description                                                 |
-|---------------------------|----------|-------------------------------------------------------------|
-| `program_id  `              |      no  | The program to enable                                       |
-
-### `rainmachine.enable_zone`
-
-Enable a RainMachine zone.
-
-| Service Data Attribute    | Optional | Description                                                 |
-|---------------------------|----------|-------------------------------------------------------------|
-| `zone_id  `                 |      no  | The zone to enable                                          |
-
-### `rainmachine.pause_watering`
-
-Pause all watering activities for a number of seconds.
-
-| Service Data Attribute    | Optional | Description                                                 |
-|---------------------------|----------|-------------------------------------------------------------|
-| `seconds`                   |      no  | The number of seconds to pause                              |
-
-### `rainmachine.start_program`
-
-Start a RainMachine program.
-
-| Service Data Attribute    | Optional | Description                                                 |
-|---------------------------|----------|-------------------------------------------------------------|
-| `program_id  `              |      no  | The program to start                                        |
-
-### `rainmachine.start_zone`
-
-Start a RainMachine zone for a set number of seconds.
-
-| Service Data Attribute    | Optional | Description                                                 |
-|---------------------------|----------|-------------------------------------------------------------|
-| `zone_id`                   |      no  | The zone to start                                           |
-| `zone_run_time`             |      yes | The number of seconds to run; defaults to 60 seconds        |
-
-### `rainmachine.stop_all`
-
-Stop all watering activities.
-
-### `rainmachine.stop_program`
-
-Stop a RainMachine program.
-
-| Service Data Attribute    | Optional | Description                                                 |
-|---------------------------|----------|-------------------------------------------------------------|
-| `program_id  `              |      no  | The program to stop                                         |
-
-### `rainmachine.stop_zone`
-
-Stop a RainMachine zone.
-
-| Service Data Attribute    | Optional | Description                                                 |
-|---------------------------|----------|-------------------------------------------------------------|
-| `zone_id  `                 |      no  | The zone to stop                                            |
-
-### `rainmachine.unpause_watering`
-
-Unpause all watering activities.
-
-## Switch
-
-The `rainmachine` switch platform allows you to control programs and zones within a [RainMachine smart Wi-Fi sprinkler controller](https://www.rainmachine.com/).
-
-### Controlling Your Device
+## Controlling Your Device
 
 After Home Assistant loads, new switches will be added for every enabled program and zone. These work as expected:
 
 - Program On/Off: starts/stops a program
-- Zone On/Off: starts/stops a zone (using the `zone_run_time` parameter to determine how long to run for)
+- Zone On/Off: starts/stops a zone (using the configuration options described above to determine how long to run for)
 
 Programs and zones are linked. While a program is running, you will see both the program and zone switches turned on; turning either one off will turn the other one off (just like in the web app).
+
+## Entity Availability
+
+Many RainMachine entities are enabled by default. Others, like those related to flow sensors, are disabled by default if they only apply to some controllers. You can view all entities for a controller and enable/disable them as appropriate in the Device screen for your RainMachine controller.
+
+
+## Firmware Updates
+
+The integration has an [update entity](/integrations/update/) that provides information on the latest available RainMachine firmware version. The firmware update can be triggered and installed onto your RainMachine controller
+directly from Home Assistant.

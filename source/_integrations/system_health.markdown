@@ -1,14 +1,16 @@
 ---
-title: System Health
-description: System Health integration will report system info and allow to run system diagnostics.
-ha_category:
-  - Other
+description: System Health integration will report system info and allow you to run system diagnostics.
 ha_release: 0.87
-ha_quality_scale: internal
 ha_domain: system_health
 ---
 
-The System Health integration provides an API to offer information on the system and its components. It also allows to run diagnostic tools to diagnose problems.
+The **System Health** {% term integration %} provides an API to offer information on the system and its components. It also allows you to run diagnostic tools to diagnose problems.
+
+This data can be viewed at {% my repairs title="**Settings** > **System** > **Repairs**" %}. From the three dots {% icon "mdi:dots-vertical" %} menu (top right), select **System information**.
+
+{% my system_health badge %}
+
+Data includes information about your system architecture, operating system and version, Home Assistant installation type and version, Python version, frontend version, the number of [Dashboards](/dashboards/dashboards/) and [Views](/dashboards/views/) you have, and more.
 
 This integration is by default enabled, unless you've disabled or removed the [`default_config:`](/integrations/default_config/) line from your configuration. If that is the case, the following example shows you how to enable this integration manually:
 
@@ -16,7 +18,3 @@ This integration is by default enabled, unless you've disabled or removed the [`
 # Example configuration.yaml entry
 system_health:
 ```
-
-System Health integration data can be viewed at **Configuration** -> **Info**.
-
-Data includes information about your system architecture, operating system and version, Home Assistant installation type and version, Python version, frontend version, the number of Lovelace [Dashboards](/lovelace/dashboards/) and [Views](/lovelace/views/) you have, and more.

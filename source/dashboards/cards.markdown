@@ -1,0 +1,138 @@
+---
+title: "Dashboard cards"
+description: "Cards are the building blocks of a Home Assistant dashboard. Each card shows information from your home or lets you control a device, and you add them with a single tap."
+related:
+  - docs: /dashboards/actions/
+    title: Card tap actions
+  - docs: /dashboards/features/
+    title: Card features
+  - docs: /dashboards/header-footer/
+    title: Card header and footer widgets
+  - docs: /dashboards/views/
+    title: Views
+  - docs: /dashboards/
+    title: Introduction to dashboards
+---
+
+Each dashboard is made up of cards. Cards display information and let you control your devices. You can arrange them freely across views, resize them in the [Sections view](/dashboards/sections/) layout, and configure actions, features, and conditional visibility.
+
+<p class='img'>
+<img src='/images/getting-started/lovelace.png' alt='Screenshot of the masonry view with different types of cards'>
+Screenshot of the masonry view with different types of cards.
+</p>
+
+## Card categories
+
+There are several different card types, each with their own configuration options. They can be categorized in terms of their function:
+
+- **Specific to a device type or service**: [alarm](/dashboards/alarm-panel/), [light](/dashboards/light/), [humidifier](/dashboards/humidifier/), [thermostat](/dashboards/thermostat/), [plant status](/dashboards/plant-status/), [media control](/dashboards/media-control/), [weather forecast](/dashboards/weather-forecast/), [to-do list](/dashboards/todo-list/), [shopping list](/dashboards/shopping-list/), [map](/dashboards/map/), [activity](/dashboards/logbook/), [calendar](/dashboards/calendar/)
+- **Grouping other cards**: [vertical stack](/dashboards/vertical-stack/), [horizontal stack](/dashboards/horizontal-stack/), [grid](/dashboards/grid/)
+- **Logic function**: [conditional](/dashboards/conditional/), [entity filter](/dashboards/entity-filter/)
+- **Display generic data**: [sensor](/dashboards/sensor/), [history graph](/dashboards/history-graph/), [statistic](/dashboards/statistic/), [statistics graph](/dashboards/statistics-graph/), [energy](/dashboards/energy/), [gauge](/dashboards/gauge/), [clock](/dashboards/clock/), [Markdown](/dashboards/markdown/), [webpage](/dashboards/iframe/)
+- **Control devices and entities**: [button](/dashboards/button/), [entity](/dashboards/entity/), [shortcut](/dashboards/shortcut/)
+- **Display data and control entities**: [tile](/dashboards/tile/), [alert](/dashboards/alert/), [heading](/dashboards/heading/), [entities](/dashboards/entities/), [glance](/dashboards/glance/), [area](/dashboards/area/), [picture](/dashboards/picture/), [picture entity](/dashboards/picture-entity/), [picture elements](/dashboards/picture-elements/), [picture glance](/dashboards/picture-glance/)
+
+## Adding cards to your dashboard
+
+A card can be added to a dashboard directly from the view where you want to have it.
+
+1. Go to {% my lovelace_dashboards title="**Settings** > **Dashboards**" %}.
+2. Select your dashboard from the list.
+3. If your dashboard has multiple [views](/dashboards/views/), select the view to which you want to add a card.
+4. In the top right of the screen, select the edit {% icon "mdi:edit" %} button.
+5. Depending on your dashboard view layout:
+   - For Sections layout, select {% icon "mdi:plus" %} in the section (bottom left).
+     ![Add card in sections layout](/images/dashboards/add_card_sections_layout.png)
+   - For other layout types (such as Masonry, Panel, or Sidebar), in the bottom right of the view, select **Add card**.
+     ![Add card in masonry layout](/images/dashboards/add_card_masonary_layout.png)
+6. There are three methods to add a card:
+   - **By entity**.
+        - Select the entities from the list.
+        - Then, select the card you want from the preview.
+        - If you can't see your entity, check the **Unassigned** section. Entities that are not assigned to an area are listed there.
+        ![Screenshot add cards by entity](/images/dashboards/dashboard_add-by-entity_02.png)
+   - **By card**:
+        - Browse the list of available cards.
+        - If you are using the **Sections** view, try the **Tile** card in the **Suggested cards** section.
+        ![Add card by Card type dialog](/images/blog/2024-03-dashboard-chapter-1/sections-add-card-by-card.png)
+   - From a copied card: If you copied a card, **Paste card** is shown at the bottom left of the dialog. Select it to add the card. The same works for badges when you add a badge.
+7. If you want this card to be visible only to specific users or under a certain condition, you can [define those conditions](#showing-or-hiding-a-card-or-badge-conditionally).
+8. If you are adding this card to a [sections view](/dashboards/sections/), on the **Layout** tab, you can [resize the card](#resizing-a-card).
+9. Customize your card:
+   - [define card actions](/dashboards/actions/).
+   - [define header and footer](/dashboards/header-footer/)
+   - [customize features](/dashboards/features/#customizing-features).
+   - Not all cards support these elements. Refer to the documentation of the specific card type.
+10. In the top right of the screen, select **Done** to save the changes of the view.
+
+## Adding a device to your dashboard
+
+This method is useful, for example, if you are on the page of a device and want to add all its entities to a dashboard in one step, instead of adding them card by card.
+
+1. Go to {% my integrations title="**Settings** > **Devices & services**" %}.
+2. On the integration card of interest, select **Devices** or select the **Devices** tab.
+   - If there are multiple devices, select the device from the list.
+3. Next to **Related**, select **Add to…** and then **Add to a dashboard**.
+4. Select the dashboard, the view, and then select **Next**.
+5. Set the options in the **Device section configuration** dialog and select **Save**, or select **Add to dashboard**, depending on the type of the selected view.
+   - In a [sections view](/dashboards/sections/), a **Device** section for this device is added. It stays up to date when the device gets new entities.
+   - In other views, an **Entities** card is added.
+
+## Showing or hiding a card or badge conditionally
+
+You can choose to show or hide certain cards or [badges](/dashboards/badges/) based on different conditions. You can use conditions about the person viewing the dashboard and their device, such as **User**, **Screen**, **Location**, and **Time**. You can also use the same conditions as in automations, such as **Entity state**, **Template**, **Sun**, **Zone**, and **Device**. The [available conditions](/dashboards/conditional/#conditions-options) are the same as the ones for the conditional card.
+
+1. On the **Visibility** tab, select **Add condition**.
+   - Troubleshooting: Don't see a **Visibility** tab?
+     - It is not available inside nested cards: vertical stack, horizontal stack, and grid card
+2. Select the type of condition, and enter the parameters.
+   - If you define multiple conditions, the card or badge is only shown when all conditions are met.
+   - If you did not define any conditions, the card or badge is always shown to all users.
+3. To change the order of the conditions, drag a condition by its handle {% icon "mdi:drag-horizontal-variant" %}.
+4. Check the result before you save.
+   - At the top of the tab, **Current visibility** shows whether the card or badge would be shown right now.
+   - Each condition shows whether it passes right now, for example **Condition passes** or **Condition did not pass**.
+5. Select **Save**.
+
+## Resizing a card
+
+In [sections view](/dashboards/sections/), you can resize cards. Each card has a recommended size, which it keeps until you change it. Follow these steps:
+
+1. On the **Layout** tab, turn off **Use recommended size**. Below the switch, you can see the recommended size of the card, for example **6 columns × 2 rows**.
+
+   ![Screenshot of the Layout tab in the card dialog](/images/dashboards/card_resize.png)
+
+   - Troubleshooting: Don't see a **Layout** tab?
+     - It is not available inside nested cards: vertical stack, horizontal stack, and grid card
+     - It is not available on the picture elements card.
+2. Use the grid size picker to adjust the number of columns and rows the card occupies.
+3. If you want to set the width with more precision, select **Enter precise mode** ({% icon "mdi:grid-large" %}) in the upper-left corner of the grid. To leave precise mode, select the button again. In the example below, all cards were resized using precise mode.
+
+   ![Screenshot of a section with cards resized using precise mode](/images/dashboards/precise-mode-example.png)
+
+4. To make the card as tall as its content, enable **Fit height to content**.
+5. To make the card always fill the section, whatever its width, enable **Full width**.
+6. Select **Save**.
+
+## Revert resizing of a card
+
+If you previously [resized](#resizing-a-card) a card in the [sections view](/dashboards/sections/), and you don't like the new size, you can go back to the recommended size of the card. Follow these steps:
+
+1. On the **Layout** tab, turn on **Use recommended size**.
+2. Select **Save**.
+
+## Card actions, features, header and footer widgets
+
+Some cards have support for [tap actions](/dashboards/actions/). These actions define what will happen when you tap or hold on an object within a card.
+
+Some cards have support for [features](/dashboards/features/). These widgets add quick controls to the card. Supported features depend on the card and entity capabilities. Multiple features can be added to a single card.
+
+<p class='img'><img src='/images/dashboards/features/screenshot-tile-feature-grid.png' alt="Screenshot of tile cards with features.">
+Screenshot of tile cards with features.
+</p>
+
+Some cards have support for [header and footer widgets](/dashboards/header-footer/). These widgets fill up the entire available space in a card.
+
+<p class='img'><img src='/images/dashboards/header-footer/screenshot-picture-buttons.png' alt="Screenshot of an entities card with a picture header.">
+Screenshot of an entities card with a picture header and buttons footer.
+</p>

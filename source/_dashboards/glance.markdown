@@ -1,0 +1,168 @@
+---
+type: card
+title: "Glance card"
+sidebar_label: Glance
+description: "The glance card is useful to group multiple sensors in a compact overview."
+related:
+  - docs: /dashboards/actions/
+    title: Card actions
+  - docs: /integrations/frontend/
+    title: Themes
+  - docs: /dashboards/cards/
+    title: Dashboard cards
+  - docs: /dashboards/naming/
+    title: Card naming
+---
+
+The glance card is useful to group multiple sensors in a compact overview. Keep in mind that this can be used together with [entity-filter](/dashboards/entity-filter/) cards to create dynamic cards.
+
+<p class='img'>
+<img src='/images/dashboards/glance_card.png' alt='Screenshot of the glance card'>
+Screenshot of the glance card.
+</p>
+
+All options for this card can be configured via the user interface.
+
+{% include dashboard/edit_dashboard.md %}
+
+## YAML configuration
+
+The following YAML options are available when you use YAML mode or just prefer to use YAML in the code editor in the UI.
+
+{% configuration %}
+type:
+  required: true
+  description: "`glance`"
+  type: string
+entities:
+  required: true
+  description: "A list of entity IDs or `entity` objects, see below."
+  type: list
+title:
+  required: false
+  description: Card title.
+  type: string
+show_name:
+  required: false
+  description: Show entity name.
+  type: boolean
+  default: "true"
+show_icon:
+  required: false
+  description: Show entity icon.
+  type: boolean
+  default: "true"
+show_state:
+  required: false
+  description: Show entity state text.
+  type: boolean
+  default: "true"
+theme:
+  required: false
+  description: Override the used theme for this card with any loaded theme. For more information about themes, see the [frontend documentation](/integrations/frontend/).
+  type: string
+columns:
+  required: false
+  description: Number of columns to show. If not specified the number will be set automatically.
+  type: integer
+color:
+  required: false
+  description: Set the icon color when the entity is active for all entities in the card. By default, the color is based on the `state`, `domain`, and `device_class` of the entity. To disable coloring, set to `none`. It accepts `state`, `none`, a [color token](/dashboards/tile/#available-colors), or a hex color code.
+  type: string
+  default: state
+{% endconfiguration %}
+
+### Options for entities
+
+If you define entities as objects instead of strings, you can add more customization and configuration:
+
+{% configuration %}
+entity:
+  required: true
+  description: Entity ID.
+  type: string
+name:
+  required: false
+  description: Overwrites the default name of the entity. Can be a string, or a name configuration object. See [naming documentation](/dashboards/naming/).
+  type: [string, map, list]
+icon:
+  required: false
+  description: Overwrites icon.
+  type: string
+image:
+  required: false
+  description: Overwrites entity picture.
+  type: string
+show_last_changed:
+  required: false
+  description: Overwrites the state display with the relative time since last changed.
+  type: boolean
+  default: false
+time_format:
+  required: false
+  description: >
+    Controls how timestamp states are formatted. Valid values are `relative`, `total`, `date`, `time`, and `datetime`. Can also be defined as a map with a `type` key and an optional `style` key (`long` or `short`).
+  type: [string, map]  
+show_state:
+  required: false
+  description: Show entity state text.
+  type: boolean
+  default: true
+color:
+  required: false
+  description: Set the icon color when the entity is active, overriding the card's `color` option for this entity. It accepts `state`, `none`, a [color token](/dashboards/tile/#available-colors), or a hex color code.
+  type: string
+tap_action:
+  required: false
+  description: Action taken on card tap. See [action documentation](/dashboards/actions/#tap-action).
+  type: map
+hold_action:
+  required: false
+  description: Action taken on card tap and hold. See [action documentation](/dashboards/actions/).
+  type: map
+double_tap_action:
+  required: false
+  description: Action taken on card double tap. See [action documentation](/dashboards/actions/#double-tap-action).
+  type: map
+{% endconfiguration %}
+
+### Examples
+
+Basic example:
+
+```yaml
+type: glance
+title: Glance card sample
+entities:
+  - binary_sensor.movement_backyard
+  - light.bed_light
+  - binary_sensor.basement_floor_wet
+  - sensor.outside_temperature
+  - light.ceiling_lights
+  - switch.ac
+  - lock.kitchen_door
+```
+
+<p class='img'>
+<img src='/images/dashboards/glance_card.png' alt='Screenshot of the glance card with custom title'>
+Screenshot of the glance card with custom title.
+</p>
+
+Define entities as objects and apply a custom name:
+
+```yaml
+type: glance
+title: Better names
+entities:
+  - entity: binary_sensor.movement_backyard
+    name: Movement?
+  - light.bed_light
+  - binary_sensor.basement_floor_wet
+  - sensor.outside_temperature
+  - light.ceiling_lights
+  - switch.ac
+  - lock.kitchen_door
+  - entity: switch.wall_plug_switch
+    tap_action:
+      action: toggle
+```

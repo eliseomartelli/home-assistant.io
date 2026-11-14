@@ -1,49 +1,108 @@
 ---
-title: Tesla Powerwall
 description: Instructions on how to integrate Tesla Power Walls into Home Assistant.
-ha_category:
-  - Binary Sensor
-  - Energy
-  - Sensor
 ha_release: 0.108
-ha_iot_class: Local Polling
-ha_config_flow: true
-ha_codeowners:
-  - '@bdraco'
-  - '@jrester'
 ha_domain: powerwall
-ha_dhcp: true
-ha_platforms:
-  - binary_sensor
-  - sensor
 ---
 
-The `powerwall` integration allows you to integrate your [Tesla Powerwall](https://www.tesla.com/powerwall) into Home Assistant.
+The **Tesla Powerwall** {% term integration %} allows you to integrate your [Tesla Powerwall](https://www.tesla.com/powerwall) into Home Assistant.
 
-There is currently support for the following device types within Home Assistant:
+## Supported devices
 
-- [Binary Sensor](#binary-sensor)
-- [Sensor](#sensor)
+The following devices are known to be supported by the integration:
+- Tesla Powerwall 2
+- Tesla Powerwall 3 (with limitations)
+
+## Unsupported devices
+
+The following devices are not supported by the integration:
+- Tesla Powerwall 1
+
+## Prerequisites
+
+Before setting up the integration, make sure you have the following information:
+
+- IP address: The local IP address assigned to your Powerwall or Backup Gateway. Home Assistant may discover this automatically. If it does not, check your router or DHCP server for the address assigned to the device.
+- Password:
+  - If a password is printed inside the Backup Gateway, use the last 5 characters of that password.
+  - If there is no separate password, use the last 5 characters of the Backup Gateway serial number. You can find the serial number in the Tesla app.
 
 {% include integrations/config_flow.md %}
 
-### Binary Sensor
+## Supported functionality
 
-The following binary sensors are added for each Powerwall:
+There is currently support for the following device types within Home Assistant:
 
-- Powerwall Status
-- Powerwall Connected to Tesla
-- Grid Status
+- [Binary sensor](#binary-sensor)
+- [Sensor](#sensor)
+- [Switch](#switch)
+
+### Binary sensor
+
+The following binary sensors are added for each Backup Gateway:
+
+- Grid Services - On/ Off
+- Grid Status - On/ Off
+- Powerwall Charging - Charging/ Not Charging
+- Powerwall Connected to Tesla - Connected / Not Connected
+- Powerwall Status - On/ Off
 
 ### Sensor
 
-The following sensors are added for each Powerwall:
+The following sensors are added for each Backup Gateway aggregated across all Powerwalls:
 
-- Powerwall Charge
-- Powerwall Site Now
-- Powerwall Load Now
-- Powerwall Battery Now
-- Powerwall Frequency Now (if applicable)
-- Powerwall Busway Now (if applicable)
-- Powerwall Solar Now (if applicable)
-- Powerwall Generator Now (if applicable)
+- Powerwall Backup Reserve - Reserve energy for grid outages in %
+- Powerwall Battery Now - Power in kW (negative for charging)
+- Powerwall Charge - Percent charge remaining in %
+- Powerwall Generator Now - Power in kW (if applicable)
+- Powerwall Load Now - Power in kW
+- Powerwall Solar Now - Power in kW (if applicable)
+- Powerwall Site Now - Power in kW (negative for grid export)
+- Powerwall Backup Reserve - Percentage of battery which will be reserved for a grid outage
+- Frequency/ Average Current/ Average Voltage Now - in Hertz, Amps and Volts
+
+The following sensors measure lifetime energy flow:
+
+- Powerwall Solar Export - Solar energy exported in kWh
+- Powerwall Solar Import - Solar energy imported in kWh (generally near zero)
+- Powerwall Site Export - Site energy exported in kWh
+- Powerwall Site Import - Site energy imported in kWh
+- Powerwall Battery Export - Battery energy exported in kWh
+- Powerwall Battery Import - Battery energy imported in kWh
+- Powerwall Load Export - Load energy exported in kWh (generally zero)
+- Powerwall Load Import - Load energy imported in kWh
+- Powerwall Generator Export - Generator energy exported in kWh 
+- Powerwall Generator Import - Generator energy imported in kWh
+
+A Powerwall battery device for each battery, connected to the Powerwall Gateway, with the following sensors:
+- Powerwall Battery Capacity - Energy in kWh
+- Powerwall Battery Remaining - Remaining energy in kWh
+- Frequency/ Average Current/ Average Voltage Now in Hertz, Amps and Volts
+- Powerwall Battery Power - Battery power in kW (negative for charging)
+- Powerwall Battery Export - Battery energy exported in kWh
+- Powerwall Battery Import - Battery energy imported in kWh
+- Powerwall Grid State - Battery grid compliance
+
+
+### Switch
+
+The following switch is added for the Powerwall Backup Gateway:
+
+- Off-Grid operation - Take your Powerwall off-grid (simulate a grid outage)
+
+### Device info
+
+- Model Number
+- Firmware Revision
+
+## Known Limitations
+
+### Powerwall 3 support
+
+Powerwall 3 exposes a more restricted local HTTP API than Powerwall 2. As a result, some entities and features are not available when Home Assistant connects to one of these gateways:
+
+- Off-Grid operation
+- Powerwall Backup Reserve
+- Per-battery sensors (Powerwall Battery Capacity, Powerwall Battery Remaining, Powerwall Battery Power, Frequency/Average Current/Average Voltage Now, Powerwall Battery Export, Powerwall Battery Import, Powerwall Grid State)
+- Powerwall Status and Powerwall Connected to Tesla binary sensors
+
+The aggregate sensors (power flow, charge, lifetime energy) and the Grid Status / Grid Services / Powerwall Charging binary sensors remain available.

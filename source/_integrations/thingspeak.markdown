@@ -1,21 +1,17 @@
 ---
-title: ThingSpeak
 description: Record one entity in ThingSpeak
-ha_category:
-  - History
-ha_iot_class: Cloud Push
 ha_release: 0.32
 ha_domain: thingspeak
 ---
 
-The `thingspeak` integrations makes Home Assistant communicate with the [ThingSpeak API](https://thingspeak.com/).
-For now, it records exactly one entity at once, which is great for testing purposes. For long-time storage you should rely on the [InfluxDB component](/integrations/influxdb/).
+The **ThingSpeak** {% term integration %} makes Home Assistant communicate with the [ThingSpeak API](https://thingspeak.mathworks.com/).
+For now, it records exactly one entity at once, which is great for testing purposes. For long-time storage you should rely on the [InfluxDB integration](/integrations/influxdb/).
 
 ## Configuration
 
-You will have to create a [new channel](https://thingspeak.com/channels/new) on ThingSpeak and grab your Write API Key from the "API Keys" tab of the channel you want to use.
+You will have to create a [new channel](https://thingspeak.mathworks.com/channels/new) on ThingSpeak and grab your Write API Key from the "API Keys" tab of the channel you want to use.
 
-To setup the ThingSpeak integration in your installation, add the following to your `configuration.yaml` file:
+To set up the ThingSpeak integration in your installation, add the following to your {% term "`configuration.yaml`" %} file:
 
 ```yaml
 # Example configuration.yaml entry

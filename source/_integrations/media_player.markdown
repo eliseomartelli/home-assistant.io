@@ -1,179 +1,135 @@
 ---
-title: Media Player
-description: Instructions on how to setup your media players with Home Assistant.
-ha_category:
-  - Media Player
+description: Control and automate your TVs, speakers, and other media players in Home Assistant.
 ha_release: 0.7
-ha_quality_scale: internal
+ha_categories:
+  - media_entertainment
 ha_domain: media_player
+related:
+  - docs: /docs/configuration/customizing-entities/
+    title: Customizing devices
+  - docs: /dashboards/
+    title: Dashboard
+  - docs: /integrations/media_source/
+    title: Media source
 ---
 
-Interacts with media players on your network.
+The **Media player** {% term integration %} provides the media player entities in Home Assistant, such as TVs, speakers, and receivers. Other integrations create these entities, for example, [Sonos](/integrations/sonos/) or [Google Cast](/integrations/cast/). You can control your media players from your dashboards, and use them in automations.
 
-## Services
+{% include integrations/building_block_integration.md %}
 
-### Media control services
-Available services: `turn_on`, `turn_off`, `toggle`, `volume_up`, `volume_down`, `volume_set`, `volume_mute`, `media_play_pause`, `media_play`, `media_pause`, `media_stop`, `media_next_track`, `media_previous_track`, `clear_playlist`, `shuffle_set`, `repeat_set`, `play_media`, `select_source`, `select_sound_mode`, `join`, `unjoin`
+## Media player states
 
-| Service data attribute | Optional | Description                                      |
-| ---------------------- | -------- | ------------------------------------------------ |
-| `entity_id`            |      yes | Target a specific media player. To target all media players, use `all`. |
+A media player can have the following states. Each item shows the label you see in the Home Assistant interface, followed by the state as Home Assistant stores it. If you write templates or edit automations in YAML, use the stored state.
 
-#### Service `media_player.volume_mute`
+- **Off** (`off`): The media player is turned off and is not accepting commands until turned on.
+- **On** (`on`): The media player is turned on, but no details on its state are currently known.
+- **Idle** (`idle`): The media player is turned on and accepting commands, but not playing any media. For example, it might show a home screen.
+- **Playing** (`playing`): The media player is currently playing media.
+- **Paused** (`paused`): The media player has media loaded and is paused.
+- **Buffering** (`buffering`): The media player is preparing to start playback of media.
+- **Unavailable** (`unavailable`): The entity is currently unavailable.
+- **Unknown** (`unknown`): The state is not yet known.
 
-| Service data attribute | Optional | Description                                      |
-|------------------------|----------|--------------------------------------------------|
-| `entity_id`            |      yes | Target a specific media player. To target all media players, use `all`. |
-| `is_volume_muted`      |       no | True/false for mute/unmute                       |
+## Playing media from the media browser
 
-#### Service `media_player.volume_set`
+You can browse your media in the media browser, and play it on a media player, such as a speaker or a TV. To choose the media player, open the list of players in the bottom-right corner of the media browser. The list only shows media players that support browsing media.
 
-| Service data attribute | Optional | Description                                      |
-|------------------------|----------|--------------------------------------------------|
-| `entity_id`            |      yes | Target a specific media player. To target all media players, use `all`. |
-| `volume_level`         |       no | Float for volume level. Range 0..1               |
+- For the steps, refer to [Browsing your media](/integrations/media_source/#browsing-your-media).
+- If a media player is missing from the list or grayed out, refer to [Troubleshooting](/integrations/media_source/#troubleshooting).
 
-#### Service `media_player.media_seek`
+{% include integrations/triggers.md %}
 
-| Service data attribute | Optional | Description                                            |
-|------------------------|----------|--------------------------------------------------------|
-| `entity_id`            |      yes | Target a specific media player. To target all media players, use `all`.       |
-| `seek_position`        |       no | Position to seek to. The format is platform dependent. |
+{% include integrations/conditions.md %}
 
-#### Service `media_player.play_media`
+{% include integrations/actions.md %}
 
-| Service data attribute | Optional | Description                                                                                                                                                            |
-| -----------------------| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `entity_id`            |      yes | Target a specific media player. To target all media players, use `all`.                                                                                                                       |
-| `media_content_id`     |       no | A media identifier. The format of this is integration dependent. For example, you can provide URLs to Sonos and Cast but only a playlist ID to iTunes.                   |
-| `media_content_type`   |       no | A media type. Must be one of `music`, `tvshow`, `video`, `episode`, `channel` or `playlist`. For example, to play music you would set `media_content_type` to `music`. |
-| `extra`                |      yes | Extra dictionary data to send, e.g., title, thumbnail. Possible values can be found below.
+## Media player automation examples
 
-##### Extra dictionary data
+Here are a few examples of how you can use Media player triggers and conditions in automations.
 
-{% configuration %}
-title:
-  type: string
-  description: Title of the media.
-  required: false
-thumb:
-  type: string
-  description: Thumbnail image URL.
-  required: false
-current_time:
-  type: float
-  description: Seconds since the beginning of the content. If the content is live content, and the position is not specified, the stream will start at the live position.
-  required: false
-autoplay:
-  type: boolean
-  description: Whether the media will automatically play.
-  default: true
-  required: false
-stream_type:
-  type: string
-  description: "Describes the type of media artifact as one of the following: `NONE`, `BUFFERED`, `LIVE`."
-  required: false
-subtitles:
-  type: string
-  description: URL of subtitle file to be shown on chromecast.
-  required: false
-subtitles_lang:
-  type: string
-  description: Language for subtitles.
-  required: false
-subtitles_mime:
-  type: string
-  description: Mimetype of subtitles.
-  required: false
-subtitle_id:
-  type: integer
-  description: ID of subtitle to be loaded.
-  required: false
-enqueue:
-  type: boolean
-  description: If True, enqueue the media instead of play it.
-  default: false
-  required: false
-media_info:
-  type: map
-  description: Additional MediaInformation attributes not explicitly listed.
-  required: false
-metadata:
-  type: map
-  description: "Media metadata object, one of the following: `GenericMediaMetadata`, `MovieMediaMetadata`, `TvShowMediaMetadata`, `MusicTrackMediaMetadata`, `PhotoMediaMetadata`."
-  required: false
-{% endconfiguration %}
+{% include docs/paste_yaml_tip.md %}
 
-Documentation:
+### Automation: dim the room when a movie starts
 
-- [Google Dev Documentation MediaData](https://developers.google.com/cast/docs/reference/messages#MediaData)
-- [Google Dev Documentation MediaInformation](https://developers.google.com/cast/docs/reference/web_receiver/cast.framework.messages.MediaInformation)
+When the living room TV starts playing, dim the lights so the room is ready for watching.
 
+- **Trigger**: Media player started playing
+  - **Target**: Living room TV
+- **Action**: Turn on light
+  - **Target**: Living room lights
+  - **Brightness**: 25%
 
-Example of calling media_player service with title and image set:
+{% details "YAML example for dimming the room when a movie starts" %}
 
-```yaml
-entity_id: media_player.chromecast
-service: media_player.play_media
-data:
-  media_content_type: music
-  media_content_id: "https://fake-home-assistant.io.stream/aac"
-  extra:
-    thumb: "https://brands.home-assistant.io/_/homeassistant/logo.png"
-    title: HomeAssitantRadio
-```
+{% example %}
+automation: |
+  alias: "Dim the room when the TV starts playing"
+  triggers:
+    - trigger: media_player.started_playing
+      target:
+        entity_id: media_player.living_room_tv
+  actions:
+    - action: light.turn_on
+      target:
+        entity_id: light.living_room_lights
+      data:
+        brightness_pct: 25
+{% endexample %}
 
-#### Service `media_player.select_source`
+{% enddetails %}
 
-| Service data attribute | Optional | Description                                          |
-| ---------------------- | -------- | ---------------------------------------------------- |
-| `entity_id`            |      yes | Target a specific media player. To target all media players, use `all`.     |
-| `source`               |       no | Name of the source to switch to. Platform dependent. |
+### Automation: send a bedtime reminder if audio is still playing
 
-#### Service `media_player.select_sound_mode`
+At bedtime, check whether the bedroom speaker is still playing, and send a notification if it is.
 
-Currently only supported on [Denon AVR](/integrations/denonavr/) and  [Songpal](/integrations/songpal).
+- **Trigger**: Time: 23:00
+- **Condition**: Media player is playing
+  - **Target**: Bedroom speaker
+- **Action**: Send a notification message
+  - **Target**: My Device (`notify.my_device`)
 
-| Service data attribute | Optional | Description                                          |
-| ---------------------- | -------- | ---------------------------------------------------- |
-| `entity_id`            |      yes | Target a specific media player. For example `media_player.marantz`|
-| `sound_mode`           |       no | Name of the sound mode to switch to. Platform dependent.|
+{% details "YAML example for a bedtime playback reminder" %}
 
-#### Service `media_player.shuffle_set`
+{% example %}
+automation: |
+  alias: "Remind me when audio is still playing at bedtime"
+  triggers:
+    - trigger: time
+      at: "23:00:00"
+  conditions:
+    - condition: media_player.is_playing
+      target:
+        entity_id: media_player.bedroom_speaker
+  actions:
+    - action: notify.send_message
+      target:
+        entity_id: notify.my_device
+      data:
+        message: >
+          Bedroom audio is still playing.
+{% endexample %}
 
-Currently only supported on [Sonos](/integrations/sonos), [Spotify](/integrations/spotify), [MPD](/integrations/mpd), [Kodi](/integrations/kodi), [Roon](/integrations/roon), [Squeezebox](/integrations/squeezebox) and [Universal](/integrations/universal).
+{% enddetails %}
 
-| Service data attribute | Optional | Description                                          |
-| ---------------------- | -------- | ---------------------------------------------------- |
-| `entity_id`            |      yes | Target a specific media player. For example `media_player.spotify`|
-| `shuffle`              |       no | `true`/`false` for enabling/disabling shuffle        |
+## Device class
 
-#### Service `media_player.repeat_set`
+The device class tells Home Assistant what kind of media player an entity is, such as a TV or a speaker. Home Assistant uses the device class to choose the icon. Google Assistant, Alexa, and Apple Home use the device class to decide what kind of device to show.
 
-| Service data attribute | Optional | Description                                          |
-| ---------------------- | -------- | ---------------------------------------------------- |
-| `entity_id`            |      yes | Target a specific media player. For example `media_player.kitchen`|
-| `repeat`               |       no | `off`/`all`/`one` for setting repeat mode            |
+The integration that provides the media player sets the device class.
 
-#### Service `media_player.join`
+### Device classes in automations and templates
 
-Allows to group media players together for synchronous playback. Only works on supported multiroom audio systems.
+- Automations: The device class doesn't change how a media player works in automations.
+- Templates: The device class is the `device_class` attribute of the entity. Use the stored value, such as `tv`. For example, you can [find entities by device class](/docs/templating/patterns/#finding-entities-by-device-class).
 
-| Service data attribute | Optional | Description                                          |
-| ---------------------- | -------- | ---------------------------------------------------- |
-| `entity_id`            |      yes | The media player entity whose playback will be expanded to the players specified in `group_members`.  |
-| `group_members`        |       no | The player entities which will be synced with the playback from `entity_id`.  |
+### List of available device classes
 
-#### Service `media_player.unjoin`
+A media player without a device class is a generic media player and shows {% icon "mdi:cast" %} by default.
 
-| Service data attribute | Optional | Description                                          |
-| ---------------------- | -------- | ---------------------------------------------------- |
-| `entity_id`            |      yes | Unjoin this media player from any player groups.     |
+Each item shows the name you see in the Home Assistant interface, followed by the device class as Home Assistant stores it.
 
-### Device Class
+- {% icon "mdi:television" %} **TV** (`tv`): A television.
+- {% icon "mdi:speaker" %} **Speaker** (`speaker`): A speaker.
+- {% icon "mdi:audio-video" %} **Receiver** (`receiver`): A device that takes audio and video input and outputs it to speakers and displays.
+- {% icon "mdi:projector" %} **Projector** (`projector`): A projector.
 
-The way media players are displayed in the frontend can be modified in the [customize section](/getting-started/customizing-devices/). The following device classes are supported for media players:
-
-- `tv`: Device is a television type device.
-- `speaker`: Device is speaker or stereo type device.
-- `receiver`: Device is audio video receiver type device taking audio and outputting to speakers and video to some display.

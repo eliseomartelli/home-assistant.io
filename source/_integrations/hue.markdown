@@ -1,84 +1,90 @@
 ---
-title: Philips Hue
 description: Instructions on setting up Philips Hue within Home Assistant.
-ha_category:
-  - Hub
-  - Light
-ha_iot_class: Local Push
 featured: true
 ha_release: '0.60'
-ha_config_flow: true
-ha_quality_scale: platinum
-ha_codeowners:
-  - '@balloob'
-  - '@frenck'
 ha_domain: hue
-ha_ssdp: true
-ha_homekit: true
-ha_platforms:
-  - binary_sensor
-  - light
-  - sensor
-ha_zeroconf: true
 ---
 
-The Philips Hue integration allows you to control and monitor the lights and motion sensors connected to your Hue bridge.
-
-There is currently support for the following device types within Home Assistant:
+The **Philips Hue** {% term integration %} allows you to control and monitor the lights and sensors connected to your Hue bridge. The integration supports:
 
 - Lights
 - Motion sensors (including temperature and light level sensors)
-- Hue switches (as device triggers for automations and also exposed as battery sensors when they are battery-powered)
-  - Hue Dimmer Switch
-  - Hue Tap Switch
-  - Hue Smart Button
-  - Hue Wall Switch Module
-  - Friends of Hue Switch
+- Remotes and switches (as device triggers for automations, and also exposed as battery sensors when they are battery-powered)
 
 {% include integrations/config_flow.md %}
 
-## Options
+## Lights for Hue zones and rooms
 
-Options for the Hue integration can be set going to **Configuration** -> **Integrations** -> **Hue** -> **Options**.
+The Hue concept is based on Rooms and Zones. Although the underlying Hue lights are exposed directly to Home Assistant, it might also be useful to interact with the `grouped lights` of the Hue ecosystem, for example, to turn all lights in a Hue group on/off at the same time.
+
+Home Assistant creates lights for each Hue zone and room automatically but disables them by default. To enable them, go to {% my integrations title="**Settings** > **Devices & services**" %}, select the **Philips Hue** integration, and enable the grouped light entities you want to use.
+
+## Scenes
+
+You can create, edit, and delete Hue scenes from the official Hue app on iOS and Android. Each room and zone can have its own scenes, and there is a large library of preset scenes for specific moods. These Hue scenes are automatically imported into Home Assistant and available as scene entities. Creating or editing Hue scenes in Home Assistant is not supported.
+
+Using Hue scenes is recommended when you want to control multiple lights at once. If you control multiple lights individually or use Home Assistant scenes, each command is sent to each light one by one. A Hue scene sends commands to all lights at once in an optimized way, resulting in a smoother experience.
+
+### Scene selection
+
+On V2 Hue bridges (square shape), each room and zone has a **Scene** dropdown. It shows the active scene and lets you choose a regular scene or smart scene.
+
+To select a scene:
+
+1. Go to {% my integrations title="**Settings** > **Devices & services**" %} and select **Philips Hue**.
+2. Open the device for the room or zone you want to control.
+3. Use the **Scene** dropdown to choose a scene.
+   - The **Scene** dropdown is a select entity, so you can add it to a dashboard to select scenes directly from there.
+
+## Configuration options
+
+After setting up the integration, the following options can be configured by going to {% my integrations title="**Settings** > **Devices & services**" %}, selecting the **Philips Hue** integration, and selecting **Configure**.
+
+### V2 bridges (square shape)
+
+{% configuration_basic %}
+Ignore connectivity status for the given devices:
+  description: "Select devices for which the connectivity (availability) status should be ignored. This is useful for battery-powered devices like remotes that are reported as unavailable when they go to sleep."
+{% endconfiguration_basic %}
+
+### V1 bridges (round shape)
 
 {% configuration_basic %}
 Allow Hue groups:
-  description: "Enabling this option, will create entities for each Hue group, so you can control your Hue light groups from Home Assistant."
+  description: "When enabled, creates light entities for Hue rooms."
 Allow unreachable bulbs to report their state correctly:
-  description: "If a light is unavailable, it will show up as unavailable in Home Assistant as well. Enabling this option, will not mark the light unavailable, but instead show the last state known to the Hue bridge."
+  description: "When enabled, allows bulbs that are reported as unreachable by the bridge to still report their last known state."
 {% endconfiguration_basic %}
 
-## Using Hue Scenes
+## Hue remotes and switches
 
-The Hue platform has its own concept of scenes for setting the colors of a group of lights simultaneously. A Hue bridge could potentially have dozens of scenes stored on it, and many scenes across different rooms might share the same name (the default scenes, for example). To avoid user interface overload, we don't expose scenes directly. Instead there is a `hue.hue_activate_scene` service which can be used in an automation or script. This will have all the bulbs transitioned at once, instead of one at a time like when using standard scenes in Home Assistant.
+Hue remotes such as the Dimmer Switch are stateless devices, meaning that they do not have an on/off state like regular entities in Home Assistant. Instead, these devices emit the event `hue_event` when a button is pressed. You can test what events come in by going to {% my tools_events title="**Settings** > **Tools** > **Events**" %} and subscribing to `hue_event`. Once you know what the event data looks like, you can use it to create automations.
 
-For instance:
+{% note %}
+The Hue API limits each device to one event per second. This means that button events are rate-limited to one per second.
+{% endnote %}
 
-```yaml
-service: hue.hue_activate_scene
-data:
-  group_name: "Porch"
-  scene_name: "Porch Orange"
-```
+## Support for legacy (V1) Hue bridges
 
-| Service data attribute | Optional | Description                                                           |
-| ---------------------- | -------- | --------------------------------------------------------------------- |
-| `group_name`           | no       | The group/room name of the lights. Find this in the official Hue app. |
-| `scene_name`           | no       | The name of the scene. Find this in the official Hue app.             |
-| `transition`           | yes      | The time in 100s of milliseconds to transition to the scene. For example, a value of 4 means 400 milliseconds.          |
+Signify released a newer version of the Hue bridge (square shape), and the legacy V1 bridge (round shape) is now end of life and no longer supported by Signify. Home Assistant will continue to support the V1 Hue bridge as long as it is technically possible, with the following limitations:
 
-_Note_: `group_name` is not a reference to a Home Assistant group name. It can only be the name of a group/room in the Hue app.
+- Scene entities are not automatically created for V1 bridges. To activate a Hue scene on a V1 bridge from Home Assistant, use the [**Philips Hue: Activate scene** action](/actions/hue.hue_activate_scene/) and refer to the scene by its group and scene name.
+- State updates for devices on V1 bridges are not received instantly but polled on an interval.
+- Light entities for Hue rooms are not automatically created for V1 bridges. You can opt in to creating room entities in the integration's options.
 
-### Finding Group and Scene Names
+To activate a scene on a V1 bridge:
 
-The easiest way to find Hue scene names is to only use the scenes from the 2nd generation Hue app, which are organized by room (group) and scene name. Use the room name and scene name that you see in the app. You can test that these work at Developer Tools > Services in your Home Assistant instance.
+1. Go to **Scripts** and select **Add New Script** > **Add Action** > **Philips Hue: Activate Scene**.
+2. Select the room name in the **Group** field and the scene name in the **Scene** field.
 
-Alternatively, a more advanced method can be used to dump all rooms and scene names using this [gist](https://gist.github.com/sdague/5479b632e0fce931951c0636c39a9578). This does **not** tell you which groups and scenes work together, but it is sufficient to get values that you can test at Developer Tools > Services.
+{% include integrations/actions.md %}
 
-### Caveats
+## Data updates
 
-The Hue API doesn't activate scenes directly; rather, they must be associated with a Hue group (typically rooms). But Hue scenes don't actually reference their group, so heuristic matching is used.
+V2 Hue bridges (square shape) push state changes to Home Assistant instantly over their local event stream. V1 Hue bridges (round shape) are polled on an interval because the V1 API does not support push updates.
 
-Neither group names nor scene names are guaranteed unique in Hue. If you are observing unexpected behavior from calling Hue scenes in Home Assistant, make the names of your Hue scenes more specific in the Hue app.
+## Removing the integration
 
-The Hue hub has limited space for scenes and will delete scenes if new ones get created that would overflow that space. The API documentation says this is based on the scenes that are "least recently used."
+This integration follows standard integration removal. No extra steps are required.
+
+{% include integrations/remove_device_service.md %}
